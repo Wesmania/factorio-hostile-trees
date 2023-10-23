@@ -1,3 +1,5 @@
+local config = {}
+
 local function cache_tree_prototypes()
 	local st = {}
 	for _, p in pairs(game.get_filtered_entity_prototypes{{filter='type', type='tree'}}) do
@@ -69,11 +71,14 @@ local function count_chunks(surface)
 	end
 end
 
-local function squares_to_check_per_tick(seconds_per_square)
-	local global = global
+local function squares_to_check_per_tick_per_chunk(seconds_per_square)
 	local ticks_per_square = seconds_per_square * 60
 	local squares_per_chunk = 16
-	return (squares_per_chunk * global.chunks) / ticks_per_square
+	return squares_per_chunk / ticks_per_square
+end
+
+local function squares_to_check_per_tick()
+	return global.chunks * config.factory_events_per_tick_per_chunk
 end
 
 -- TODO consider passing an argument by reference and using blocals to avoid allocation. Might be premature optimization?
@@ -146,6 +151,10 @@ local function initialize()
 	global.chunks           = 0
 	global.accum            = 0
 
+	config.factory_events = settings.global["hostile-trees-do-trees-hate-your-factory"].value
+	local fe_intvl = settings.global["hostile-trees-how-often-do-trees-hate-your-factory"].value
+	config.factory_events_per_tick_per_chunk = squares_to_check_per_tick_per_chunk(fe_intvl)
+
 	cache_tree_prototypes()
 end
 
@@ -162,11 +171,14 @@ script.on_event({defines.events.on_tick}, function(event)
 		count_chunks(surface)
 	end
 
+	-- FIXME replace with TODO when we add player events
+	if not config.factory_events then return end
+
 	if not surface or not surface.valid then
 		return
 	end
 
-	global.accum = global.accum + squares_to_check_per_tick(5)	-- TODO configure
+	global.accum = global.accum + squares_to_check_per_tick()
 	local tocheck = math.floor(global.accum)
 	global.accum = global.accum - tocheck
 

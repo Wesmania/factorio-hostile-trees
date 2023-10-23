@@ -2,11 +2,11 @@
 	"name": "hostile-trees",
 	"version": "0.0.1",
 	"factorio_version": "1.1",
-	"title": "hostile trees",
+	"title": "Hostile Trees",
 	"author": "Mazor",
 	"contact": "not.a.valid.email.address@example.com",
 	"homepage": "",
-	"description": "Makes trees more hostile.",
+	"description": "Makes trees hate you and your factory. They will do bad things to you and your factory.",
 	"dependencies": [
 		"base >= 1.1.0"
 	]
