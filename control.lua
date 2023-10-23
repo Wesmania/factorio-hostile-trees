@@ -7,16 +7,6 @@ local function cache_tree_prototypes()
 	global.surface_trees = st
 end
 
-local function initialize()
-	global.rng              = game.create_random_generator()
-	global.surface_trees    = {}
-	global.tick_mod_10_s    = 0
-	global.chunks           = 0
-	global.accum            = 0
-
-	cache_tree_prototypes()
-end
-
 local function has_player_entities(surface, area)
 	for _, force in pairs(game.forces) do
 		if #force.players > 0 then
@@ -28,18 +18,22 @@ local function has_player_entities(surface, area)
 	return false
 end
 
--- Only call it after we did an entity / tree check
-local function has_buildings(surface, area)
+
+local function get_building(surface, area)
 	for _, force in pairs(game.forces) do
 		if #force.players > 0 then
 			for _, e in ipairs(surface.find_entities_filtered{area = area, force = force}) do
-				if e.prototype.is_building then return true end
+				if e.prototype.is_building then return e end
 			end
 		end
 	end
-	return false
+	return nil
 end
 
+-- Only call it after we did an entity / tree check
+local function has_buildings(surface, area)
+	return get_building(surface, area) ~= nil
+end
 
 local function deal_damage_to_player_entities(surface, position, radius, amount)
 	for _, force in pairs(game.forces) do
@@ -58,9 +52,13 @@ local function has_trees(surface, area)
 	return surface.count_entities_filtered{area = area, name = global.surface_trees, limit = 1} > 0
 end
 
+local function get_trees(surface, area)
+	return surface.find_entities_filtered{area = area, name = global.surface_trees}
+end
+
 local function get_tree(surface, area)
 	local global = global
-	return surface.find_entities_filtered{area = area, name = global.surface_trees, limit = 1}
+	return surface.find_entities_filtered{area = area, name = global.surface_trees, limit = 1}[1]
 end
 
 local function count_chunks(surface)
@@ -76,6 +74,79 @@ local function squares_to_check_per_tick(seconds_per_square)
 	local ticks_per_square = seconds_per_square * 60
 	local squares_per_chunk = 16
 	return (squares_per_chunk * global.chunks) / ticks_per_square
+end
+
+-- TODO consider passing an argument by reference and using blocals to avoid allocation. Might be premature optimization?
+local function position(entity)
+	local bb = entity.bounding_box
+	return {
+		x = (bb.left_top.x + bb.right_bottom.x) / 2,
+		y = (bb.left_top.y + bb.right_bottom.y) / 2,
+	}
+end
+
+-- Tree-factory interactions
+
+local function factory_event_spread_trees(surface, area)
+	-- TODO select tree and building randomly instead of first from the list?
+	local tree = get_tree(surface, area)
+	if tree == nil then return end
+	local building = get_building(surface, area)
+	if building == nil then return end
+	local treepos = position(tree)
+	local buildingpos = position(building)
+	-- Spread 3 to 5 trees two thirds of the way between the building and the tree.
+	treepos.x = (treepos.x * 2 + buildingpos.x) / 3
+	treepos.y = (treepos.y * 2 + buildingpos.y) / 3
+	for i = 1,global.rng(3, 5) do
+		buildingpos.x = treepos.x + (global.rng() * 3)
+		buildingpos.y = treepos.y + (global.rng() * 3)
+		surface.create_entity{name = tree.name, position = buildingpos}
+	end
+end
+
+local function factory_event_set_tree_on_fire(surface, area)
+	local tree = get_tree(surface, area)
+	if tree == nil then return end
+	local at = position(tree)
+	tree.destroy()
+	surface.create_entity{
+		name = 'fire-flame-on-tree',
+		position = at,
+	}
+end
+
+local function factory_event_small_tree_explosion(surface, area)
+	local tree = get_tree(surface, area)
+	if tree == nil then return end
+	local at = position(tree)
+	tree.destroy()
+	surface.create_entity{
+		name = 'land-mine-explosion',
+		position = at,
+	}
+	deal_damage_to_player_entities(surface, at, 5, 100)
+end
+
+local function factory_event(surface, area)
+	local random = global.rng()
+	if random < 0.3 then
+		factory_event_spread_trees(surface, area)
+	elseif random < 0.9 then
+		factory_event_set_tree_on_fire(surface, area)
+	else
+		factory_event_small_tree_explosion(surface, area)
+	end
+end
+
+local function initialize()
+	global.rng              = game.create_random_generator()
+	global.surface_trees    = {}
+	global.tick_mod_10_s    = 0
+	global.chunks           = 0
+	global.accum            = 0
+
+	cache_tree_prototypes()
 end
 
 script.on_init(function()
@@ -119,26 +190,7 @@ script.on_event({defines.events.on_tick}, function(event)
 		
 		if has_player_entities(surface, box) and has_trees(surface, box) -- These two first, they remove most checks
 		    and has_buildings(surface, box) then
-			local some_trees = get_tree(surface, box)
-			for _, e in ipairs(some_trees) do
-				local box = e.bounding_box
-				local at = {
-					x = (box.left_top.x + box.right_bottom.x) / 2,
-					y = (box.left_top.y + box.right_bottom.y) / 2,
-				}
-				e.destroy()
-				surface.create_entity{
-					name = 'fire-flame-on-tree',
-					position = at,
-				}
-				if global.rng() > 0.9 then
-					surface.create_entity{
-						name = 'land-mine-explosion',
-						position = at,
-					}
-					deal_damage_to_player_entities(surface, at, 5, 100)
-				end
-			end
+		    	factory_event(surface, box)
 		end
 	end
 end)
