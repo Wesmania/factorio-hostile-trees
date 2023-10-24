@@ -1,13 +1,6 @@
-local config = {}
+local setup = require("modules/setup")
 
-local function cache_tree_prototypes()
-	local st = {}
-	for _, p in pairs(game.get_filtered_entity_prototypes{{filter='type', type='tree'}}) do
-		if p.emissions_per_second > 0 or p.emissions_per_second > -0.0005 then goto skip end
-		table.insert(st, p.name)
-	::skip:: end
-	global.surface_trees = st
-end
+local config = setup.config
 
 local function has_player_entities(surface, area)
 	for _, force in pairs(game.forces) do
@@ -69,12 +62,6 @@ local function count_chunks(surface)
 	for _ in surface.get_chunks() do
 		global.chunks = global.chunks + 1
 	end
-end
-
-local function squares_to_check_per_tick_per_chunk(seconds_per_square)
-	local ticks_per_square = seconds_per_square * 60
-	local squares_per_chunk = 16
-	return squares_per_chunk / ticks_per_square
 end
 
 local function squares_to_check_per_tick()
@@ -144,22 +131,8 @@ local function factory_event(surface, area)
 	end
 end
 
-local function initialize()
-	global.rng              = game.create_random_generator()
-	global.surface_trees    = {}
-	global.tick_mod_10_s    = 0
-	global.chunks           = 0
-	global.accum            = 0
-
-	config.factory_events = settings.global["hostile-trees-do-trees-hate-your-factory"].value
-	local fe_intvl = settings.global["hostile-trees-how-often-do-trees-hate-your-factory"].value
-	config.factory_events_per_tick_per_chunk = squares_to_check_per_tick_per_chunk(fe_intvl)
-
-	cache_tree_prototypes()
-end
-
 script.on_init(function()
-	initialize()
+	setup.initialize()
 end)
 
 script.on_event({defines.events.on_tick}, function(event)
