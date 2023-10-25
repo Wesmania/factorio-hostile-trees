@@ -78,7 +78,7 @@ script.on_event({defines.events.on_tick}, function(event)
 		end
 	end
 
-	local event_chance = 1 / 600
+	local event_chance = 1 / 60
 	if global.rng() >= event_chance then return end
 	if #global.players == 0 then return end
 	local player = global.players[global.rng(1, #global.players)]
@@ -86,19 +86,8 @@ script.on_event({defines.events.on_tick}, function(event)
 	if global.stories[player.unit_number] ~= nil then return end
 
 	local ppos = util.position(player)
-	local box = {
-		left_top = {
-			x = ppos.x - 8,
-			y = ppos.y - 8,
-		},
-		right_bottom = {
-			x = ppos.x + 8,
-			y = ppos.y + 8,
-		},
-	}
-	game.print("foo")
+	local box = util.box_around(ppos, 8)
 	if area_util.count_trees(surface, box) > 40 then
-		game.print("bar")
 		global.stories[player.unit_number] = player_stories.spooky_story(player, surface)
 	end
 end)
