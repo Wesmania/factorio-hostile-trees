@@ -21,5 +21,17 @@ function M.shuffle(count)
 	return tbl
 end
 
+function M.box_around(position, radius)
+	return {
+		left_top = {
+			x = position.x - radius,
+			y = position.y - radius,
+		},
+		right_bottom = {
+			x = position.x + radius,
+			y = position.y + radius,
+		},
+	}
+end
 
 return M

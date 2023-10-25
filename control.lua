@@ -70,17 +70,7 @@ script.on_event({defines.events.on_tick}, function(event)
 				x = chunk.x * 32 + global.rng(0, 32),
 				y = chunk.y * 32 + global.rng(0, 32),
 			}
-			local box = {
-				left_top = {
-					x = map_pos.x - 4,
-					y = map_pos.y - 4,
-				},
-				right_bottom = {
-					x = map_pos.x + 4,
-					y = map_pos.y + 4,
-				},
-			}
-			
+			local box = util.box_around(map_pos, 4)
 			if area_util.has_player_entities(surface, box) and area_util.has_trees(surface, box) -- These two first, they remove most checks
 			    and area_util.has_buildings(surface, box) then
 				factory_event(surface, box)

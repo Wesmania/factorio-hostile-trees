@@ -47,16 +47,7 @@ local SpookyStoryPrototype = {
 				x = ppos.x + math.sin(math.pi / 8 * s.circle[s.i]) * s.fire_radius,
 				y = ppos.y + math.cos(math.pi / 8 * s.circle[s.i]) * s.fire_radius,
 			}
-			local box = {
-				left_top = {
-					x = search_pos.x - 2,
-					y = search_pos.y - 2,
-				},
-				right_bottom = {
-					x = search_pos.x + 2,
-					y = search_pos.y + 2,
-				},
-			}
+			local box = util.box_around(search_pos, 2)
 			tree_events.set_tree_on_fire(s.surface, box)
 			s.i = s.i + 1
 			s.until_next = global.rng(5, 9)
