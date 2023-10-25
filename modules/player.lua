@@ -6,12 +6,12 @@ local M = {}
 local SpookyStoryPrototype = {
 	stages = {
 		-- Flicker light
-		function(s)
+		start = function(s)
 			s.until_next = s.until_next - 1
 			if s.until_next == 0 then
 				s.player.disable_flashlight()
 				s.until_next = global.rng(120, 180)
-				s.stage = s.stage + 1
+				s.stage = "initial_pause"
 				return
 			end
 			if s.player.is_flashlight_enabled() then
@@ -20,24 +20,22 @@ local SpookyStoryPrototype = {
 				s.player.enable_flashlight()
 			end
 		end,
-		-- Dramatic pause
-		function(s)
+		initial_pause = function(s)
 			s.until_next = s.until_next - 1
 			if s.until_next ~= 0 then return end
 
-			s.stage = s.stage + 1
+			s.stage = "fire_ring"
 			s.circle = util.shuffle(16)
 			s.i = 1
 			s.until_next = global.rng(5, 9)
 			s.fire_radius = 6  + global.rng() * 4
 		end,
-		-- Start setting trees on fire
-		function(s)
+		fire_ring = function(s)
 			s.until_next = s.until_next - 1
 			if s.until_next ~= 0 then return end
 
 			if s.i > 16 then
-				s.stage = s.stage + 1
+				s.stage = "outro"
 				s.until_next = global.rng(120, 180)
 				return
 			end
@@ -53,10 +51,10 @@ local SpookyStoryPrototype = {
 			s.until_next = global.rng(5, 9)
 		end,
 		-- Dramatic pause
-		function(s)
+		outro = function(s)
 			s.until_next = s.until_next - 1
 			if s.until_next ~= 0 then return end
-			s.stage = s.stage + 1
+			s.stage = nil
 			s.player.enable_flashlight()
 		end,
 	},
@@ -72,7 +70,7 @@ local SpookyStoryPrototype = {
 M.spooky_story = function(player, surface)
 	local s = {}
 	setmetatable(s, {__index = SpookyStoryPrototype})
-	s.stage = 1
+	s.stage = "start"
 	s.until_next = global.rng(45, 75)
 	s.player = player
 	s.surface = surface
