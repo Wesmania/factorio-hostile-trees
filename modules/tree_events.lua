@@ -57,20 +57,14 @@ function M.small_tree_explosion(surface, area)
 	deal_damage_to_player_entities(surface, at, 5, 100)
 end
 
-function M.spitter_projectile(surface, area)
-	local tree = area_util.get_tree(surface, area)
-	if tree == nil then return end
-	local building = area_util.get_building(surface, area)
-	if building == nil then return end
+function M.spitter_projectile(surface, tree, building)
 	local treepos = util.position(tree)
-	local entity = surface.create_entity{
+	surface.create_entity{
 		name = 'tree-spitter-projectile',
 		position = treepos,
 		source = treepos,
 		target = building,
 	}
-	if entity then
-	end
 end
 
 return M

@@ -36,6 +36,7 @@ M.initialize = function()
 	global.chunks           = 0
 	global.accum            = 0
 	global.stories          = {}
+	global.tree_stories     = {}
 
 	M.config.factory_events = settings.global["hostile-trees-do-trees-hate-your-factory"].value
 	local fe_intvl = settings.global["hostile-trees-how-often-do-trees-hate-your-factory"].value

@@ -43,6 +43,19 @@ script.on_event({defines.events.on_tick}, function(event)
 		end
 	end
 
+	-- Tree stories. Safe iteration while removing elements.
+	local i = 1
+	while true do
+		if i > #global.tree_stories then break end
+		local story = global.tree_stories[i]
+		if story.run(story) then
+			i = i + 1
+		else
+			util.list_remove(global.tree_stories, i)
+			-- New entity under same i
+		end
+	end
+
 	if not surface or not surface.valid then
 		return
 	end
