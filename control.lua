@@ -3,6 +3,7 @@ local util = require("modules/util")
 local area_util = require("modules/area_util")
 local player_stories = require("modules/player")
 local tree_events = require("modules/tree_events")
+local trees = require("modules/trees")
 
 local config = setup.config
 
@@ -20,18 +21,6 @@ end
 
 -- Tree-factory interactions
 
-local function factory_event(surface, area)
-	local random = math.random()
-	tree_events.spitter_projectile(surface, area)
-	do return end	-- FIXME for testing
-	if random < 0.3 then
-		tree_events.spread_trees_towards_buildings(surface, area)
-	elseif random < 0.9 then
-		tree_events.set_tree_on_fire(surface, area)
-	else
-		tree_events.small_tree_explosion(surface, area)
-	end
-end
 
 script.on_init(function()
 	setup.initialize()
@@ -75,7 +64,7 @@ script.on_event({defines.events.on_tick}, function(event)
 			local box = util.box_around(map_pos, 4)
 			if area_util.has_player_entities(surface, box) and area_util.has_trees(surface, box) -- These two first, they remove most checks
 			    and area_util.has_buildings(surface, box) then
-				factory_event(surface, box)
+				trees.event(surface, box)
 			end
 		end
 	end
