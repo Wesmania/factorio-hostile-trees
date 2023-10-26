@@ -21,7 +21,9 @@ end
 -- Tree-factory interactions
 
 local function factory_event(surface, area)
-	local random = global.rng()
+	local random = math.random()
+	tree_events.spitter_projectile(surface, area)
+	do return end	-- FIXME for testing
 	if random < 0.3 then
 		tree_events.spread_trees_towards_buildings(surface, area)
 	elseif random < 0.9 then
@@ -67,8 +69,8 @@ script.on_event({defines.events.on_tick}, function(event)
 			-- TODO do we define these as globals to avoid allocation cost?
 			local chunk = surface.get_random_chunk()
 			local map_pos = {
-				x = chunk.x * 32 + global.rng(0, 32),
-				y = chunk.y * 32 + global.rng(0, 32),
+				x = chunk.x * 32 + math.random(0, 32),
+				y = chunk.y * 32 + math.random(0, 32),
 			}
 			local box = util.box_around(map_pos, 4)
 			if area_util.has_player_entities(surface, box) and area_util.has_trees(surface, box) -- These two first, they remove most checks
@@ -79,9 +81,9 @@ script.on_event({defines.events.on_tick}, function(event)
 	end
 
 	local event_chance = 1 / 60
-	if global.rng() >= event_chance then return end
+	if math.random() >= event_chance then return end
 	if #global.players == 0 then return end
-	local player = global.players[global.rng(1, #global.players)]
+	local player = global.players[math.random(1, #global.players)]
 	if not player.valid then return end
 	if global.stories[player.unit_number] ~= nil then return end
 

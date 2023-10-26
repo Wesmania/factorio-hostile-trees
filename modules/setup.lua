@@ -30,7 +30,6 @@ M.squares_to_check_per_tick_per_chunk = function(seconds_per_square)
 end
 
 M.initialize = function()
-	global.rng              = game.create_random_generator()
 	global.players          = {}
 	global.surface_trees    = {}
 	global.tick_mod_10_s    = 0

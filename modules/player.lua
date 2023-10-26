@@ -38,7 +38,7 @@ local function fire_ring(s, until_low, until_high)
 	local box = util.box_around(search_pos, 2)
 	tree_events.set_tree_on_fire(s.surface, box)
 	s.i = s.i + 1
-	s.until_next = global.rng(until_low, until_high)
+	s.until_next = math.random(until_low, until_high)
 	return false
 end
 
@@ -47,21 +47,21 @@ local SpookyStoryPrototype = {
 		-- Flicker light
 		start = function(s)
 			if not flicker_light(s) then return end
-			s.until_next = global.rng(120, 180)
+			s.until_next = math.random(120, 180)
 			s.stage = "initial_pause"
 		end,
 		initial_pause = function(s)
 			if not pause(s) then return end
 			s.stage = "fire_ring"
 			s.until_next = 0
-			s.fire_radius = 6  + global.rng() * 4
+			s.fire_radius = 6  + math.random() * 4
 			s.circle = util.shuffle(16)
 			s.i = 1
 		end,
 		fire_ring = function(s)
 			if not fire_ring(s, 5, 9) then return end
 			s.stage = "outro"
-			s.until_next = global.rng(120, 180)
+			s.until_next = math.random(120, 180)
 		end,
 		-- Dramatic pause
 		outro = function(s)
@@ -83,7 +83,7 @@ M.spooky_story = function(player, surface)
 	local s = {}
 	setmetatable(s, {__index = SpookyStoryPrototype})
 	s.stage = "start"
-	s.until_next = global.rng(45, 75)
+	s.until_next = math.random(45, 75)
 	s.player = player
 	s.surface = surface
 	return s
