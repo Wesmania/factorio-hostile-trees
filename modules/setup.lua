@@ -23,12 +23,8 @@ M.cache_tree_prototypes = function()
 	global.surface_trees = st
 end
 
-M.cache_evolution_rates = function()
-	local evolution = game.forces["enemy"].evolution_factor
-	game.print("Update " .. evolution)
-	global.spawntable = {}
+local function cache_evolution_for(evolution)
 	local new_entries = {}
-
 	local enemy_rates = {
 		biters = 0.75,
 		spitters = 0.25,
@@ -65,6 +61,7 @@ M.cache_evolution_rates = function()
 		end
 	end
 
+	local res = {}
 	-- Now normalize rates and set values.
 	local total_prob = 0
 	for _, entry in ipairs(new_entries) do
@@ -73,9 +70,18 @@ M.cache_evolution_rates = function()
 
 	local sum = 0
 	for _, entry in ipairs(new_entries) do
-		global.spawntable[#global.spawntable + 1] = {entry[1], sum}
+		res[#res+ 1] = {entry[1], sum}
 		sum = sum + entry[2] / total_prob
 	end
+	return res
+end
+
+M.cache_evolution_rates = function()
+	local evolution = game.forces["enemy"].evolution_factor
+	global.spawntable = {
+		default = cache_evolution_for(evolution),
+		retaliation = cache_evolution_for(evolution + 0.1),
+	}
 end
 
 M.squares_to_check_per_tick_per_chunk = function(seconds_per_square)
