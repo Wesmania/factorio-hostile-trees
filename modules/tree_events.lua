@@ -67,9 +67,20 @@ function M.spitter_projectile(surface, tree, building)
 	}
 end
 
-function M.spawn_biters(surface, tree, count, biter)
-	local biter = biter or 'small-biter'
+function M.pick_random_enemy_type()
+	local rand = math.random()
+	local res = nil
+	for _, entry in ipairs(global.spawntable) do
+		if rand < entry[2] then break end
+		res = entry[1]
+	end
+	if res == nil then
+		res = 'small-biter'
+	end
+	return res
+end
 
+function M.spawn_biters(surface, tree, count)
 	local treepos = util.position(tree)
 	local actual_pos = {
 		x = treepos.x,
@@ -77,6 +88,7 @@ function M.spawn_biters(surface, tree, count, biter)
 	}
 
 	for i = 1,count do
+		local biter = M.pick_random_enemy_type()
 		actual_pos.x = treepos.x + math.random() * 5 - 2.5
 		actual_pos.y = treepos.y + math.random() * 5 - 2.5
 		surface.create_entity{

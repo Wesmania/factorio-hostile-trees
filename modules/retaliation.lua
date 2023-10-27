@@ -47,7 +47,7 @@ local function check_for_major_retaliation(surface, event)
 	end
 
 	if counts < 5 then return end
-	tree_events.spawn_biters(surface, tree, math.random(30, 50), 'big-biter')
+	tree_events.spawn_biters(surface, tree, math.random(30, 50))
 
 	-- Clear counts in neighbouring chunks
 	local counts = 0

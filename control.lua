@@ -36,6 +36,7 @@ script.on_event({defines.events.on_tick}, function(event)
 	if global.tick_mod_10_s == 0 then
 		count_chunks(surface)
 		setup.cache_players()
+		setup.cache_evolution_rates()
 	end
 
 	-- Stories, ran once per tick.
