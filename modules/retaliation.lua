@@ -47,7 +47,7 @@ local function check_for_major_retaliation(surface, event)
 	end
 
 	if counts < 5 then return end
-	tree_events.spawn_biters(surface, tree, math.random(30, 50))
+	global.tree_stories[#global.tree_stories + 1] = tree_events.spawn_biters_over_time(surface, util.position(tree), math.random(30, 50), "retaliation")
 
 	-- Clear counts in neighbouring chunks
 	local counts = 0

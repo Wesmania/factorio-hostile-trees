@@ -59,7 +59,7 @@ function M.event(surface, area)
 	do	-- FIXME for testing
 		local tree = area_util.get_tree(surface, area)
 		if tree == nil then return end
-		tree_events.spawn_biters(surface, tree, math.random(3, 5), "retaliation")
+		tree_events.spawn_biters(surface, tree, math.random(3, 5))
 		return
 	end
 	if random < 0.3 then
