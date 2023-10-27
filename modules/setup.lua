@@ -37,6 +37,8 @@ M.initialize = function()
 	global.accum            = 0
 	global.stories          = {}
 	global.tree_stories     = {}
+	global.tree_kill_count  = 0
+	global.tree_kill_locs   = {}
 
 	M.config.factory_events = settings.global["hostile-trees-do-trees-hate-your-factory"].value
 	local fe_intvl = settings.global["hostile-trees-how-often-do-trees-hate-your-factory"].value

@@ -5,6 +5,8 @@ local player_stories = require("modules/player")
 local tree_events = require("modules/tree_events")
 local trees = require("modules/trees")
 
+local retaliation = require("modules/retaliation")
+
 local config = setup.config
 
 local function count_chunks(surface)
