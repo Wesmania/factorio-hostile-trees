@@ -39,6 +39,7 @@ M.initialize = function()
 	global.tree_stories     = {}
 	global.tree_kill_count  = 0
 	global.tree_kill_locs   = {}
+	global.major_retaliation_threshold = 200	-- FIXME balance
 
 	M.config.factory_events = settings.global["hostile-trees-do-trees-hate-your-factory"].value
 	local fe_intvl = settings.global["hostile-trees-how-often-do-trees-hate-your-factory"].value
