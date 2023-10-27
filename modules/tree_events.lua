@@ -67,4 +67,33 @@ function M.spitter_projectile(surface, tree, building)
 	}
 end
 
+function M.spawn_biters(surface, tree, count)
+	local treepos = util.position(tree)
+	local actual_pos = {
+		x = treepos.x,
+		y = treepos.y,
+	}
+
+	for i = 1,count do
+		actual_pos.x = treepos.x + math.random() * 5 - 2.5
+		actual_pos.y = treepos.y + math.random() * 5 - 2.5
+		surface.create_entity{
+			name = 'small-biter',
+			position = actual_pos,
+		}
+	end
+
+	local enemy = surface.find_nearest_enemy_entity_with_owner{position=treepos, max_distance=50}
+	if enemy ~= nil then
+		surface.set_multi_command{
+			command = {
+				type = defines.command.attack,
+				target = enemy,
+			},
+			unit_count = count,
+			unit_search_distance=10,
+		}
+	end
+end
+
 return M
