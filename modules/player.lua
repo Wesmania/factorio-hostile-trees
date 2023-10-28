@@ -22,7 +22,7 @@ local function pause(s)
 	return s.until_next <= 0
 end
 
-local function fire_ring(s, until_low, until_high)
+local function fire_ring(s)
 	s.until_next = s.until_next - 1
 	if s.until_next > 0 then return false end
 
@@ -32,49 +32,63 @@ local function fire_ring(s, until_low, until_high)
 
 	local ppos = util.position(s.player)
 	local search_pos = {
-		x = ppos.x + math.sin(math.pi / 8 * s.circle[s.i]) * s.fire_radius,
-		y = ppos.y + math.cos(math.pi / 8 * s.circle[s.i]) * s.fire_radius,
+		x = ppos.x + math.sin(math.pi / 8 * s.tree_circle[s.i]) * s.fire_radius,
+		y = ppos.y + math.cos(math.pi / 8 * s.tree_circle[s.i]) * s.fire_radius,
 	}
 	local box = util.box_around(search_pos, 2)
 	tree_events.set_tree_on_fire(s.surface, box)
 	s.i = s.i + 1
-	s.until_next = math.random(until_low, until_high)
+	s.until_next = math.random(s.until_low, s.until_high)
 	return false
 end
 
 local SpookyStoryPrototype = {
 	stages = {
-		-- Flicker light
-		start = function(s)
+		-- Args: until_next
+		flicker_light = function(s)
 			if not flicker_light(s) then return end
-			s.until_next = math.random(120, 180)
-			s.stage = "initial_pause"
+			s.next_stage(s)
 		end,
-		initial_pause = function(s)
+		-- Args: until_next
+		pause = function(s)
 			if not pause(s) then return end
-			s.stage = "fire_ring"
-			s.until_next = 0
-			s.fire_radius = 6  + math.random() * 4
-			s.circle = util.shuffle(16)
-			s.i = 1
+			s.next_stage(s)
 		end,
+		-- Args s.fire_radius, s.until_low, s.until_high, s.tree_count
 		fire_ring = function(s)
-			if not fire_ring(s, 5, 9) then return end
-			s.stage = "outro"
-			s.until_next = math.random(120, 180)
+			if s.tree_circle == nil then
+				s.i = 1
+				s.tree_circle = util.shuffle(s.tree_count)
+			end
+			if not fire_ring(s) then return end
+			s.tree_circle = nil
+			s.next_stage(s)
 		end,
 		-- Dramatic pause
-		outro = function(s)
-			if not pause(s) then return end
-			s.stage = nil
+		unflicker_light = function(s)
 			s.player.enable_flashlight()
+			s.next_stage(s)
 		end,
 	},
+
+	next_stage = function(s)
+		s.stage_idx = s.stage_idx + 1
+		local stage = s.stage_list[s.stage_idx]
+		if stage == nil then return end
+		for n, v in pairs(stage[2]) do
+			s[n] = v
+		end
+	end,
+
+	finish = function(s)
+		s.stage_idx = nil
+	end,
+
 	run = function(s)
-		local stage = s.stages[s.stage]
+		local stage = s.stage_list[s.stage_idx]
 		if stage == nil then return false end
 		if not s.player.valid or not s.surface.valid then return false end
-		stage(s)
+		s.stages[stage[1]](s)
 		return true
 	end,
 }
@@ -82,10 +96,17 @@ local SpookyStoryPrototype = {
 M.spooky_story = function(player, surface)
 	local s = {}
 	setmetatable(s, {__index = SpookyStoryPrototype})
-	s.stage = "start"
-	s.until_next = math.random(45, 75)
+	s.stage_list = {
+		{ "flicker_light", {until_next = math.random(45, 75)} },
+		{ "pause", {until_next = math.random(120, 180)} },
+		{ "fire_ring", {fire_radius = 6 + math.random() * 4, until_low = 5, until_high = 9, tree_count = 16}},
+		{ "pause", {until_next = math.random(120, 180)}},
+		{ "unflicker_light", {}}
+	}
+	s.stage_idx = 0
 	s.player = player
 	s.surface = surface
+	s.next_stage(s)
 	return s
 end
 

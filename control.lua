@@ -85,7 +85,6 @@ script.on_event({defines.events.on_tick}, function(event)
 		end
 	end
 
-	do return end
 	local event_chance = 1 / 60
 	if math.random() >= event_chance then return end
 	if #global.players == 0 then return end
