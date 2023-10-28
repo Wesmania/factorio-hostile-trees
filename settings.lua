@@ -29,4 +29,11 @@ data:extend({
 		default_value = 60,
 		order = "b-b"
 	},
+	{
+		type = "bool-setting",
+		name = "hostile-trees-do-trees-retaliate",
+		setting_type = "runtime-global",
+		default_value = true,
+		order = "c-a"
+	},
 })

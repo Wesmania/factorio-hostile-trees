@@ -87,7 +87,7 @@ end
 
 script.on_event(defines.events.on_entity_died, function(event)
 	global.tree_kill_count = global.tree_kill_count + 1
-	if global.tree_kill_count % 50 == 0 then
+	if global.tree_kill_count % 50 == 0 and config.retaliation_enabled then
 		register_tree_death_loc(event)
 		
 		if global.tree_kill_count >= global.major_retaliation_threshold then
