@@ -122,7 +122,8 @@ M.spooky_story = function(player, surface)
 	local tree = area_util.get_tree(surface, box)
 
 	local flicker_light = false
-	if is_night and is_in_forest and math.random() < 0.3 then
+	if is_night and is_in_forest -- and math.random() < 0.3
+	then
 		flicker_light = true
 	end
 
@@ -131,19 +132,22 @@ M.spooky_story = function(player, surface)
 
 	if flicker_light then
 		sl[#sl + 1] = { "flicker_light", {until_next = math.random(45, 75)} }
-		sl[#sl + 1] = { "pause", {until_next = math.random(120, 180)} }
 	end
 
-	if is_night and is_in_forest and math.random() < 0.2 then
+	local player_spooked = false
+	if is_night and is_in_forest and math.random() < 0.2 and false then	-- FIXME
 		-- Spook the player first
+		player_spooked = true
+		sl[#sl + 1] = { "pause", {until_next = math.random(120, 180)} }
 		sl[#sl + 1] = { "fire_ring", {fire_radius = 6 + math.random() * 4, until_low = 5, until_high = 9, tree_count = 16}}
 		sl[#sl + 1] = { "pause", {until_next = math.random(60, 90)}}
 	end
 
-	sl[#sl + 1] = { "fake_biters", {count = 30, wait_low = 10, wait_high = 30}}
-	goto skip
-
-	if is_in_forest then
+	if is_night and not player_spooked --and math.random() < 0.2
+	then
+		sl[#sl + 1] = { "pause", {until_next = 20}}
+		sl[#sl + 1] = { "fake_biters", {count = 20, wait_low = 10, wait_high = 25}}
+	elseif is_in_forest then
 		local rand = math.random()
 		if rand < 0.3 then
 			if tree ~= nil then
@@ -175,11 +179,9 @@ M.spooky_story = function(player, surface)
 		end
 	end
 
-	::skip::
-
 	if flicker_light then
 		sl[#sl + 1] = { "pause", {until_next = math.random(120, 180)} }
-		sl[#sl + 1] = { "unflicker_light" }
+		sl[#sl + 1] = { "unflicker_light", {}}
 	end
 
 	s.stage_idx = 0

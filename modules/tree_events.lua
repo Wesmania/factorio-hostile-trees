@@ -156,6 +156,18 @@ function M.spawn_biters_over_time(surface, position, count, rate_table)
 	return s
 end
 
+local function player_is_unhurt(player)
+	if player.get_health_ratio() ~= 1 then return false end
+	if player.grid ~= nil then
+		if player.grid.shield ~= player.grid.max_shield then return false end
+	end
+	return true
+end
+
+local function player_restore_health(player)
+	player.health = player.prototype.max_health
+end
+
 local FakeBitersPrototype = {
 	run = function(s)
 		if not s.player.valid then return false end
@@ -171,7 +183,15 @@ local FakeBitersPrototype = {
 			name = "fake-biter",
 			position = pos,
 		}
-		return s.spawned < s.count
+		if s.deal_damage then
+			s.player.damage(5, "enemy")
+		end
+		if s.spawned == s.count then
+			player_restore_health(s.player)
+			return false
+		else
+			return true
+		end
 	end
 }
 
@@ -180,6 +200,7 @@ function M.fake_biters(surface, player, count, wait_low, wait_high)
 	setmetatable(s, {__index = FakeBitersPrototype})
 	s.surface = surface
 	s.player = player
+	s.deal_damage = player_is_unhurt(player)
 	s.wait_interval = 0
 	s.count = count
 	s.spawned = 0
