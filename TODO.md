@@ -4,3 +4,4 @@
 * Worm spawning events
 * Base spawning events
 * Add a grace period for player events
+* Properly scale player events to number of players

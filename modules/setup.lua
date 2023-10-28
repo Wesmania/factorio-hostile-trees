@@ -113,6 +113,8 @@ M.initialize = function()
 	local fe_intvl = settings.global["hostile-trees-how-often-do-trees-hate-your-factory"].value
 	M.config.factory_events_per_tick_per_chunk = M.squares_to_check_per_tick_per_chunk(fe_intvl)
 
+	M.config.player_events = settings.global["hostile-trees-do-trees-hate-you"].value
+	M.config.player_event_frequency = settings.global["hostile-trees-how-often-do-trees-hate-you"].value
 	M.cache_tree_prototypes()
 	M.cache_players()
 end

@@ -85,9 +85,9 @@ script.on_event({defines.events.on_tick}, function(event)
 		end
 	end
 
-	local event_chance = 1 / 60
+	if not config.player_events or #global.players == 0 then return end
+	local event_chance = #global.players / (config.player_event_frequency * 60)
 	if math.random() >= event_chance then return end
-	if #global.players == 0 then return end
 	local player = global.players[math.random(1, #global.players)]
 	if not player.valid then return end
 	if global.stories[player.unit_number] ~= nil then return end
