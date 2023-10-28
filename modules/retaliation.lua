@@ -1,4 +1,5 @@
 local util = require("modules/util")
+local area_util = require("modules/area_util")
 local tree_events = require("modules/tree_events")
 
 script.on_nth_tick(30 * 60, function()
@@ -47,7 +48,28 @@ local function check_for_major_retaliation(surface, event)
 	end
 
 	if counts < 5 then return end
-	global.tree_stories[#global.tree_stories + 1] = tree_events.spawn_biters_over_time(surface, util.position(tree), math.random(30, 50), "retaliation")
+	-- Try to find a forested place to spawn from
+	local spawn_tree = nil
+	local biter_count = nil
+	for i = 1,6 do
+		local random_area = util.box_around({
+			x = treepos.x - 12 + math.random(1, 24),
+			y = treepos.y - 12 + math.random(1, 24),
+		}, 4)
+		if area_util.count_trees(surface, random_area, 20) >= 20 then
+			spawn_tree = area_util.get_tree(surface, random_area)
+			break
+		end
+	end
+
+	if spawn_tree == nil then
+		spawn_tree = tree
+		biter_count = math.random(10, 15)
+	else
+		biter_count = math.random(30, 50)
+	end
+
+	global.tree_stories[#global.tree_stories + 1] = tree_events.spawn_biters_over_time(surface, util.position(spawn_tree), biter_count, "retaliation")
 
 	-- Clear counts in neighbouring chunks
 	local counts = 0

@@ -35,9 +35,9 @@ function M.has_trees(surface, area)
 	return surface.count_entities_filtered{area = area, name = global.surface_trees, limit = 1} > 0
 end
 
-function M.count_trees(surface, area)
+function M.count_trees(surface, area, limit)
 	local global = global
-	return surface.count_entities_filtered{area = area, name = global.surface_trees}
+	return surface.count_entities_filtered{area = area, name = global.surface_trees, limit = limit}
 end
 
 function M.get_tree(surface, area)
