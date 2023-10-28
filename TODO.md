@@ -1,5 +1,5 @@
 * More randomized player events
-* Activate some player events only at night
+  * Player event: 10+ second onslaught of bugs and acid projectiles when in a forest
 * More settings
 * Worm spawning events
 * Base spawning events
