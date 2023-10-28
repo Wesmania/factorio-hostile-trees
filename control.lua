@@ -93,8 +93,8 @@ script.on_event({defines.events.on_tick}, function(event)
 	if global.stories[player.unit_number] ~= nil then return end
 
 	local ppos = util.position(player)
-	local box = util.box_around(ppos, 8)
-	if area_util.count_trees(surface, box) > 40 then
+	local box = util.box_around(ppos, 6)
+	if area_util.count_trees(surface, box, 10) >= 10 then
 		global.stories[player.unit_number] = player_stories.spooky_story(player, surface)
 	end
 end)

@@ -57,8 +57,7 @@ function M.small_tree_explosion(surface, area)
 	deal_damage_to_player_entities(surface, at, 5, 100)
 end
 
-function M.spitter_projectile(surface, tree, building)
-	local treepos = util.position(tree)
+function M.spitter_projectile(surface, treepos, building)
 	surface.create_entity{
 		name = 'tree-spitter-projectile',
 		position = treepos,
@@ -82,8 +81,7 @@ function M.pick_random_enemy_type(rate_tree)
 	return res
 end
 
-function M.spawn_biters(surface, tree, count, rate_table)
-	local treepos = util.position(tree)
+function M.spawn_biters(surface, treepos, count, rate_table)
 	local actual_pos = {
 		x = treepos.x,
 		y = treepos.y,

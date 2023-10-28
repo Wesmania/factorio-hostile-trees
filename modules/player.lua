@@ -1,4 +1,5 @@
 local util = require("modules/util")
+local area_util = require("modules/area_util")
 local tree_events = require("modules/tree_events")
 
 local M = {}
@@ -64,9 +65,16 @@ local SpookyStoryPrototype = {
 			s.tree_circle = nil
 			s.next_stage(s)
 		end,
-		-- Dramatic pause
 		unflicker_light = function(s)
 			s.player.enable_flashlight()
+			s.next_stage(s)
+		end,
+		biter_attack = function(s)
+			tree_events.spawn_biters(s.surface, s.treepos, s.biter_count, s.biter_rate_table)
+			s.next_stage(s)
+		end,
+		spit = function(s)
+			tree_events.spitter_projectile(s.surface, s.treepos, s.player)
 			s.next_stage(s)
 		end,
 	},
@@ -96,13 +104,68 @@ local SpookyStoryPrototype = {
 M.spooky_story = function(player, surface)
 	local s = {}
 	setmetatable(s, {__index = SpookyStoryPrototype})
-	s.stage_list = {
-		{ "flicker_light", {until_next = math.random(45, 75)} },
-		{ "pause", {until_next = math.random(120, 180)} },
-		{ "fire_ring", {fire_radius = 6 + math.random() * 4, until_low = 5, until_high = 9, tree_count = 16}},
-		{ "pause", {until_next = math.random(120, 180)}},
-		{ "unflicker_light", {}}
-	}
+	local is_night = surface.darkness >= 0.7
+
+	local ppos = util.position(player)
+	local box = util.box_around(ppos, 8)
+	local is_in_forest = area_util.count_trees(surface, box, 40) == 40
+	local tree = area_util.get_tree(surface, box)
+
+	local flicker_light = false
+	if is_night and is_in_forest and math.random() < 0.3 then
+		flicker_light = true
+	end
+
+	s.stage_list = {}
+	sl = s.stage_list
+
+	if flicker_light then
+		sl[#sl + 1] = { "flicker_light", {until_next = math.random(45, 75)} }
+		sl[#sl + 1] = { "pause", {until_next = math.random(120, 180)} }
+	end
+
+	if is_night and is_in_forest and math.random() < 0.2 then
+		-- Spook the player first
+		sl[#sl + 1] = { "fire_ring", {fire_radius = 6 + math.random() * 4, until_low = 5, until_high = 9, tree_count = 16}}
+		sl[#sl + 1] = { "pause", {until_next = math.random(60, 90)}}
+	end
+
+	if is_in_forest then
+		local rand = math.random()
+		if rand < 0.3 then
+			if tree ~= nil then
+				sl[#sl + 1] = { "biter_attack", {
+					treepos = util.position(tree),
+					biter_count = math.random(5, 10),
+					biter_rate_table = "retaliation",
+				}}
+			end
+		else
+			if tree ~= nil then
+				sl[#sl + 1] = { "spit", {treepos = util.position(tree)}}
+			end
+		end
+	else
+		local rand = math.random()
+		if rand < 0.15 then
+			if tree ~= nil then
+				sl[#sl + 1] = { "biter_attack", {
+					treepos = util.position(tree),
+					biter_count = math.random(1, 3),
+					biter_rate_table = "default",
+				}}
+			end
+		elseif rand < 0.65 then
+			if tree ~= nil then
+				sl[#sl + 1] = { "spit", {treepos = util.position(tree)}}
+			end
+		end
+	end
+	if flicker_light then
+		sl[#sl + 1] = { "pause", {until_next = math.random(120, 180)} }
+		sl[#sl + 1] = { "unflicker_light" }
+	end
+
 	s.stage_idx = 0
 	s.player = player
 	s.surface = surface
