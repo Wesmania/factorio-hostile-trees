@@ -15,3 +15,24 @@ tree_spitter_projectile.name = "tree-spitter-projectile"
 edit_spitter_projectile(tree_spitter_projectile, 30)
 
 data:extend({tree_spitter_projectile})
+
+local stdlib_util = require("__core__/lualib/util")
+
+function fake_biter_sounds(name, soundlist)
+	data:extend({
+		{
+			type = "explosion",
+			name = name,
+			flags = {"not-on-map", "placeable-off-grid"},
+			sound = {
+				aggregation = { max_count = 3, remove = false },
+				variations = soundlist,
+			},
+			animations = stdlib_util.empty_sprite(),
+		},
+	})
+end
+
+local sounds = require("__base__/prototypes/entity/sounds")
+
+fake_biter_sounds("fake-biter", sounds.biter_roars(0.5))

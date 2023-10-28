@@ -77,6 +77,16 @@ local SpookyStoryPrototype = {
 			tree_events.spitter_projectile(s.surface, s.treepos, s.player)
 			s.next_stage(s)
 		end,
+		fake_biters = function(s)
+			if s._coroutine == nil then
+				s._coroutine = tree_events.fake_biters(s.surface, s.player, s.count, s.wait_low, s.wait_high)
+			else
+				if not s._coroutine.run(s._coroutine) then
+					s._coroutine = nil
+					s.next_stage(s)
+				end
+			end
+		end,
 	},
 
 	next_stage = function(s)
@@ -130,6 +140,9 @@ M.spooky_story = function(player, surface)
 		sl[#sl + 1] = { "pause", {until_next = math.random(60, 90)}}
 	end
 
+	sl[#sl + 1] = { "fake_biters", {count = 30, wait_low = 10, wait_high = 30}}
+	goto skip
+
 	if is_in_forest then
 		local rand = math.random()
 		if rand < 0.3 then
@@ -161,6 +174,9 @@ M.spooky_story = function(player, surface)
 			end
 		end
 	end
+
+	::skip::
+
 	if flicker_light then
 		sl[#sl + 1] = { "pause", {until_next = math.random(120, 180)} }
 		sl[#sl + 1] = { "unflicker_light" }

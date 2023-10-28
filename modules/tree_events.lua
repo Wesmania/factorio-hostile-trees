@@ -156,4 +156,36 @@ function M.spawn_biters_over_time(surface, position, count, rate_table)
 	return s
 end
 
+local FakeBitersPrototype = {
+	run = function(s)
+		if not s.player.valid then return false end
+		if not s.surface.valid then return false end
+
+		s.wait_interval = s.wait_interval - 1
+		if s.wait_interval > 0 then return true end
+		s.wait_interval = math.random(s.wait_low, s.wait_high)
+
+		s.spawned = s.spawned + 1
+		local pos = util.position(s.player)
+		s.surface.create_entity{
+			name = "fake-biter",
+			position = pos,
+		}
+		return s.spawned < s.count
+	end
+}
+
+function M.fake_biters(surface, player, count, wait_low, wait_high)
+	local s = {}
+	setmetatable(s, {__index = FakeBitersPrototype})
+	s.surface = surface
+	s.player = player
+	s.wait_interval = 0
+	s.count = count
+	s.spawned = 0
+	s.wait_low = wait_low
+	s.wait_high = wait_high
+	return s
+end
+
 return M
