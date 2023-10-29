@@ -13,7 +13,7 @@ local function spit_at(tree, s)
 		util.list_remove(s.buildings, bi)
 		return
 	end
-	tree_events.spitter_projectile(s.surface, util.position(tree), building)
+	tree_events.spitter_projectile(s.surface, tree.position, building)
 end
 
 local SpitAssaultPrototype = {

@@ -1,6 +1,9 @@
+local setup = require("modules/setup")
 local util = require("modules/util")
 local area_util = require("modules/area_util")
 local tree_events = require("modules/tree_events")
+
+local config = setup.config
 
 script.on_nth_tick(30 * 60, function()
 	global.tree_kill_count = 0
@@ -16,7 +19,7 @@ end
 
 local function register_tree_death_loc(event)
 	local tree = event.entity
-	local treepos = util.position(tree)
+	local treepos = tree.position
 	local chunk_x, chunk_y = table.unpack(pos_to_coords(treepos))
 	local mx = global.tree_kill_locs[chunk_x]
 	if mx == nil then
@@ -31,7 +34,7 @@ end
 
 local function check_for_major_retaliation(surface, event)
 	local tree = event.entity
-	local treepos = util.position(tree)
+	local treepos = tree.position
 	local chunk_x, chunk_y = table.unpack(pos_to_coords(treepos))
 
 	-- Check neighbouring chunks
@@ -69,7 +72,7 @@ local function check_for_major_retaliation(surface, event)
 		biter_count = math.random(30, 50)
 	end
 
-	global.tree_stories[#global.tree_stories + 1] = tree_events.spawn_biters_over_time(surface, util.position(spawn_tree), biter_count, "retaliation")
+	global.tree_stories[#global.tree_stories + 1] = tree_events.spawn_biters_over_time(surface, spawn_tree.position, biter_count, "retaliation")
 
 	-- Clear counts in neighbouring chunks
 	local counts = 0

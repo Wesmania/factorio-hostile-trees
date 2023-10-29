@@ -31,7 +31,7 @@ local function fire_ring(s)
 		return true
 	end
 
-	local ppos = util.position(s.player)
+	local ppos = s.player.position
 	local search_pos = {
 		x = ppos.x + math.sin(math.pi / 8 * s.tree_circle[s.i]) * s.fire_radius,
 		y = ppos.y + math.cos(math.pi / 8 * s.tree_circle[s.i]) * s.fire_radius,
@@ -120,7 +120,7 @@ M.spooky_story = function(player, surface)
 	setmetatable(s, {__index = SpookyStoryPrototype})
 	local is_night = surface.darkness >= 0.7
 
-	local ppos = util.position(player)
+	local ppos = player.position
 	local box = util.box_around(ppos, 8)
 	local is_in_forest = area_util.count_trees(surface, box, 40) == 40
 	local tree = area_util.get_tree(surface, box)
@@ -156,18 +156,18 @@ M.spooky_story = function(player, surface)
 		if rand < 0.3 then
 			if tree ~= nil then
 				sl[#sl + 1] = { "biter_attack", {
-					treepos = util.position(tree),
+					treepos = tree.position,
 					biter_count = math.random(5, 10),
 					biter_rate_table = "retaliation",
 				}}
 			end
 		elseif rand < 0.4 then
 			if tree ~= nil then
-				sl[#sl + 1] = { "spit_fire", {treepos = util.position(tree)}}
+				sl[#sl + 1] = { "spit_fire", {treepos = tree.position}}
 			end
 		else
 			if tree ~= nil then
-				sl[#sl + 1] = { "spit", {treepos = util.position(tree)}}
+				sl[#sl + 1] = { "spit", {treepos = tree.position}}
 			end
 		end
 	else
@@ -175,18 +175,18 @@ M.spooky_story = function(player, surface)
 		if rand < 0.15 then
 			if tree ~= nil then
 				sl[#sl + 1] = { "biter_attack", {
-					treepos = util.position(tree),
+					treepos = tree.position,
 					biter_count = math.random(1, 3),
 					biter_rate_table = "default",
 				}}
 			end
 		elseif rand < 0.2 then
 			if tree ~= nil then
-				sl[#sl + 1] = { "spit_fire", {treepos = util.position(tree)}}
+				sl[#sl + 1] = { "spit_fire", {treepos = tree.position}}
 			end
 		elseif rand < 0.65 then
 			if tree ~= nil then
-				sl[#sl + 1] = { "spit", {treepos = util.position(tree)}}
+				sl[#sl + 1] = { "spit", {treepos = tree.position}}
 			end
 		end
 	end
