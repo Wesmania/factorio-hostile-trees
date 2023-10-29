@@ -13,7 +13,8 @@ local function spit_at(tree, s)
 		util.list_remove(s.buildings, bi)
 		return
 	end
-	tree_events.spitter_projectile(s.surface, tree.position, building)
+	local projectile = s.tree_projectiles[math.random(1, #s.tree_projectiles)]
+	tree_events[projectile](s.surface, tree.position, building)
 end
 
 local SpitAssaultPrototype = {
@@ -39,7 +40,7 @@ local SpitAssaultPrototype = {
 	end,
 }
 
-M.spit_assault = function(surface, area)
+M.spit_assault = function(surface, area, tree_projectiles)
 	local s = {}
 	setmetatable(s, {__index = SpitAssaultPrototype})
 	s.trees = {}
@@ -51,6 +52,7 @@ M.spit_assault = function(surface, area)
 	s.buildings = area_util.get_buildings(surface, area)
 	s.total_ticks = 0
 	s.next_event = 0
+	s.tree_projectiles = tree_projectiles
 	return s
 end
 
@@ -78,7 +80,12 @@ function M.event(surface, area)
 			tree_events.fire_stream(surface, tree.position, building.position)
 		end
 	else
-		global.tree_stories[#global.tree_stories + 1] = M.spit_assault(surface, area)
+		local projectile_kinds = {
+			{ "spitter_projectile" },
+			{ "fire_stream" },
+			{ "spitter_projectile", "fire_stream" },
+		}
+		global.tree_stories[#global.tree_stories + 1] = M.spit_assault(surface, area, projectile_kinds[math.random(1, #projectile_kinds)])
 	end
 end
 
