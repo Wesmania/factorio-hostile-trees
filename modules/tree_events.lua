@@ -66,6 +66,16 @@ function M.spitter_projectile(surface, treepos, building)
 	}
 end
 
+-- This produces a very short fire stream. It looks nice enough to not really need a coroutine.
+function M.fire_stream(surface, treepos, building)
+	surface.create_entity{
+		name = 'flamethrower-fire-stream',
+		position = treepos,
+		source = treepos,
+		target = building,
+	}
+end
+
 function M.pick_random_enemy_type(rate_tree)
 	if rate_tree == nil then rate_tree = "default" end
 

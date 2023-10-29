@@ -77,6 +77,10 @@ local SpookyStoryPrototype = {
 			tree_events.spitter_projectile(s.surface, s.treepos, s.player)
 			s.next_stage(s)
 		end,
+		spit_fire = function(s)
+			tree_events.fire_stream(s.surface, s.treepos, s.player)
+			s.next_stage(s)
+		end,
 		fake_biters = function(s)
 			if s._coroutine == nil then
 				s._coroutine = tree_events.fake_biters(s.surface, s.player, s.count, s.wait_low, s.wait_high)
@@ -143,7 +147,7 @@ M.spooky_story = function(player, surface)
 		sl[#sl + 1] = { "pause", {until_next = math.random(60, 90)}}
 	end
 
-	if is_night and not player_spooked --and math.random() < 0.2
+	if is_night and not player_spooked and math.random() < 0.2
 	then
 		sl[#sl + 1] = { "pause", {until_next = 20}}
 		sl[#sl + 1] = { "fake_biters", {count = 20, wait_low = 10, wait_high = 25}}
@@ -156,6 +160,10 @@ M.spooky_story = function(player, surface)
 					biter_count = math.random(5, 10),
 					biter_rate_table = "retaliation",
 				}}
+			end
+		elseif rand < 0.4 then
+			if tree ~= nil then
+				sl[#sl + 1] = { "spit_fire", {treepos = util.position(tree)}}
 			end
 		else
 			if tree ~= nil then
@@ -171,6 +179,10 @@ M.spooky_story = function(player, surface)
 					biter_count = math.random(1, 3),
 					biter_rate_table = "default",
 				}}
+			end
+		elseif rand < 0.2 then
+			if tree ~= nil then
+				sl[#sl + 1] = { "spit_fire", {treepos = util.position(tree)}}
 			end
 		elseif rand < 0.65 then
 			if tree ~= nil then
