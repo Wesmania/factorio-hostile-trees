@@ -37,7 +37,7 @@ local function fire_ring(s)
 		y = ppos.y + math.cos(math.pi / 8 * s.tree_circle[s.i]) * s.fire_radius,
 	}
 	local box = util.box_around(search_pos, 2)
-	local tree = area_util.get_tree(surface, box)
+	local tree = area_util.get_tree(s.surface, box)
 	tree_events.set_tree_on_fire(s.surface, tree)
 	s.i = s.i + 1
 	s.until_next = math.random(s.until_low, s.until_high)
@@ -82,14 +82,58 @@ local SpookyStoryPrototype = {
 			tree_events.fire_stream(s.surface, s.treepos, s.player)
 			s.next_stage(s)
 		end,
+		_do_coroutine = function(s)
+			if not s._coroutine.run(s._coroutine) then
+				s._coroutine = nil
+				s.next_stage(s)
+			end
+		end,
 		fake_biters = function(s)
 			if s._coroutine == nil then
 				s._coroutine = tree_events.fake_biters(s.surface, s.player, s.count, s.wait_low, s.wait_high)
 			else
-				if not s._coroutine.run(s._coroutine) then
-					s._coroutine = nil
-					s.next_stage(s)
-				end
+				s.stages._do_coroutine(s)
+			end
+		end,
+		biter_onslaught = function(s)
+			if s._coroutine == nil then
+				s._coroutine = tree_events.spawn_biters_over_time(s.surface, s.treepos, s.count, s.biter_rate_table)
+			else
+				s.stages._do_coroutine(s)
+			end
+		end,
+
+		-- FIXME duplication with building spit assault
+		-- Args s.duration, s.until_low, s.until_high, s.projectiles
+		-- Optional args: s.biter_chance, s.biter_low, s.biter_high, s.biter_rate_table
+		spit_assault = function(s)
+			if s.total_ticks == nil then
+				s.total_ticks = 0
+				s.next_event = 0
+			end
+
+			s.total_ticks = s.total_ticks + 1
+			if s.total_ticks >= s.duration then
+				s.total_ticks = nil
+				s.next_stage(s)
+				return
+			end
+
+			if s.next_event > 0 then
+				s.next_event = s.next_event - 1
+				return
+			end
+			s.next_event = math.random(s.until_low, s.until_high)
+
+			local ppos = s.player.position
+			local box = util.box_around(ppos, 6)
+			local tree = area_util.get_random_tree(s.surface, box)
+			if tree == nil then return end
+
+			if s.biter_chance ~= false and math.random() < s.biter_chance then
+				tree_events.spawn_biters(s.surface, tree.position, math.random(s.biter_low, s.biter_high), s.biter_rate_table)
+			else
+				tree_events.spit_at(s.surface, tree.position, s.player, s.projectiles)
 			end
 		end,
 	},
@@ -116,86 +160,191 @@ local SpookyStoryPrototype = {
 	end,
 }
 
-M.spooky_story = function(player, surface)
-	local s = {}
-	setmetatable(s, {__index = SpookyStoryPrototype})
-	local is_night = surface.darkness >= 0.7
+local function surround_with_flicker(sl)
+	-- First, flicker + pause.
+	table.insert(sl, 1, { "pause", {until_next = math.random(60, 90)} })
+	table.insert(sl, 1, { "flicker_light", {until_next = math.random(45, 75)} })
 
-	local ppos = player.position
-	local box = util.box_around(ppos, 8)
-	local is_in_forest = area_util.count_trees(surface, box, 40) == 40
-	local tree = area_util.get_tree(surface, box)
+	-- Last, pause + unflicker.
+	sl[#sl + 1] = { "pause", {until_next = math.random(120, 180)} }
+	sl[#sl + 1] = { "unflicker_light", {}}
+end
 
-	local flicker_light = false
-	if is_night and is_in_forest -- and math.random() < 0.3
-	then
-		flicker_light = true
-	end
-
-	s.stage_list = {}
-	sl = s.stage_list
-
-	if flicker_light then
-		sl[#sl + 1] = { "flicker_light", {until_next = math.random(45, 75)} }
-	end
-
-	local player_spooked = false
-	if is_night and is_in_forest and math.random() < 0.2 and false then	-- FIXME
-		-- Spook the player first
-		player_spooked = true
-		sl[#sl + 1] = { "pause", {until_next = math.random(120, 180)} }
+local function complex_random_assault(sl, tree, add_flicker, spook_player, duration, biter_assault)
+	if spook_player then
+		-- Spook and warn the player.
+		sl[#sl + 1] = { "pause", {until_next = math.random(60, 90)} }
 		sl[#sl + 1] = { "fire_ring", {fire_radius = 6 + math.random() * 4, until_low = 5, until_high = 9, tree_count = 16}}
 		sl[#sl + 1] = { "pause", {until_next = math.random(60, 90)}}
 	end
 
-	if is_night and not player_spooked and math.random() < 0.2
+	local rand = math.random()
+	if biter_assault and rand < 0.3
 	then
-		sl[#sl + 1] = { "pause", {until_next = 20}}
-		sl[#sl + 1] = { "fake_biters", {count = 20, wait_low = 10, wait_high = 25}}
-	elseif is_in_forest then
-		local rand = math.random()
-		if rand < 0.3 then
-			if tree ~= nil then
-				sl[#sl + 1] = { "biter_attack", {
-					treepos = tree.position,
-					biter_count = math.random(5, 10),
-					biter_rate_table = "retaliation",
-				}}
-			end
-		elseif rand < 0.4 then
-			if tree ~= nil then
-				sl[#sl + 1] = { "spit_fire", {treepos = tree.position}}
-			end
+		local count = nil
+		if is_in_forest then
+			count = math.random(20, 40)
 		else
-			if tree ~= nil then
-				sl[#sl + 1] = { "spit", {treepos = tree.position}}
+			count = math.random(10, 25)
+		end
+		sl[#sl + 1] = { "biter_onslaught", {treepos = tree.position, count = count, biter_rate_table = "retaliation"}}
+	else
+		local projectiles = nil
+		local biter_stats = {}
+
+		rand = math.random()
+		if rand < 0.6 then
+			projectiles = { "spitter_projectile" }
+		elseif rand < 0.85 then
+			projectiles = { "spitter_projectile", "fire_stream" }
+		else
+			projectiles = { "fire_stream" }
+		end
+
+		if rand < 0.3 then
+			biter_stats.biter_chance = false
+		else
+			biter_stats.biter_chance = 0.15 + math.random() * 0.1
+			biter_stats.biter_low = math.random(1, 3)
+			biter_stats.biter_high = biter_stats.biter_low + math.random(1, 3)
+			if math.random() < 0.3 then
+				biter_stats.biter_rate_table = "default"
+			else
+				biter_stats.biter_rate_table = "retaliation"
 			end
 		end
-	else
-		local rand = math.random()
-		if rand < 0.15 then
-			if tree ~= nil then
-				sl[#sl + 1] = { "biter_attack", {
-					treepos = tree.position,
-					biter_count = math.random(1, 3),
-					biter_rate_table = "default",
-				}}
-			end
-		elseif rand < 0.2 then
-			if tree ~= nil then
-				sl[#sl + 1] = { "spit_fire", {treepos = tree.position}}
-			end
-		elseif rand < 0.65 then
-			if tree ~= nil then
-				sl[#sl + 1] = { "spit", {treepos = tree.position}}
-			end
+
+		sl[#sl + 1] = { "spit_assault", {
+			duration = duration,
+			until_low = 20,
+			until_high = 40,
+			projectiles = projectiles,
+			biter_chance = biter_stats.biter_chance,
+			biter_low = biter_stats.biter_low,
+			biter_high = biter_stats.biter_high,
+			biter_rate_table = biter_stats.biter_rate_table,
+		}}
+	end
+
+	if add_flicker then
+		surround_with_flicker(sl)
+	end
+end
+
+M.spooky_story = function(player_info, surface)
+	local player = player_info.player
+
+	local ppos = player.position
+	local box = util.box_around(ppos, 8)
+	local tree_count = area_util.count_trees(surface, box, 40)
+
+	if tree_count == 0 then
+		-- Not near trees. Don't do a story, chance to reduce threat.
+		if player_info.tree_threat > 0 and math.random() < 0.2 then
+			player_info.tree_threat = player_info.tree_threat - 1
+		end
+		return nil
+	end
+
+	local s = {}
+	setmetatable(s, {__index = SpookyStoryPrototype})
+	s.stage_list = {}
+	local sl = s.stage_list
+
+	-- FIXME does that produce a random tree, or e.g. always the one in top left?
+	local tree = area_util.get_random_tree(surface, box)	-- won't be nil
+	local is_in_forest = tree_count >= 40
+	local is_near_a_few_trees = tree_count >= 10
+	local threat = player_info.tree_threat
+	local is_night = surface.darkness >= 0.7
+
+	-- Eternal TODO: add more events.
+
+	if threat >= 6 and is_near_a_few_trees then
+		-- Large event. Happens about a fifth of the time a mid-sized event does.
+		if math.random() < 0.8 then
+			player_info.tree_threat = player_info.tree_threat + 1
+		else
+			player_info.tree_threat = threat - 6
+
+			local add_flicker = is_night and math.random() < 0.25
+			local spook_player = is_in_forest and add_flicker and math.random() < 0.6
+			complex_random_assault(sl, tree, add_flicker, spook_player, math.random(420, 720), true)
+
+			goto finish
 		end
 	end
 
-	if flicker_light then
-		sl[#sl + 1] = { "pause", {until_next = math.random(120, 180)} }
-		sl[#sl + 1] = { "unflicker_light", {}}
+	if threat >= 4 then
+		-- Mid-sized event.
+		local rand = math.random()
+		if rand < 0.5 then
+			player_info.tree_threat = player_info.tree_threat + 1
+		else
+			game.print("Medium event")
+			player_info.tree_threat = threat - 4
+
+			local add_flicker = is_night and math.random() < 0.25
+			if math.random() < 0.85 then
+				complex_random_assault(sl, tree, add_flicker, spook_player, math.random(180, 360))
+			else
+				sl[#sl + 1] = { "pause", {until_next = 20}}
+				sl[#sl + 1] = { "fake_biters", {count = 20, wait_low = 10, wait_high = 25}}
+				if add_flicker then
+					surround_with_flicker(sl)
+				end
+			end
+
+			goto finish
+		end
 	end
+
+	-- Small events.
+	if is_in_forest then
+		player_info.tree_threat = player_info.tree_threat + 1
+
+		local rand = math.random()
+		if rand < 0.3 then
+			local biter_rate_table = "default"
+			if math.random() < 0.15 then
+				biter_rate_table = "retaliation"
+			end
+			sl[#sl + 1] = { "biter_attack", {
+				treepos = tree.position,
+				biter_count = math.random(2, 4),
+				biter_rate_table = biter_rate_table,
+			}}
+		elseif rand < 0.4 then
+			sl[#sl + 1] = { "spit_fire", {treepos = tree.position}}
+		else
+			sl[#sl + 1] = { "spit", {treepos = tree.position}}
+		end
+	elseif is_near_a_few_trees then
+		if math.random() < 0.3 then
+			player_info.tree_threat = player_info.tree_threat + 1
+		end
+		local rand = math.random()
+		if rand < 0.15 then
+			sl[#sl + 1] = { "biter_attack", {
+				treepos = tree.position,
+				biter_count = math.random(1, 2),
+				biter_rate_table = "default",
+			}}
+		elseif rand < 0.2 then
+			sl[#sl + 1] = { "spit_fire", {treepos = tree.position}}
+		elseif rand < 0.65 then
+			sl[#sl + 1] = { "spit", {treepos = tree.position}}
+		end
+	else
+		local rand = math.random()
+		if rand < 0.05 then
+			sl[#sl + 1] = { "spit_fire", {treepos = tree.position}}
+		elseif rand < 0.20 then
+			sl[#sl + 1] = { "spit", {treepos = tree.position}}
+		end
+	end
+
+	::finish::
 
 	s.stage_idx = 0
 	s.player = player

@@ -40,9 +40,11 @@ script.on_event({defines.events.on_tick}, function(event)
 	end
 
 	-- Stories, ran once per tick.
-	for cid, story in pairs(global.stories) do
-		if not story.run(story) then
-			global.stories[cid] = nil
+	for _, player_info in pairs(global.players) do
+		if player_info.story ~= nil then
+			if not player_info.story.run(player_info.story) then
+				player_info.story = nil
+			end
 		end
 	end
 
@@ -85,16 +87,15 @@ script.on_event({defines.events.on_tick}, function(event)
 		end
 	end
 
-	if not config.player_events or #global.players == 0 then return end
-	local event_chance = #global.players / (config.player_event_frequency * 60)
+	if not config.player_events or #global.players_array == 0 then return end
+	local event_chance = #global.players_array / (config.player_event_frequency * 60)
 	if math.random() >= event_chance then return end
-	local player = global.players[math.random(1, #global.players)]
-	if not player.valid then return end
-	if global.stories[player.unit_number] ~= nil then return end
+	local player_info = global.players_array[math.random(1, #global.players_array)]
+	if not player_info.player.valid then return end
+	if player_info.story ~= nil then return end
 
-	local ppos = player.position
-	local box = util.box_around(ppos, 6)
-	if area_util.count_trees(surface, box, 10) >= 10 then
-		global.stories[player.unit_number] = player_stories.spooky_story(player, surface)
+	local story = player_stories.spooky_story(player_info, surface)
+	if story ~= nil then
+		player_info.story = story
 	end
 end)

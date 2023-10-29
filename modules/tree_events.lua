@@ -71,6 +71,11 @@ function M.fire_stream(surface, treepos, building)
 	}
 end
 
+function M.spit_at(surface, treepos, building, projectiles)
+	local projectile = projectiles[math.random(1, #projectiles)]
+	M[projectile](surface, treepos, building)
+end
+
 function M.pick_random_enemy_type(rate_tree)
 	if rate_tree == nil then rate_tree = "default" end
 

@@ -3,12 +3,24 @@ local M = {}
 M.config = {}
 
 M.cache_players = function()
+	local old_players = global.players
 	global.players = {}
+	global.players_array = {}
 
 	for _, force in pairs(game.forces) do
 		for _, player in pairs(force.players) do
 			if player.character ~= nil then
-				global.players[#global.players + 1] = player.character
+				local id = player.character.unit_number
+				if old_players[id] ~= nil then
+					global.players[id] = old_players[id]
+				else
+					global.players[id] = {
+						player = player.character,
+						story = nil,
+						tree_threat = 0,
+					}
+				end
+				global.players_array[#global.players_array + 1] = global.players[id]
 			end
 		end
 	end
@@ -92,11 +104,11 @@ end
 
 M.initialize = function()
 	global.players          = {}
+	global.players_array    = {}
 	global.surface_trees    = {}
 	global.tick_mod_10_s    = 0
 	global.chunks           = 0
 	global.accum            = 0
-	global.stories          = {}
 	global.tree_stories     = {}
 	global.tree_kill_count  = 0
 	global.tree_kill_locs   = {}

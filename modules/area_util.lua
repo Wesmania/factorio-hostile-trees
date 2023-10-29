@@ -45,6 +45,15 @@ function M.get_tree(surface, area)
 	return surface.find_entities_filtered{area = area, name = global.surface_trees, limit = 1}[1]
 end
 
+-- More expensive, but there's no other way to get a random tree.
+function M.get_random_tree(surface, area)
+	local trees = surface.find_entities_filtered{area = area, name = global.surface_trees}
+	if #trees == 0 then
+		return nil
+	end
+	return trees[math.random(1, #trees)]
+end
+
 function M.get_trees(surface, area)
 	return surface.find_entities_filtered{area = area, name = global.surface_trees}
 end

@@ -60,7 +60,7 @@ local function check_for_major_retaliation(surface, event)
 			y = treepos.y - 12 + math.random(1, 24),
 		}, 4)
 		if area_util.count_trees(surface, random_area, 20) >= 20 then
-			spawn_tree = area_util.get_tree(surface, random_area)
+			spawn_tree = area_util.get_random_tree(surface, random_area)
 			break
 		end
 	end
