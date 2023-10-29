@@ -37,7 +37,8 @@ local function fire_ring(s)
 		y = ppos.y + math.cos(math.pi / 8 * s.tree_circle[s.i]) * s.fire_radius,
 	}
 	local box = util.box_around(search_pos, 2)
-	tree_events.set_tree_on_fire(s.surface, box)
+	local tree = area_util.get_tree(surface, box)
+	tree_events.set_tree_on_fire(s.surface, tree)
 	s.i = s.i + 1
 	s.until_next = math.random(s.until_low, s.until_high)
 	return false

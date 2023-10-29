@@ -16,8 +16,7 @@ local function deal_damage_to_player_entities(surface, position, radius, amount)
 end
 
 -- FIXME move
-function M.set_tree_on_fire(surface, area)
-	local tree = area_util.get_tree(surface, area)
+function M.set_tree_on_fire(surface, tree)
 	if tree == nil then return end
 	local at = tree.position
 	tree.destroy()
@@ -27,11 +26,8 @@ function M.set_tree_on_fire(surface, area)
 	}
 end
 
-function M.spread_trees_towards_buildings(surface, area)
-	-- TODO select tree and building randomly instead of first from the list?
-	local tree = area_util.get_tree(surface, area)
+function M.spread_trees_towards_buildings(surface, tree, building)
 	if tree == nil then return end
-	local building = area_util.get_building(surface, area)
 	if building == nil then return end
 	local treepos = tree.position
 	local buildingpos = building.position
@@ -45,8 +41,7 @@ function M.spread_trees_towards_buildings(surface, area)
 	end
 end
 
-function M.small_tree_explosion(surface, area)
-	local tree = area_util.get_tree(surface, area)
+function M.small_tree_explosion(surface, tree)
 	if tree == nil then return end
 	local at = tree.position
 	tree.destroy()

@@ -56,20 +56,29 @@ end
 
 function M.event(surface, area)
 	local random = math.random()
-	do	-- FIXME for testing
-		local tree = area_util.get_tree(surface, area)
-		if tree == nil then return end
-		tree_events.spawn_biters(surface, tree, math.random(3, 5))
-		return
-	end
-	if random < 0.3 then
-		tree_events.spread_trees_towards_buildings(surface, area)
+	local tree = area_util.get_tree(surface, area)
+	local building = area_util.get_building(surface, area)
+
+	if random < 0.25 then
+		tree_events.spread_trees_towards_buildings(surface, tree, building)
+	elseif random < 0.4 then
+		tree_events.set_tree_on_fire(surface, tree)
+	elseif random < 0.5 then
+		tree_events.small_tree_explosion(surface, tree)
+	elseif random < 0.6 then
+		if tree ~= nil then
+			tree_events.spawn_biters(surface, tree.position, math.random(3, 5))
+		end
 	elseif random < 0.85 then
-		tree_events.set_tree_on_fire(surface, area)
+		if tree ~= nil and building ~= nil then
+			tree_events.spitter_projectile(surface, tree.position, building.position)
+		end
 	elseif random < 0.95 then
-		global.tree_stories[#global.tree_stories + 1] = M.spit_assault(surface, area)
+		if tree ~= nil and building ~= nil then
+			tree_events.fire_stream(surface, tree.position, building.position)
+		end
 	else
-		tree_events.small_tree_explosion(surface, area)
+		global.tree_stories[#global.tree_stories + 1] = M.spit_assault(surface, area)
 	end
 end
 
