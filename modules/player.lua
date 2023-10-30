@@ -251,7 +251,6 @@ M.spooky_story = function(player_info, surface)
 	s.stage_list = {}
 	local sl = s.stage_list
 
-	-- FIXME does that produce a random tree, or e.g. always the one in top left?
 	local tree = area_util.get_random_tree(surface, box)	-- won't be nil
 	local is_in_forest = tree_count >= 40
 	local is_near_a_few_trees = tree_count >= 10

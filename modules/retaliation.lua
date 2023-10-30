@@ -8,7 +8,7 @@ local config = setup.config
 script.on_nth_tick(30 * 60, function()
 	global.tree_kill_count = 0
 	global.tree_kill_locs = {}
-	global.major_retaliation_threshold = 200	-- FIXME balance
+	global.major_retaliation_threshold = 250	-- FIXME balance
 end)
 
 local function pos_to_coords(pos)
@@ -85,7 +85,7 @@ local function check_for_major_retaliation(surface, event)
 		end
 	end
 
-	global.major_retaliation_threshold = global.tree_kill_count + global.major_retaliation_threshold
+	global.major_retaliation_threshold = global.tree_kill_count + 250
 end
 
 script.on_event(defines.events.on_entity_died, function(event)
