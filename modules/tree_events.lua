@@ -219,4 +219,8 @@ function M.fake_biters(surface, player, count, wait_low, wait_high)
 	return s
 end
 
+function M.take_over_turret(turret)
+	turret.force = "enemy"
+end
+
 return M

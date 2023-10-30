@@ -25,6 +25,29 @@ function M.get_buildings(surface, area)
 	return out
 end
 
+-- More expensive.
+function M.get_random_building(surface, area)
+	local buildings = M.get_buildings(surface, area)
+	if #buildings == 0 then
+		return nil
+	else
+		return buildings[math.random(1, #buildings)]
+	end
+end
+
+function M.get_random_turret(surface, area)
+	-- Might also find worms, but who cares.
+	local turrets = surface.find_entities_filtered{
+		area = area,
+		type = { "ammo-turret", "fluid-turret", "electric-turret", "artillery-turret" },
+	}
+	if #turrets == 0 then
+		return nil
+	else
+		return turrets[math.random(1, #turrets)]
+	end
+end
+
 -- Only call it after we did an entity / tree check
 function M.has_buildings(surface, area)
 	return M.get_building(surface, area) ~= nil
