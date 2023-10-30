@@ -26,7 +26,7 @@ data:extend({
 		name = "hostile-trees-how-often-do-trees-hate-you",
 		setting_type = "runtime-global",
 		minimum_value = 1,
-		default_value = 60,
+		default_value = 30,
 		order = "b-b"
 	},
 	{
