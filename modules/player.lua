@@ -115,6 +115,7 @@ local SpookyStoryPrototype = {
 			s.total_ticks = s.total_ticks + 1
 			if s.total_ticks >= s.duration then
 				s.total_ticks = nil
+				s.next_event = nil
 				s.next_stage(s)
 				return
 			end
@@ -136,6 +137,12 @@ local SpookyStoryPrototype = {
 				tree_events.spit_at(s.surface, tree.position, s.player, s.projectiles)
 			end
 		end,
+
+		poison_cloud = function(s)
+			tree_events.poison_cloud(s.surface, s.treepos)
+			s.next_stage(s)
+			return
+		end
 	},
 
 	next_stage = function(s)
@@ -280,12 +287,21 @@ M.spooky_story = function(player_info, surface)
 		if rand < 0.5 then
 			player_info.tree_threat = player_info.tree_threat + 1
 		else
-			game.print("Medium event")
 			player_info.tree_threat = threat - 4
 
 			local add_flicker = is_night and math.random() < 0.25
-			if math.random() < 0.85 then
+			local rand = math.random()
+			if rand < 0.85 then
 				complex_random_assault(sl, tree, add_flicker, spook_player, math.random(180, 360))
+			elseif rand < 0.9 then
+				game.print("Happening")
+				sl[#sl + 1] = { "spit_assault", {
+					duration = math.random(480, 660),
+					until_low = 120,
+					until_high = 240,
+					biter_chance = false,
+					projectiles = { "poison_cloud" },
+				}}
 			else
 				sl[#sl + 1] = { "pause", {until_next = 20}}
 				sl[#sl + 1] = { "fake_biters", {count = 20, wait_low = 10, wait_high = 25}}
@@ -313,8 +329,10 @@ M.spooky_story = function(player_info, surface)
 				biter_count = math.random(2, 4),
 				biter_rate_table = biter_rate_table,
 			}}
-		elseif rand < 0.4 then
+		elseif rand < 0.45 then
 			sl[#sl + 1] = { "spit_fire", {treepos = tree.position}}
+		elseif rand < 0.5 then
+			sl[#sl + 1] = { "poison_cloud", {treepos = tree.position}}
 		else
 			sl[#sl + 1] = { "spit", {treepos = tree.position}}
 		end

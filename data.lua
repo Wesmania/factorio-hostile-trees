@@ -36,3 +36,24 @@ end
 local sounds = require("__base__/prototypes/entity/sounds")
 
 fake_biter_sounds("fake-biter", sounds.biter_roars(0.5))
+
+local tree_poison = table.deepcopy(data.raw["smoke-with-trigger"]["poison-cloud"])
+tree_poison.name = "tree-poison-cloud"
+
+-- Remove capsule explosion sound
+for _, i in pairs(tree_poison.created_effect) do
+	if i.action_delivery.target_effects ~= nil then
+		local effects = {}
+		for _, j in pairs(i.action_delivery.target_effects) do
+			if j.type ~= "play-sound" then
+				effects[#effects + 1] = j
+			end
+		end
+		i.action_delivery.target_effects = effects
+	end
+end
+
+-- Only make poison affect the player
+tree_poison.action.action_delivery.target_effects.action.force = "enemy"
+
+data:extend({tree_poison})

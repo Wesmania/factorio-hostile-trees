@@ -71,6 +71,13 @@ function M.fire_stream(surface, treepos, building)
 	}
 end
 
+function M.poison_cloud(surface, treepos)
+	surface.create_entity{
+		name = "tree-poison-cloud",
+		position = treepos,
+	}
+end
+
 function M.spit_at(surface, treepos, building, projectiles)
 	local projectile = projectiles[math.random(1, #projectiles)]
 	M[projectile](surface, treepos, building)
