@@ -1,4 +1,10 @@
-Hostile trees mod. TODO make README more useful.
+Hostile trees mod.
+
+## Features
+
+* Trees will hate you. Go into the forest at your own risk.
+* Trees will hate your factory. Make sure to clear trees from the premises.
+* Trees will have being destroyed. Don't go around grenading trees without a turret nearby.
 
 ## Acknowledgements
 
