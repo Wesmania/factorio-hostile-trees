@@ -128,6 +128,7 @@ M.initialize = function()
 	M.config.player_events = settings.global["hostile-trees-do-trees-hate-you"].value
 	M.config.player_event_frequency = settings.global["hostile-trees-how-often-do-trees-hate-you"].value
 	M.config.retaliation_enabled = settings.global["hostile-trees-do-trees-retaliate"].value
+	M.config.grace_period = settings.global["hostile-trees-how-long-do-trees-withhold-their-hate"].value * 60
 	M.cache_tree_prototypes()
 	M.cache_players()
 end

@@ -39,6 +39,15 @@ script.on_event({defines.events.on_tick}, function(event)
 		setup.cache_evolution_rates()
 	end
 
+	if config.grace_period ~= nil then
+		if config.grace_period <= 0 then
+			config.grace_period = nil
+		else
+			config.grace_period = config.grace_period - 1
+		end
+		return
+	end
+
 	-- Stories, ran once per tick.
 	for _, player_info in pairs(global.players) do
 		if player_info.story ~= nil then

@@ -36,4 +36,12 @@ data:extend({
 		default_value = true,
 		order = "c-a"
 	},
+	{
+		type = "int-setting",
+		name = "hostile-trees-how-long-do-trees-withhold-their-hate",
+		setting_type = "runtime-global",
+		minimum_value = 0,
+		default_value = 0,
+		order = "d-a"
+	},
 })
