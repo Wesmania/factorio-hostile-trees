@@ -4,7 +4,7 @@ Hostile trees mod.
 
 * Trees will hate you. Go into the forest at your own risk.
 * Trees will hate your factory. Make sure to clear trees from the premises.
-* Trees will have being destroyed. Don't go around grenading trees without a turret nearby.
+* Trees will hate being destroyed. Don't go around grenading trees without a turret nearby.
 
 ## Acknowledgements
 
