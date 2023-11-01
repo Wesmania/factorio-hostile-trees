@@ -32,6 +32,26 @@ local function register_tree_death_loc(event)
 	mx[chunk_y] = mx[chunk_y] + 1
 end
 
+local function check_for_minor_retaliation(surface, event)
+	local tree = event.entity
+	local treepos = tree.position
+
+	local enemy = surface.find_nearest_enemy_entity_with_owner{position=treepos, max_distance=32, force="enemy"}
+
+	local rand = math.random()
+	if rand < 0.3 then
+		tree_events.spawn_biters(surface, treepos, math.random(1, 2), "retaliation")
+	elseif rand < 0.85 and enemy ~= nil then
+		local projectiles = tree_events.default_random_projectiles()
+		for i = 1,math.random(1, 2) do
+			local random_loc = util.random_offset(treepos, 2)
+			tree_events.spit_at(surface, treepos, enemy, projectiles)
+		end
+	else
+		tree_events.poison_cloud(surface, treepos)
+	end
+end
+
 local function check_for_major_retaliation(surface, event)
 	local tree = event.entity
 	local treepos = tree.position
@@ -91,10 +111,13 @@ end
 script.on_event(defines.events.on_entity_died, function(event)
 	global.tree_kill_count = global.tree_kill_count + 1
 	if global.tree_kill_count % 50 == 0 and config.retaliation_enabled then
+		local surface = game.get_surface(1)
 		register_tree_death_loc(event)
-		
+		if math.random() < 0.65 then
+			check_for_minor_retaliation(surface, event)
+		end
+
 		if global.tree_kill_count >= global.major_retaliation_threshold then
-			local surface = game.get_surface(1)
 			check_for_major_retaliation(surface, event)
 		end
 	end

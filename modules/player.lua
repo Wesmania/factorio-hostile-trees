@@ -196,17 +196,8 @@ local function complex_random_assault(sl, tree, add_flicker, spook_player, durat
 		end
 		sl[#sl + 1] = { "biter_onslaught", {treepos = tree.position, count = count, biter_rate_table = "retaliation"}}
 	else
-		local projectiles = nil
+		local projectiles = tree_events.default_random_projectiles()
 		local biter_stats = {}
-
-		rand = math.random()
-		if rand < 0.6 then
-			projectiles = { "spitter_projectile" }
-		elseif rand < 0.85 then
-			projectiles = { "spitter_projectile", "fire_stream" }
-		else
-			projectiles = { "fire_stream" }
-		end
 
 		if rand < 0.3 then
 			biter_stats.biter_chance = false

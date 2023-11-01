@@ -83,6 +83,23 @@ function M.spit_at(surface, treepos, building, projectiles)
 	M[projectile](surface, treepos, building)
 end
 
+local random_projectiles = {
+	{ "spitter_projectile" },
+	{ "spitter_projectile", "fire_stream" },
+	{ "fire_stream" },
+}
+
+function M.default_random_projectiles()
+		rand = math.random()
+		if rand < 0.6 then
+			return random_projectiles[1]
+		elseif rand < 0.85 then
+			return random_projectiles[2]
+		else
+			return random_projectiles[3]
+		end
+end
+
 function M.pick_random_enemy_type(rate_tree)
 	if rate_tree == nil then rate_tree = "default" end
 
@@ -114,7 +131,7 @@ function M.spawn_biters(surface, treepos, count, rate_table)
 		}
 	end
 
-	local enemy = surface.find_nearest_enemy_entity_with_owner{position=treepos, max_distance=50}
+	local enemy = surface.find_nearest_enemy_entity_with_owner{position=treepos, max_distance=50, force="enemy"}
 	if enemy ~= nil then
 		surface.set_multi_command{
 			command = {

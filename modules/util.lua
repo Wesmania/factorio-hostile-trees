@@ -49,4 +49,11 @@ function M.list_remove(list, idx)
 	return out
 end
 
+function M.random_offset(pos, offset)
+	return {
+		x = pos.x - offset + math.random() * offset * 2,
+		y = pos.y - offset + math.random() * offset * 2,
+	}
+end
+
 return M
