@@ -21,9 +21,6 @@ local function squares_to_check_per_tick()
 	return global.chunks * config.factory_events_per_tick_per_chunk
 end
 
--- Tree-factory interactions
-
-
 script.on_init(function()
 	setup.initialize()
 end)
@@ -31,6 +28,9 @@ end)
 script.on_event({defines.events.on_tick}, function(event)
 	local global = global
 	local surface = game.get_surface(1)
+	if not surface or not surface.valid then
+		return
+	end
 
 	global.tick_mod_10_s = (global.tick_mod_10_s + 1) % 600
 	if global.tick_mod_10_s == 0 then
@@ -68,10 +68,6 @@ script.on_event({defines.events.on_tick}, function(event)
 			util.list_remove(global.tree_stories, i)
 			-- New entity under same i
 		end
-	end
-
-	if not surface or not surface.valid then
-		return
 	end
 
 	-- FIXME replace with TODO when we add player events
