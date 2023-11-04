@@ -171,7 +171,7 @@ local function surround_with_flicker(sl)
 	sl[#sl + 1] = { "unflicker_light", {}}
 end
 
-local function complex_random_assault(sl, tree, add_flicker, spook_player, duration, biter_assault)
+local function complex_random_assault(sl, tree, add_flicker, spook_player, is_in_forest, duration, biter_assault)
 	if spook_player then
 		-- Spook and warn the player.
 		sl[#sl + 1] = { "pause", {until_next = math.random(60, 90)} }
@@ -259,7 +259,7 @@ M.spooky_story = function(player_info, surface)
 
 			local add_flicker = is_night and math.random() < 0.25
 			local spook_player = is_in_forest and add_flicker and math.random() < 0.6
-			complex_random_assault(sl, tree, add_flicker, spook_player, math.random(420, 720), true)
+			complex_random_assault(sl, tree, add_flicker, spook_player, is_in_forest, math.random(420, 720), true)
 
 			goto finish
 		end
@@ -276,7 +276,7 @@ M.spooky_story = function(player_info, surface)
 			local add_flicker = is_night and math.random() < 0.25
 			local rand = math.random()
 			if rand < 0.85 then
-				complex_random_assault(sl, tree, add_flicker, spook_player, math.random(180, 360))
+				complex_random_assault(sl, tree, add_flicker, false, is_in_forest, math.random(180, 360))
 			elseif rand < 0.9 then
 				sl[#sl + 1] = { "spit_assault", {
 					duration = math.random(480, 660),

@@ -43,7 +43,7 @@ local function check_for_minor_retaliation(surface, event)
 		local projectiles = tree_events.default_random_projectiles()
 		for i = 1,math.random(1, 2) do
 			local random_loc = util.random_offset(treepos, 2)
-			tree_events.spit_at(surface, treepos, enemy, projectiles)
+			tree_events.spit_at(surface, random_loc, enemy, projectiles)
 		end
 	else
 		tree_events.poison_cloud(surface, treepos)
@@ -93,7 +93,6 @@ local function check_for_major_retaliation(surface, event)
 	global.tree_stories[#global.tree_stories + 1] = tree_events.spawn_biters_over_time(surface, spawn_tree.position, biter_count, "retaliation")
 
 	-- Clear counts in neighbouring chunks
-	local counts = 0
 	for i = chunk_x - 2,chunk_x + 2 do
 		local mx = global.tree_kill_locs[i]
 		if mx ~= nil then

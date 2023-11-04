@@ -90,7 +90,7 @@ local random_projectiles = {
 }
 
 function M.default_random_projectiles()
-		rand = math.random()
+		local rand = math.random()
 		if rand < 0.6 then
 			return random_projectiles[1]
 		elseif rand < 0.85 then
@@ -149,7 +149,7 @@ function M.event_spawn_biters(s)
 	s.wait_interval = s.wait_interval - 1
 	if s.wait_interval > 0 then return true end
 	s.spawned = s.spawned + 1
-	local biter = M.pick_random_enemy_type(rate_table)
+	local biter = M.pick_random_enemy_type(s.rate_table)
 	s.actual_pos.x = s.position.x + math.random() * 5 - 2.5
 	s.actual_pos.y = s.position.y + math.random() * 5 - 2.5
 	s.surface.create_entity{
