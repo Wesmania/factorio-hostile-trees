@@ -36,7 +36,6 @@ function M.get_random_building(surface, area)
 end
 
 function M.get_random_turret(surface, area)
-	-- Might also find worms, but who cares.
 	local turrets = surface.find_entities_filtered{
 		area = area,
 		type = { "ammo-turret", "fluid-turret", "electric-turret", "artillery-turret" },
