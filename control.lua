@@ -49,7 +49,7 @@ script.on_event({defines.events.on_tick}, function(event)
 	-- Stories, ran once per tick.
 	for _, player_info in pairs(global.players) do
 		if player_info.story ~= nil then
-			if not player_info.story.run(player_info.story) then
+			if not player_stories.run_coro(player_info.story) then
 				player_info.story = nil
 			end
 		end
@@ -60,7 +60,7 @@ script.on_event({defines.events.on_tick}, function(event)
 	while true do
 		if i > #global.tree_stories then break end
 		local story = global.tree_stories[i]
-		if story.run(story) then
+		if trees.run_coro(story) then
 			i = i + 1
 		else
 			util.list_remove(global.tree_stories, i)

@@ -121,6 +121,7 @@ M.initialize = function()
 	M.config.grace_period = settings.global["hostile-trees-how-long-do-trees-withhold-their-hate"].value * 60
 	global.config = M.config
 	M.cache_players()
+	M.cache_evolution_rates()
 end
 
 return M

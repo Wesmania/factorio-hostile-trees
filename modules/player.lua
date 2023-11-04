@@ -44,128 +44,122 @@ local function fire_ring(s)
 	return false
 end
 
-local SpookyStoryPrototype = {
-	stages = {
-		-- Args: until_next
-		flicker_light = function(s)
-			if not flicker_light(s) then return end
-			s.next_stage(s)
-		end,
-		-- Args: until_next
-		pause = function(s)
-			if not pause(s) then return end
-			s.next_stage(s)
-		end,
-		-- Args s.fire_radius, s.until_low, s.until_high, s.tree_count
-		fire_ring = function(s)
-			if s.tree_circle == nil then
-				s.i = 1
-				s.tree_circle = util.shuffle(s.tree_count)
-			end
-			if not fire_ring(s) then return end
-			s.tree_circle = nil
-			s.next_stage(s)
-		end,
-		unflicker_light = function(s)
-			s.player.enable_flashlight()
-			s.next_stage(s)
-		end,
-		biter_attack = function(s)
-			tree_events.spawn_biters(s.surface, s.treepos, s.biter_count, s.biter_rate_table)
-			s.next_stage(s)
-		end,
-		spit = function(s)
-			tree_events.spitter_projectile(s.surface, s.treepos, s.player)
-			s.next_stage(s)
-		end,
-		spit_fire = function(s)
-			tree_events.fire_stream(s.surface, s.treepos, s.player)
-			s.next_stage(s)
-		end,
-		_do_coroutine = function(s)
-			if not s._coroutine.run(s._coroutine) then
+local stages = {
+	-- Args: until_next
+	flicker_light = function(s)
+		if not flicker_light(s) then return end
+		coro_next_stage(s)
+	end,
+	-- Args: until_next
+	pause = function(s)
+		if not pause(s) then return end
+		coro_next_stage(s)
+	end,
+	-- Args s.fire_radius, s.until_low, s.until_high, s.tree_count
+	fire_ring = function(s)
+		if s.tree_circle == nil then
+			s.i = 1
+			s.tree_circle = util.shuffle(s.tree_count)
+		end
+		if not fire_ring(s) then return end
+		s.tree_circle = nil
+		coro_next_stage(s)
+	end,
+	unflicker_light = function(s)
+		s.player.enable_flashlight()
+		coro_next_stage(s)
+	end,
+	biter_attack = function(s)
+		tree_events.spawn_biters(s.surface, s.treepos, s.biter_count, s.biter_rate_table)
+		coro_next_stage(s)
+	end,
+	spit = function(s)
+		tree_events.spitter_projectile(s.surface, s.treepos, s.player)
+		coro_next_stage(s)
+	end,
+	spit_fire = function(s)
+		tree_events.fire_stream(s.surface, s.treepos, s.player)
+		coro_next_stage(s)
+	end,
+	fake_biters = function(s)
+		if s._coroutine == nil then
+			s._coroutine = tree_events.fake_biters(s.surface, s.player, s.count, s.wait_low, s.wait_high)
+		else
+			if not tree_events.run_coro(s._coroutine) then
 				s._coroutine = nil
-				s.next_stage(s)
+				coro_next_stage(s)
 			end
-		end,
-		fake_biters = function(s)
-			if s._coroutine == nil then
-				s._coroutine = tree_events.fake_biters(s.surface, s.player, s.count, s.wait_low, s.wait_high)
-			else
-				s.stages._do_coroutine(s)
+		end
+	end,
+	biter_onslaught = function(s)
+		if s._coroutine == nil then
+			s._coroutine = tree_events.spawn_biters_over_time(s.surface, s.treepos, s.count, s.biter_rate_table)
+		else
+			if not tree_events.run_coro(s._coroutine) then
+				s._coroutine = nil
+				coro_next_stage(s)
 			end
-		end,
-		biter_onslaught = function(s)
-			if s._coroutine == nil then
-				s._coroutine = tree_events.spawn_biters_over_time(s.surface, s.treepos, s.count, s.biter_rate_table)
-			else
-				s.stages._do_coroutine(s)
-			end
-		end,
+		end
+	end,
 
-		-- FIXME duplication with building spit assault
-		-- Args s.duration, s.until_low, s.until_high, s.projectiles
-		-- Optional args: s.biter_chance, s.biter_low, s.biter_high, s.biter_rate_table
-		spit_assault = function(s)
-			if s.total_ticks == nil then
-				s.total_ticks = 0
-				s.next_event = 0
-			end
+	-- FIXME duplication with building spit assault
+	-- Args s.duration, s.until_low, s.until_high, s.projectiles
+	-- Optional args: s.biter_chance, s.biter_low, s.biter_high, s.biter_rate_table
+	spit_assault = function(s)
+		if s.total_ticks == nil then
+			s.total_ticks = 0
+			s.next_event = 0
+		end
 
-			s.total_ticks = s.total_ticks + 1
-			if s.total_ticks >= s.duration then
-				s.total_ticks = nil
-				s.next_event = nil
-				s.next_stage(s)
-				return
-			end
-
-			if s.next_event > 0 then
-				s.next_event = s.next_event - 1
-				return
-			end
-			s.next_event = math.random(s.until_low, s.until_high)
-
-			local ppos = s.player.position
-			local box = util.box_around(ppos, 6)
-			local tree = area_util.get_random_tree(s.surface, box)
-			if tree == nil then return end
-
-			if s.biter_chance ~= false and math.random() < s.biter_chance then
-				tree_events.spawn_biters(s.surface, tree.position, math.random(s.biter_low, s.biter_high), s.biter_rate_table)
-			else
-				tree_events.spit_at(s.surface, tree.position, s.player, s.projectiles)
-			end
-		end,
-
-		poison_cloud = function(s)
-			tree_events.poison_cloud(s.surface, s.treepos)
-			s.next_stage(s)
+		s.total_ticks = s.total_ticks + 1
+		if s.total_ticks >= s.duration then
+			s.total_ticks = nil
+			s.next_event = nil
+			coro_next_stage(s)
 			return
 		end
-	},
 
-	next_stage = function(s)
-		s.stage_idx = s.stage_idx + 1
-		local stage = s.stage_list[s.stage_idx]
-		if stage == nil then return end
-		for n, v in pairs(stage[2]) do
-			s[n] = v
+		if s.next_event > 0 then
+			s.next_event = s.next_event - 1
+			return
+		end
+		s.next_event = math.random(s.until_low, s.until_high)
+
+		local ppos = s.player.position
+		local box = util.box_around(ppos, 6)
+		local tree = area_util.get_random_tree(s.surface, box)
+		if tree == nil then return end
+
+		if s.biter_chance ~= false and math.random() < s.biter_chance then
+			tree_events.spawn_biters(s.surface, tree.position, math.random(s.biter_low, s.biter_high), s.biter_rate_table)
+		else
+			tree_events.spit_at(s.surface, tree.position, s.player, s.projectiles)
 		end
 	end,
 
-	finish = function(s)
-		s.stage_idx = nil
-	end,
-
-	run = function(s)
-		local stage = s.stage_list[s.stage_idx]
-		if stage == nil then return false end
-		if not s.player.valid or not s.surface.valid then return false end
-		s.stages[stage[1]](s)
-		return true
-	end,
+	poison_cloud = function(s)
+		tree_events.poison_cloud(s.surface, s.treepos)
+		coro_next_stage(s)
+		return
+	end
 }
+
+function coro_next_stage(s)
+	s.stage_idx = s.stage_idx + 1
+	local stage = s.stage_list[s.stage_idx]
+	if stage == nil then return end
+	for n, v in pairs(stage[2]) do
+		s[n] = v
+	end
+end
+
+function M.event_spooky_story(s)
+	local stage = s.stage_list[s.stage_idx]
+	if stage == nil then return false end
+	if not s.player.valid or not s.surface.valid then return false end
+	stages[stage[1]](s)
+	return true
+end
 
 local function surround_with_flicker(sl)
 	-- First, flicker + pause.
@@ -245,7 +239,6 @@ M.spooky_story = function(player_info, surface)
 	end
 
 	local s = {}
-	setmetatable(s, {__index = SpookyStoryPrototype})
 	s.stage_list = {}
 	local sl = s.stage_list
 
@@ -354,10 +347,15 @@ M.spooky_story = function(player_info, surface)
 	::finish::
 
 	s.stage_idx = 0
+	s.event_name = "event_spooky_story"
 	s.player = player
 	s.surface = surface
-	s.next_stage(s)
+	coro_next_stage(s)
 	return s
+end
+
+function M.run_coro(s)
+	return M[s.event_name](s)
 end
 
 return M

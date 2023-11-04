@@ -144,39 +144,36 @@ function M.spawn_biters(surface, treepos, count, rate_table)
 	end
 end
 
-local SpawnBitersPrototype = {
-	run = function(s)
-		if not s.surface.valid then return false end
-		s.wait_interval = s.wait_interval - 1
-		if s.wait_interval > 0 then return true end
-		s.spawned = s.spawned + 1
-		local biter = M.pick_random_enemy_type(rate_table)
-		s.actual_pos.x = s.position.x + math.random() * 5 - 2.5
-		s.actual_pos.y = s.position.y + math.random() * 5 - 2.5
-		s.surface.create_entity{
-			name = biter,
-			position = s.actual_pos,
-		}
-		if s.spawned % 12 == 0 or s.spawned == s.count then
-			local enemy = s.surface.find_nearest_enemy_entity_with_owner{position=s.position, max_distance=50}
-			if enemy ~= nil then
-				s.surface.set_multi_command{
-					command = {
-						type = defines.command.attack,
-						target = enemy,
-					},
-					unit_count = s.spawned,
-					unit_search_distance=10,
-				}
-			end
+function M.event_spawn_biters(s)
+	if not s.surface.valid then return false end
+	s.wait_interval = s.wait_interval - 1
+	if s.wait_interval > 0 then return true end
+	s.spawned = s.spawned + 1
+	local biter = M.pick_random_enemy_type(rate_table)
+	s.actual_pos.x = s.position.x + math.random() * 5 - 2.5
+	s.actual_pos.y = s.position.y + math.random() * 5 - 2.5
+	s.surface.create_entity{
+		name = biter,
+		position = s.actual_pos,
+	}
+	if s.spawned % 12 == 0 or s.spawned == s.count then
+		local enemy = s.surface.find_nearest_enemy_entity_with_owner{position=s.position, max_distance=50}
+		if enemy ~= nil then
+			s.surface.set_multi_command{
+				command = {
+					type = defines.command.attack,
+					target = enemy,
+				},
+				unit_count = s.spawned,
+				unit_search_distance=10,
+			}
 		end
-		return s.spawned < s.count
 	end
-}
+	return s.spawned < s.count
+end
 
 function M.spawn_biters_over_time(surface, position, count, rate_table)
 	local s = {}
-	setmetatable(s, {__index = SpawnBitersPrototype})
 	s.surface = surface
 	s.position = position
 	s.actual_pos = {
@@ -187,6 +184,7 @@ function M.spawn_biters_over_time(surface, position, count, rate_table)
 	s.spawned = 0
 	s.rate_table = rate_table
 	s.wait_interval = math.random(4, 6)
+	s.event_name = "event_spawn_biters"
 	return s
 end
 
@@ -202,36 +200,33 @@ local function player_restore_health(player)
 	player.health = player.prototype.max_health
 end
 
-local FakeBitersPrototype = {
-	run = function(s)
-		if not s.player.valid then return false end
-		if not s.surface.valid then return false end
+function M.event_fake_biters(s)
+	if not s.player.valid then return false end
+	if not s.surface.valid then return false end
 
-		s.wait_interval = s.wait_interval - 1
-		if s.wait_interval > 0 then return true end
-		s.wait_interval = math.random(s.wait_low, s.wait_high)
+	s.wait_interval = s.wait_interval - 1
+	if s.wait_interval > 0 then return true end
+	s.wait_interval = math.random(s.wait_low, s.wait_high)
 
-		s.spawned = s.spawned + 1
-		local pos = s.player.position
-		s.surface.create_entity{
-			name = "fake-biter",
-			position = pos,
-		}
-		if s.deal_damage then
-			s.player.damage(5, "enemy")
-		end
-		if s.spawned == s.count then
-			player_restore_health(s.player)
-			return false
-		else
-			return true
-		end
+	s.spawned = s.spawned + 1
+	local pos = s.player.position
+	s.surface.create_entity{
+		name = "fake-biter",
+		position = pos,
+	}
+	if s.deal_damage then
+		s.player.damage(5, "enemy")
 	end
-}
+	if s.spawned == s.count then
+		player_restore_health(s.player)
+		return false
+	else
+		return true
+	end
+end
 
 function M.fake_biters(surface, player, count, wait_low, wait_high)
 	local s = {}
-	setmetatable(s, {__index = FakeBitersPrototype})
 	s.surface = surface
 	s.player = player
 	s.deal_damage = player_is_unhurt(player)
@@ -240,11 +235,16 @@ function M.fake_biters(surface, player, count, wait_low, wait_high)
 	s.spawned = 0
 	s.wait_low = wait_low
 	s.wait_high = wait_high
+	s.event_name = "event_fake_biters"
 	return s
 end
 
 function M.take_over_turret(turret)
 	turret.force = "enemy"
+end
+
+function M.run_coro(s)
+	return M[s.event_name](s)
 end
 
 return M
