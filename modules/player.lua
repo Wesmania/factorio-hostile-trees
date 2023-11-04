@@ -285,7 +285,6 @@ M.spooky_story = function(player_info, surface)
 			if rand < 0.85 then
 				complex_random_assault(sl, tree, add_flicker, spook_player, math.random(180, 360))
 			elseif rand < 0.9 then
-				game.print("Happening")
 				sl[#sl + 1] = { "spit_assault", {
 					duration = math.random(480, 660),
 					until_low = 120,

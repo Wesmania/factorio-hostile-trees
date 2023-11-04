@@ -20,13 +20,10 @@ local function squares_to_check_per_tick()
 end
 
 script.on_init(function()
-	print("====== initialize ======")
 	setup.initialize()
-	print(global.config.player_events)
 end)
 
 script.on_event({defines.events.on_tick}, function(event)
-	print(global.config.player_events)
 	local global = global
 	local surface = game.get_surface(1)
 	if not surface or not surface.valid then
