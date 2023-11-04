@@ -26,15 +26,6 @@ M.cache_players = function()
 	end
 end
 
-M.cache_tree_prototypes = function()
-	local st = {}
-	for _, p in pairs(game.get_filtered_entity_prototypes{{filter='type', type='tree'}}) do
-		if p.emissions_per_second > 0 or p.emissions_per_second > -0.0005 then goto skip end
-		table.insert(st, p.name)
-	::skip:: end
-	global.surface_trees = st
-end
-
 local function cache_evolution_for(evolution)
 	local new_entries = {}
 	local enemy_rates = {
@@ -105,7 +96,6 @@ end
 M.initialize = function()
 	global.players          = {}
 	global.players_array    = {}
-	global.surface_trees    = {}
 	global.tick_mod_10_s    = 0
 	global.chunks           = 0
 	global.accum            = 0
@@ -130,7 +120,6 @@ M.initialize = function()
 	M.config.retaliation_enabled = settings.global["hostile-trees-do-trees-retaliate"].value
 	M.config.grace_period = settings.global["hostile-trees-how-long-do-trees-withhold-their-hate"].value * 60
 	global.config = M.config
-	M.cache_tree_prototypes()
 	M.cache_players()
 end
 

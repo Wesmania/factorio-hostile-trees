@@ -55,22 +55,22 @@ end
 
 function M.has_trees(surface, area)
 	local global = global
-	return surface.count_entities_filtered{area = area, name = global.surface_trees, limit = 1} > 0
+	return surface.count_entities_filtered{area = area, type = "tree", limit = 1} > 0
 end
 
 function M.count_trees(surface, area, limit)
 	local global = global
-	return surface.count_entities_filtered{area = area, name = global.surface_trees, limit = limit}
+	return surface.count_entities_filtered{area = area, type = "tree", limit = limit}
 end
 
 function M.get_tree(surface, area)
 	local global = global
-	return surface.find_entities_filtered{area = area, name = global.surface_trees, limit = 1}[1]
+	return surface.find_entities_filtered{area = area, type = "tree", limit = 1}[1]
 end
 
 -- More expensive, but there's no other way to get a random tree.
 function M.get_random_tree(surface, area)
-	local trees = surface.find_entities_filtered{area = area, name = global.surface_trees}
+	local trees = surface.find_entities_filtered{area = area, type = "tree"}
 	if #trees == 0 then
 		return nil
 	end
@@ -78,7 +78,7 @@ function M.get_random_tree(surface, area)
 end
 
 function M.get_trees(surface, area)
-	return surface.find_entities_filtered{area = area, name = global.surface_trees}
+	return surface.find_entities_filtered{area = area, type = "tree"}
 end
 
 function M.has_player_entities(surface, area)
