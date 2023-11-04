@@ -68,7 +68,6 @@ script.on_event({defines.events.on_tick}, function(event)
 		end
 	end
 
-	-- FIXME replace with TODO when we add player events
 	if global.config.factory_events then
 
 		global.accum = global.accum + squares_to_check_per_tick()
