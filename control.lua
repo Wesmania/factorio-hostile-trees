@@ -7,8 +7,6 @@ local trees = require("modules/trees")
 
 local retaliation = require("modules/retaliation")
 
-local config = setup.config
-
 local function count_chunks(surface)
 	local global = global
 	global.chunks = 0
@@ -18,14 +16,17 @@ local function count_chunks(surface)
 end
 
 local function squares_to_check_per_tick()
-	return global.chunks * config.factory_events_per_tick_per_chunk
+	return global.chunks * global.config.factory_events_per_tick_per_chunk
 end
 
 script.on_init(function()
+	print("====== initialize ======")
 	setup.initialize()
+	print(global.config.player_events)
 end)
 
 script.on_event({defines.events.on_tick}, function(event)
+	print(global.config.player_events)
 	local global = global
 	local surface = game.get_surface(1)
 	if not surface or not surface.valid then
@@ -39,11 +40,11 @@ script.on_event({defines.events.on_tick}, function(event)
 		setup.cache_evolution_rates()
 	end
 
-	if config.grace_period ~= nil then
-		if config.grace_period <= 0 then
-			config.grace_period = nil
+	if global.config.grace_period ~= nil then
+		if global.config.grace_period <= 0 then
+			global.config.grace_period = nil
 		else
-			config.grace_period = config.grace_period - 1
+			global.config.grace_period = global.config.grace_period - 1
 		end
 		return
 	end
@@ -71,7 +72,7 @@ script.on_event({defines.events.on_tick}, function(event)
 	end
 
 	-- FIXME replace with TODO when we add player events
-	if config.factory_events then
+	if global.config.factory_events then
 
 		global.accum = global.accum + squares_to_check_per_tick()
 		local tocheck = math.floor(global.accum)
@@ -92,8 +93,8 @@ script.on_event({defines.events.on_tick}, function(event)
 		end
 	end
 
-	if not config.player_events or #global.players_array == 0 then return end
-	local event_chance = #global.players_array / (config.player_event_frequency * 60)
+	if not global.config.player_events or #global.players_array == 0 then return end
+	local event_chance = #global.players_array / (global.config.player_event_frequency * 60)
 	if math.random() >= event_chance then return end
 	local player_info = global.players_array[math.random(1, #global.players_array)]
 	if not player_info.player.valid then return end

@@ -3,8 +3,6 @@ local util = require("modules/util")
 local area_util = require("modules/area_util")
 local tree_events = require("modules/tree_events")
 
-local config = setup.config
-
 script.on_nth_tick(30 * 60, function()
 	global.tree_kill_count = 0
 	global.tree_kill_locs = {}
@@ -110,7 +108,7 @@ end
 
 script.on_event(defines.events.on_entity_died, function(event)
 	global.tree_kill_count = global.tree_kill_count + 1
-	if global.tree_kill_count % 50 == 0 and config.retaliation_enabled then
+	if global.tree_kill_count % 50 == 0 and global.config.retaliation_enabled then
 		local surface = game.get_surface(1)
 		register_tree_death_loc(event)
 		if math.random() < 0.65 then
