@@ -25,10 +25,8 @@ end)
 
 script.on_event({defines.events.on_tick}, function(event)
 	local global = global
-	local surface = game.get_surface(1)
-	if not surface or not surface.valid then
-		return
-	end
+	local surface = global.surface
+	local config = global.config
 
 	global.tick_mod_10_s = (global.tick_mod_10_s + 1) % 600
 	if global.tick_mod_10_s == 0 then
@@ -37,11 +35,11 @@ script.on_event({defines.events.on_tick}, function(event)
 		setup.cache_evolution_rates()
 	end
 
-	if global.config.grace_period ~= nil then
-		if global.config.grace_period <= 0 then
-			global.config.grace_period = nil
+	if config.grace_period ~= nil then
+		if config.grace_period <= 0 then
+			config.grace_period = nil
 		else
-			global.config.grace_period = global.config.grace_period - 1
+			config.grace_period = config.grace_period - 1
 		end
 		return
 	end
