@@ -72,9 +72,9 @@ local function check_for_major_retaliation(surface, event)
 	local spawn_tree = nil
 	for i = 1,6 do
 		local random_area = util.box_around({
-			x = treepos.x - 12 + math.random(1, 24),
-			y = treepos.y - 12 + math.random(1, 24),
-		}, 4)
+			x = treepos.x - 24 + math.random(1, 48),
+			y = treepos.y - 24 + math.random(1, 48),
+		}, 8)
 		if area_util.count_trees(surface, random_area, 20) >= 20 then
 			spawn_tree = area_util.get_random_tree(surface, random_area)
 			break
