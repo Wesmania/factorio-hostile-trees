@@ -5,6 +5,7 @@ local tree_events = require("modules/tree_events")
 local M = {}
 
 local function pick_building(s)
+	if #s.buildings == 0 then return nil end
 	local bi = math.random(1, #s.buildings)
 	local building = s.buildings[bi]
 	if not building.valid then
@@ -17,12 +18,9 @@ end
 
 function M.event_building_spit_assault(s)
 	if not s.surface.valid then return false end
-
 	s.total_ticks = s.total_ticks + 1
-	if s.total_ticks == 600 then return false end
-
+	if s.total_ticks >= 600 then return false end
 	if s.next_event > s.total_ticks then return true end
-	if #s.buildings == 0 then return false end
 
 	local new_min = 999
 	for _, tree in pairs(s.trees) do
