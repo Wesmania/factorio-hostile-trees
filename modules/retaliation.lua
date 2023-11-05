@@ -5,7 +5,7 @@ local tree_events = require("modules/tree_events")
 script.on_nth_tick(30 * 60, function()
 	global.tree_kill_count = 0
 	global.tree_kill_locs = {}
-	global.major_retaliation_threshold = 250	-- FIXME balance
+	global.major_retaliation_threshold = 200	-- FIXME balance
 end)
 
 local function pos_to_coords(pos)
@@ -86,7 +86,7 @@ local function check_for_major_retaliation(surface, event)
 		spawn_tree = tree
 		biter_count = math.random(10, 15)
 	else
-		biter_count = math.random(30, 50)
+		biter_count = math.random(25, 40)
 	end
 
 	global.tree_stories[#global.tree_stories + 1] = tree_events.spawn_biters_over_time(surface, spawn_tree.position, biter_count, "retaliation")
@@ -101,12 +101,12 @@ local function check_for_major_retaliation(surface, event)
 		end
 	end
 
-	global.major_retaliation_threshold = global.tree_kill_count + 250
+	global.major_retaliation_threshold = global.tree_kill_count + 200
 end
 
 script.on_event(defines.events.on_entity_died, function(event)
 	global.tree_kill_count = global.tree_kill_count + 1
-	if global.tree_kill_count % 50 == 0 and global.config.retaliation_enabled then
+	if global.tree_kill_count % 40 == 0 and global.config.retaliation_enabled then
 		local surface = game.get_surface(1)
 		register_tree_death_loc(event)
 		if math.random() < 0.65 then
