@@ -1,4 +1,3 @@
-local setup = require("modules/setup")
 local util = require("modules/util")
 local area_util = require("modules/area_util")
 local tree_events = require("modules/tree_events")
@@ -71,7 +70,6 @@ local function check_for_major_retaliation(surface, event)
 	if counts < 5 then return end
 	-- Try to find a forested place to spawn from
 	local spawn_tree = nil
-	local biter_count = nil
 	for i = 1,6 do
 		local random_area = util.box_around({
 			x = treepos.x - 12 + math.random(1, 24),
@@ -83,6 +81,7 @@ local function check_for_major_retaliation(surface, event)
 		end
 	end
 
+	local biter_count
 	if spawn_tree == nil then
 		spawn_tree = tree
 		biter_count = math.random(10, 15)

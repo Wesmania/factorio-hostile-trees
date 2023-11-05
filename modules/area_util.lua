@@ -53,17 +53,14 @@ function M.has_buildings(surface, area)
 end
 
 function M.has_trees(surface, area)
-	local global = global
 	return surface.count_entities_filtered{area = area, type = "tree", limit = 1} > 0
 end
 
 function M.count_trees(surface, area, limit)
-	local global = global
 	return surface.count_entities_filtered{area = area, type = "tree", limit = limit}
 end
 
 function M.get_tree(surface, area)
-	local global = global
 	return surface.find_entities_filtered{area = area, type = "tree", limit = 1}[1]
 end
 

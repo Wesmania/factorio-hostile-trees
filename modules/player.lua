@@ -4,6 +4,15 @@ local tree_events = require("modules/tree_events")
 
 local M = {}
 
+local function coro_next_stage(s)
+	s.stage_idx = s.stage_idx + 1
+	local stage = s.stage_list[s.stage_idx]
+	if stage == nil then return end
+	for n, v in pairs(stage[2]) do
+		s[n] = v
+	end
+end
+
 local function flicker_light(s)
 	s.until_next = s.until_next - 1
 	if s.until_next == 0 then
@@ -144,15 +153,6 @@ local stages = {
 	end
 }
 
-function coro_next_stage(s)
-	s.stage_idx = s.stage_idx + 1
-	local stage = s.stage_list[s.stage_idx]
-	if stage == nil then return end
-	for n, v in pairs(stage[2]) do
-		s[n] = v
-	end
-end
-
 function M.event_spooky_story(s)
 	local stage = s.stage_list[s.stage_idx]
 	if stage == nil then return false end
@@ -182,7 +182,7 @@ local function complex_random_assault(sl, tree, add_flicker, spook_player, is_in
 	local rand = math.random()
 	if biter_assault and rand < 0.3
 	then
-		local count = nil
+		local count
 		if is_in_forest then
 			count = math.random(20, 40)
 		else
@@ -223,7 +223,7 @@ local function complex_random_assault(sl, tree, add_flicker, spook_player, is_in
 	end
 end
 
-M.spooky_story = function(player_info, surface)
+function M.spooky_story(player_info, surface)
 	local player = player_info.player
 
 	local ppos = player.position
@@ -274,10 +274,10 @@ M.spooky_story = function(player_info, surface)
 			player_info.tree_threat = threat - 4
 
 			local add_flicker = is_night and math.random() < 0.25
-			local rand = math.random()
-			if rand < 0.85 then
+			local rand2 = math.random()
+			if rand2 < 0.80 then
 				complex_random_assault(sl, tree, add_flicker, false, is_in_forest, math.random(180, 360))
-			elseif rand < 0.9 then
+			elseif rand2 < 0.9 then
 				sl[#sl + 1] = { "spit_assault", {
 					duration = math.random(480, 660),
 					until_low = 120,

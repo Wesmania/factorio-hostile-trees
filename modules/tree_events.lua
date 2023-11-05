@@ -1,6 +1,3 @@
-local util = require("modules/util")
-local area_util = require("modules/area_util")
-
 local M = {}
 
 local function deal_damage_to_player_entities(surface, position, radius, amount)

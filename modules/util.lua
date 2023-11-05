@@ -40,7 +40,7 @@ function M.box_around(position, radius)
 end
 
 function M.list_remove(list, idx)
-	local out = nil
+	local out
 	if idx < #list then
 		out, list[idx], list[#list] = list[idx], list[#list], nil
 	else
