@@ -18,6 +18,7 @@ M.cache_players = function()
 						player = player.character,
 						story = nil,
 						tree_threat = 0,
+						big_tree_threat = 0,
 					}
 				end
 				global.players_array[#global.players_array + 1] = global.players[id]

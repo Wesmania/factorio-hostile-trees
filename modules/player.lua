@@ -170,8 +170,7 @@ local function complex_random_assault(sl, tree, add_flicker, spook_player, is_in
 	end
 
 	local rand = math.random()
-	if biter_assault and rand < 0.3
-	then
+	if biter_assault and rand < 0.6 then
 		local count
 		if is_in_forest then
 			count = math.random(20, 40)
@@ -246,6 +245,7 @@ function M.spooky_story(player_info, surface)
 			player_info.tree_threat = player_info.tree_threat + 1
 		else
 			player_info.tree_threat = threat - 6
+			player_info.big_tree_threat = 0
 
 			local add_flicker = is_night and math.random() < 0.25
 			local spook_player = is_in_forest and add_flicker and math.random() < 0.6
@@ -258,10 +258,12 @@ function M.spooky_story(player_info, surface)
 	if threat >= 4 then
 		-- Mid-sized event.
 		local rand = math.random()
-		if rand < 0.5 then
+		-- If we make a mid event, make a major event more likely in the future.
+		if rand < 0.5 + (player_info.big_tree_threat * 0.1) then
 			player_info.tree_threat = player_info.tree_threat + 1
 		else
 			player_info.tree_threat = threat - 4
+			player_info.big_tree_threat = player_info.big_tree_threat + 1
 
 			local add_flicker = is_night and math.random() < 0.25
 			local rand2 = math.random()
