@@ -221,8 +221,12 @@ function M.spooky_story(player_info, surface)
 
 	if tree_count == 0 then
 		-- Not near trees. Don't do a story, chance to reduce threat.
-		if player_info.tree_threat > 0 and math.random() < 0.2 then
-			player_info.tree_threat = player_info.tree_threat - 1
+		if math.random() < 0.3 then
+			if player_info.tree_threat > 0 then
+				player_info.tree_threat = player_info.tree_threat - 1
+			elseif player_info.big_tree_threat > 0 then
+				player_info.big_tree_threat = player_info.big_tree_threat - 1
+			end
 		end
 		return nil
 	end
