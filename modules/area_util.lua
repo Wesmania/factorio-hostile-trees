@@ -1,16 +1,5 @@
 local M = {}
 
-function M.get_building(surface, area)
-	for _, force in pairs(game.forces) do
-		if #force.players > 0 then
-			for _, e in ipairs(surface.find_entities_filtered{area = area, force = force}) do
-				if e.prototype.is_building then return e end
-			end
-		end
-	end
-	return nil
-end
-
 function M.get_buildings(surface, area)
 	local out = {}
 	for _, force in pairs(game.forces) do
@@ -49,7 +38,14 @@ end
 
 -- Only call it after we did an entity / tree check
 function M.has_buildings(surface, area)
-	return M.get_building(surface, area) ~= nil
+	for _, force in pairs(game.forces) do
+		if #force.players > 0 then
+			for _, e in ipairs(surface.find_entities_filtered{area = area, force = force}) do
+				if e.prototype.is_building then return true end
+			end
+		end
+	end
+	return false
 end
 
 function M.has_trees(surface, area)

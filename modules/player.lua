@@ -13,25 +13,6 @@ local function coro_next_stage(s)
 	end
 end
 
-local function flicker_light(s)
-	s.until_next = s.until_next - 1
-	if s.until_next == 0 then
-		s.player.disable_flashlight()
-		return true
-	end
-	if s.player.is_flashlight_enabled() then
-		s.player.disable_flashlight()
-	else
-		s.player.enable_flashlight()
-	end
-	return false
-end
-
-local function pause(s)
-	s.until_next = s.until_next - 1
-	return s.until_next <= 0
-end
-
 local function fire_ring(s)
 	s.until_next = s.until_next - 1
 	if s.until_next > 0 then return false end
@@ -56,13 +37,22 @@ end
 local stages = {
 	-- Args: until_next
 	flicker_light = function(s)
-		if not flicker_light(s) then return end
-		coro_next_stage(s)
+		s.until_next = s.until_next - 1
+		if s.until_next <= 0 then
+			s.player.disable_flashlight()
+			coro_next_stage(s)
+			return
+		end
+		if s.player.is_flashlight_enabled() then
+			s.player.disable_flashlight()
+		else
+			s.player.enable_flashlight()
+		end
 	end,
 	-- Args: until_next
 	pause = function(s)
-		if not pause(s) then return end
-		coro_next_stage(s)
+		s.until_next = s.until_next - 1
+		if s.until_next <= 0 then coro_next_stage(s) end
 	end,
 	-- Args s.fire_radius, s.until_low, s.until_high, s.tree_count
 	fire_ring = function(s)
