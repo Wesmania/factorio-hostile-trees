@@ -1,0 +1,9 @@
+---------------------------------------------------------------------------------------------------
+Version: 0.1.6
+Date: 10. 11. 2023
+  Changes:
+    - Fixed a bug where trees would start to ignore the player forever.
+    - New retaliation event.
+    - New and exciting way for trees to spread.
+    - Added changelog.
+---------------------------------------------------------------------------------------------------
