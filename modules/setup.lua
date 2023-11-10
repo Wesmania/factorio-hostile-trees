@@ -94,6 +94,8 @@ M.squares_to_check_per_tick_per_chunk = function(seconds_per_square)
 	return squares_per_chunk / ticks_per_square
 end
 
+-- This is also called when configuration changes. We don't have any long-term
+-- state we need to preserve, so it's okay.
 M.initialize = function()
 	global.players          = {}
 	global.players_array    = {}

@@ -23,6 +23,12 @@ script.on_init(function()
 	setup.initialize()
 end)
 
+script.on_configuration_changed(function(info)
+	if info.old_version ~= nil or info.mod_changes["hostile-trees"] ~= nil or info.mod_startup_settings_changed then
+		setup.initialize()
+	end
+end)
+
 script.on_event({defines.events.on_tick}, function(event)
 	local global = global
 	local surface = global.surface
