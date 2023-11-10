@@ -94,7 +94,7 @@ local function check_for_major_retaliation(surface, event)
 	-- Chance for forest to just focus on player
 	if rand < 0.5 then
 		local maybe_character = event.cause
-		if maybe_character ~= nil and maybe_character.player ~= nil then
+		if maybe_character ~= nil and maybe_character.name == "character" then
 			tree_events.focus_on_player(maybe_character.unit_number, 15)
 			return
 		end
