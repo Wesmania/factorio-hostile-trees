@@ -69,7 +69,9 @@ function M.event(surface, area)
 		end
 	end
 
-	if random < 0.25 then
+	if random < 0.07 then
+		tree_events.spit_trees_towards_buildings(surface, tree, building)
+	elseif random < 0.25 then
 		tree_events.spread_trees_towards_buildings(surface, tree, building)
 	elseif random < 0.4 then
 		tree_events.set_tree_on_fire(surface, tree)

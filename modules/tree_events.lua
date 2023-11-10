@@ -40,6 +40,107 @@ function M.spread_trees_towards_buildings(surface, tree, building)
 	end
 end
 
+function M.spit_trees_towards_buildings(surface, tree, building)
+	if tree == nil then return end
+	if building == nil then return end
+	local treepos = tree.position
+	local buildingpos = building.position
+
+	local dx = (buildingpos.x - treepos.x)
+	local dy = (buildingpos.y - treepos.y)
+
+	local dist = math.sqrt(dx * dx + dy * dy)
+
+	if dist < 0.1 then return end
+
+	if dist < 8 then
+		local mult = 8 / dist * (1 + math.random() * 0.3) - 1
+		buildingpos.x = buildingpos.x + dx * mult
+		buildingpos.y = buildingpos.y + dy * mult
+	end
+
+	surface.create_entity{
+		name = 'tree-spawner-projectile-' .. tree.name .. "-1",
+		position = treepos,
+		source = treepos,
+		target = buildingpos,
+	}
+end
+
+-- I tried to do it purely with data, couldn't. Can't change projectile source
+-- and keep orientation at the same time. Hopefully performance will be okay.
+local function on_spawning_spit_landed(event)
+	local source = event.source_position
+	local target = event.target_position
+	local pname = event.effect_id
+
+	local generation = tonumber(string.sub(pname, -1))
+	local pname_pfx = string.sub(pname, 1, string.len(pname) - 1)
+
+	local rand = math.random()
+	local ts
+	local spread
+	if generation == 1 then
+		spread = 15
+		if rand < 0.75 then
+			ts = { 1 }
+		elseif rand < 0.90 then
+			ts = {}
+		else
+			ts = { 2 }
+		end
+	elseif generation == 2 then
+		spread = 60
+		if rand < 0.25 then
+			ts = { 3 }
+		elseif rand < 0.65 then
+			ts = { 3, 3 }
+		elseif rand < 0.9 then
+			ts = { 3, 3, 3}
+		else
+			ts = {2, 2}
+		end
+	elseif generation == 3 then
+		spread = 20
+		if rand < 0.55 then
+			ts = { }
+		elseif rand < 0.8 then
+			ts = { 3 }
+		else
+			ts = {3, 3}
+		end
+	end
+
+	for _, gen in pairs(ts) do
+		local x = target.x - source.x
+		local i_x = source.x - target.x
+
+		local rot = math.random(-spread, spread) / 60
+		local dist_c = 0.8 + math.random() * 0.4
+		local c = math.cos(rot) * dist_c
+		local i_c = math.sin(rot) * dist_c
+
+		-- (x + i * i_x)(c + i * i_c) = xc - i_x * i_c + i * (x * i_c + i_x * c)
+		local new_target = {
+			target.x + x * c - i_x * i_c,
+			target.y + x * i_c + i_x * c
+		}
+
+		global.surface.create_entity{
+			name = pname_pfx .. gen,
+			position = target,
+			source = target,
+			target = new_target,
+		}
+	end
+end
+
+script.on_event(defines.events.on_script_trigger_effect, function(data)
+	if string.sub(data.effect_id, 1, 23) ~= "tree-spawner-projectile" then return end
+	if data.source_position == nil or data.target_position == nil then return end
+	on_spawning_spit_landed(data)
+end)
+
 function M.small_tree_explosion(surface, tree)
 	if tree == nil then return end
 	local at = tree.position
