@@ -40,6 +40,25 @@ function M.spread_trees_towards_buildings(surface, tree, building)
 	end
 end
 
+local function make_tree_spawner_projectile(surface, source, target, tree_name, generation)
+	local s = surface.create_entity{
+		name = 'tree-spawner-projectile',
+		position = source,
+		source = source,
+		target = target,
+	}
+	if s ~= nil then
+		local rid = script.register_on_entity_destroyed(s)
+		global.entity_destroyed_script_events[rid] = {
+			action = "on_spawning_spit_landed",
+			tree_name = tree_name,
+			generation = generation,
+			source = source,
+			target = target,
+		}
+	end
+end
+
 function M.spit_trees_towards_buildings(surface, tree, building)
 	if tree == nil then return end
 	if building == nil then return end
@@ -59,23 +78,27 @@ function M.spit_trees_towards_buildings(surface, tree, building)
 		buildingpos.y = buildingpos.y + dy * mult
 	end
 
-	surface.create_entity{
-		name = 'tree-spawner-projectile-' .. tree.name .. "-1",
-		position = treepos,
-		source = treepos,
-		target = buildingpos,
-	}
+	make_tree_spawner_projectile(surface, treepos, buildingpos, tree.name, 1)
 end
 
 -- I tried to do it purely with data, couldn't. Can't change projectile source
 -- and keep orientation at the same time. Hopefully performance will be okay.
-local function on_spawning_spit_landed(event)
-	local source = event.source_position
-	local target = event.target_position
-	local pname = event.effect_id
+function M.on_spawning_spit_landed(event)
+	local source = event.source
+	local target = event.target
+	local tree_name = event.tree_name
+	local generation = event.generation
+	local surface = global.surface
 
-	local generation = tonumber(string.sub(pname, -1))
-	local pname_pfx = string.sub(pname, 1, string.len(pname) - 1)
+	for i = 1,math.random(1, 3) do
+		surface.create_entity{
+			name = tree_name,
+			position = {
+				target.x - 2.0 + math.random() * 4.0,
+				target.y - 2.0 + math.random() * 4.0
+			},
+		}
+	end
 
 	local rand = math.random()
 	local ts
@@ -122,23 +145,18 @@ local function on_spawning_spit_landed(event)
 
 		-- (x + i * i_x)(c + i * i_c) = xc - i_x * i_c + i * (x * i_c + i_x * c)
 		local new_target = {
-			target.x + x * c - i_x * i_c,
-			target.y + x * i_c + i_x * c
+			x = target.x + x * c - i_x * i_c,
+			y = target.y + x * i_c + i_x * c,
 		}
-
-		global.surface.create_entity{
-			name = pname_pfx .. gen,
-			position = target,
-			source = target,
-			target = new_target,
-		}
+		make_tree_spawner_projectile(global.surface, target, new_target, tree_name, gen)
 	end
 end
 
-script.on_event(defines.events.on_script_trigger_effect, function(data)
-	if string.sub(data.effect_id, 1, 23) ~= "tree-spawner-projectile" then return end
-	if data.source_position == nil or data.target_position == nil then return end
-	on_spawning_spit_landed(data)
+script.on_event(defines.events.on_entity_destroyed, function(data)
+	local event = global.entity_destroyed_script_events[data.registration_number]
+	if event ~= nil then
+		M[event.action](event)
+	end
 end)
 
 function M.small_tree_explosion(surface, tree)

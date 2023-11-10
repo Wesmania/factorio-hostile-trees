@@ -18,43 +18,21 @@ edit_spitter_projectile(tree_spitter_projectile, 30)
 
 data:extend({tree_spitter_projectile})
 
-local function generate_tree_spawner_projectile(generation, tree_name)
-	local ts = table.deepcopy(data.raw["stream"]["acid-stream-worm-small"])
-	ts.initial_action = {
-		{
-			type = "direct",
-			action_delivery = {
-				type = "instant",
-				target_effects = {
-					type = "create-entity",
-					entity_name = tree_name,
-					offset_deviation = {{-2, -2}, {2, 2}},
-					repeat_count = 2,
-					repeat_count_deviation = 1,
-					tile_collision_mask = { "object-layer", "water-tile" },
-				}
-			}
-		},
-		{
-			type = "direct",
-			action_delivery = {
-				type = "instant",
-				target_effects = {
-					type = "script",
-					effect_id = "tree-spawner-projectile-" .. tree_name .. "-" .. generation,
-				}
+local ts = table.deepcopy(data.raw["stream"]["acid-stream-worm-small"])
+ts.initial_action = {
+	{
+		type = "direct",
+		action_delivery = {
+			type = "instant",
+			target_effects = {
+				type = "script",
+				effect_id = "tree-spawner-projectile",
 			}
 		}
 	}
-	ts.name = "tree-spawner-projectile-" .. tree_name .. "-" .. generation
-	data:extend({ts})
-end
-
-for _, tree in pairs(data.raw["tree"]) do
-	for i = 1,3 do
-		generate_tree_spawner_projectile(i, tree.name)
-	end
-end
+}
+ts.name = "tree-spawner-projectile"
+data:extend({ts})
 
 function fake_biter_sounds(name, soundlist)
 	data:extend({

@@ -112,6 +112,7 @@ M.initialize = function()
 		list = {},
 		dict = {},
 	}
+	global.entity_destroyed_script_events = {}
 
 	global.spawnrates = {}
 	local biter_spawner = game.get_filtered_entity_prototypes{{filter="name", name="biter-spawner"}}["biter-spawner"]
