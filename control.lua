@@ -24,8 +24,11 @@ script.on_init(function()
 end)
 
 script.on_configuration_changed(function(info)
+	local old_grace_period = global.config.grace_period
+
 	if info.old_version ~= nil or info.mod_changes["hostile-trees"] ~= nil or info.mod_startup_settings_changed then
 		setup.initialize()
+		global.config.grace_period = old_grace_period
 	end
 end)
 
