@@ -68,6 +68,18 @@ local function check_for_major_retaliation(surface, event)
 	end
 
 	if counts < 5 then return end
+
+	local rand = math.random()
+
+	-- Chance for forest to just focus on player
+	if rand < 0.5 then
+		local maybe_character = event.cause
+		if maybe_character ~= nil and maybe_character.player ~= nil then
+			tree_events.focus_on_player(maybe_character.unit_number, 15)
+			return
+		end
+	end
+
 	-- Try to find a forested place to spawn from
 	local spawn_tree = nil
 	for i = 1,6 do

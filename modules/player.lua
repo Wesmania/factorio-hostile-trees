@@ -212,7 +212,7 @@ local function complex_random_assault(sl, tree, add_flicker, spook_player, is_in
 	end
 end
 
-function M.spooky_story(player_info, surface)
+function M.spooky_story(player_info, surface, player_is_focused_on)
 	local player = player_info.player
 
 	local ppos = player.position
@@ -221,7 +221,7 @@ function M.spooky_story(player_info, surface)
 
 	if tree_count == 0 then
 		-- Not near trees. Don't do a story, chance to reduce threat.
-		if math.random() < 0.3 then
+		if math.random() < 0.3 and not player_is_focused_on then
 			if player_info.tree_threat > 0 then
 				player_info.tree_threat = player_info.tree_threat - 1
 			elseif player_info.big_tree_threat > 0 then
@@ -236,7 +236,7 @@ function M.spooky_story(player_info, surface)
 	local sl = s.stage_list
 
 	local tree = area_util.get_random_tree(surface, box)	-- won't be nil
-	local is_in_forest = tree_count >= 40
+	local is_in_forest = tree_count >= 30
 	local is_near_a_few_trees = tree_count >= 10
 	local threat = player_info.tree_threat
 	local is_night = surface.darkness >= 0.7
@@ -245,7 +245,7 @@ function M.spooky_story(player_info, surface)
 
 	if threat >= 10 and is_near_a_few_trees then
 		-- Large event. Happens about a fifth of the time a mid-sized event does.
-		if math.random() < 0.8 then
+		if math.random() < 0.8 and not player_is_focused_on then
 			player_info.tree_threat = player_info.tree_threat + 1
 		else
 			player_info.tree_threat = threat - 10
@@ -263,7 +263,7 @@ function M.spooky_story(player_info, surface)
 		-- Mid-sized event.
 		local rand = math.random()
 		-- If we make a mid event, make a major event more likely in the future.
-		if rand < 0.5 + (player_info.big_tree_threat * 0.1) then
+		if rand < 0.5 + (player_info.big_tree_threat * 0.1) and not player_is_focused_on then
 			player_info.tree_threat = player_info.tree_threat + 1
 		else
 			player_info.tree_threat = threat - 8
@@ -295,7 +295,9 @@ function M.spooky_story(player_info, surface)
 
 	-- Small events.
 	if is_in_forest then
-		player_info.tree_threat = player_info.tree_threat + 1
+		if not player_is_focused_on then
+			player_info.tree_threat = player_info.tree_threat + 1
+		end
 
 		local rand = math.random()
 		if rand < 0.3 then
@@ -316,7 +318,7 @@ function M.spooky_story(player_info, surface)
 			sl[#sl + 1] = { "spit", {treepos = tree.position}}
 		end
 	elseif is_near_a_few_trees then
-		if math.random() < 0.3 then
+		if math.random() < 0.3 and not player_is_focused_on then
 			player_info.tree_threat = player_info.tree_threat + 1
 		end
 		local rand = math.random()

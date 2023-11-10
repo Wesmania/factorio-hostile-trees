@@ -96,14 +96,34 @@ script.on_event({defines.events.on_tick}, function(event)
 		end
 	end
 
-	if not global.config.player_events or #global.players_array == 0 then return end
-	local event_chance = #global.players_array / (global.config.player_event_frequency * 30)
-	if math.random() >= event_chance then return end
-	local player_info = global.players_array[math.random(1, #global.players_array)]
-	if not player_info.player.valid then return end
+	-- Player event check.
+
+	do
+		if not global.config.player_events or #global.players_array == 0 then goto focus_check end
+		local event_chance = #global.players_array / (global.config.player_event_frequency * 30)
+		if math.random() >= event_chance then goto focus_check end
+		local player_info = global.players_array[math.random(1, #global.players_array)]
+		if not player_info.player.valid then goto focus_check end
+		if player_info.story ~= nil then goto focus_check end
+
+		local story = player_stories.spooky_story(player_info, surface, false)
+		if story ~= nil then
+			player_info.story = story
+		end
+	end
+
+	::focus_check::
+
+	-- Player event check for players that are focused on.
+	local chance_every_sec = #global.players_focused_on.list / 60
+	if math.random() >= chance_every_sec then return end
+	local l = global.players_focused_on.list
+	local pid = l[math.random(1, #l)]
+	local player_info = global.players[pid]
+	if player_info == nil or not player_info.player.valid then return end
 	if player_info.story ~= nil then return end
 
-	local story = player_stories.spooky_story(player_info, surface)
+	local story = player_stories.spooky_story(player_info, surface, true)
 	if story ~= nil then
 		player_info.story = story
 	end

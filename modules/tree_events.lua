@@ -1,3 +1,5 @@
+local util = require("modules/util")
+
 local M = {}
 
 local function deal_damage_to_player_entities(surface, position, radius, amount)
@@ -243,5 +245,34 @@ end
 function M.run_coro(s)
 	return M[s.event_name](s)
 end
+
+function M.focus_on_player(player_id, seconds)
+	local l = global.players_focused_on.list
+	local d = global.players_focused_on.dict
+
+	if d[player_id] == nil then
+		l[#l + 1] = player_id
+	end
+	d[player_id] = {
+		seconds = seconds
+	}
+end
+
+local function unfocus_players()
+	global.players_focused_on.list = {}
+	local l = global.players_focused_on.list
+	local d = global.players_focused_on.dict
+
+	for id, info in pairs(d) do
+		info.seconds = info.seconds - 1
+		if info.seconds <= 0 then
+			d[id] = nil
+		else
+			l[#l + 1] = id
+		end
+	end
+end
+
+script.on_nth_tick(60, unfocus_players)
 
 return M

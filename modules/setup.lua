@@ -108,6 +108,10 @@ M.initialize = function()
 	global.tree_kill_locs   = {}
 	global.major_retaliation_threshold = 200	-- FIXME balance
 	global.surface          = game.get_surface("nauvis")
+	global.players_focused_on = {
+		list = {},
+		dict = {},
+	}
 
 	global.spawnrates = {}
 	local biter_spawner = game.get_filtered_entity_prototypes{{filter="name", name="biter-spawner"}}["biter-spawner"]
