@@ -13,6 +13,7 @@ M.cache_players = function()
 				local id = player.character.unit_number
 				if old_players[id] ~= nil then
 					global.players[id] = old_players[id]
+					global.players[id].player = player.character
 				else
 					global.players[id] = {
 						player = player.character,
