@@ -135,18 +135,21 @@ function M.on_spawning_spit_landed(event)
 	end
 
 	for _, gen in pairs(ts) do
-		local x = target.x - source.x
-		local i_x = source.x - target.x
+		local dp = {
+			x = target.x - source.x,
+			y = target.y - source.y,
+		}
 
 		local rot = math.random(-spread, spread) / 60
-		local dist_c = 0.8 + math.random() * 0.4
-		local c = math.cos(rot) * dist_c
-		local i_c = math.sin(rot) * dist_c
+		local dp = util.rotate(dp, rot)
 
-		-- (x + i * i_x)(c + i * i_c) = xc - i_x * i_c + i * (x * i_c + i_x * c)
+		local dist_c = 0.8 + math.random() * 0.4
+		dp.x = dp.x * dist_c
+		dp.y = dp.y * dist_c
+
 		local new_target = {
-			x = target.x + x * c - i_x * i_c,
-			y = target.y + x * i_c + i_x * c,
+			x = target.x + dp.x,
+			y = target.y + dp.y,
 		}
 		make_tree_spawner_projectile(global.surface, target, new_target, tree_name, gen)
 	end
@@ -159,15 +162,91 @@ script.on_event(defines.events.on_entity_destroyed, function(data)
 	end
 end)
 
-function M.small_tree_explosion(surface, tree)
-	if tree == nil then return end
-	local at = tree.position
-	tree.destroy()
+local function make_exploding_hopper_projectile(surface, source, target, target_entity, generation)
+	local s = surface.create_entity{
+		name = 'tree-spawner-projectile',
+		position = source,
+		source = source,
+		target = target,
+	}
+	if s ~= nil then
+		local rid = script.register_on_entity_destroyed(s)
+		global.entity_destroyed_script_events[rid] = {
+			action = "on_exploding_hopper_landed",
+			generation = generation,
+			target = target,
+			target_entity = target_entity,
+		}
+	end
+end
+
+local function calculate_hopper_target(source, target, min_dist)
+	local dp = {
+		x = target.x - source.x,
+		y = target.y - source.y,
+	}
+
+	local dist = math.sqrt(dp.x * dp.x + dp.y * dp.y)
+	if dist < min_dist then return end
+
+	local new_dist = 5.5 + math.random() * 3
+	if new_dist > dist + 2.5 then
+		new_dist = dist + 2.5
+	end
+	local rot = math.random(-15, 15) / 60
+
+	dp.x = dp.x * new_dist / dist
+	dp.y = dp.y * new_dist / dist
+	dp = util.rotate(dp, rot)
+	return {
+		x = source.x + dp.x,
+		y = source.y + dp.y,
+	}
+end
+
+function M.on_exploding_hopper_landed(event)
+	local source = event.target
+	local target_entity = event.target_entity
+	local generation = event.generation
+	local surface = global.surface
+
+	M.small_explosion(surface, source, 3, 75)
+	generation = generation - 1
+	if generation <= 0 then return end
+	-- Check here because explosion could've killed our target
+	if not target_entity.valid then return end
+
+	local target = target_entity.position
+	local new_target = calculate_hopper_target(source, target, 2.5)
+	if new_target ~= nil then
+		make_exploding_hopper_projectile(global.surface, source, new_target, target_entity, generation)
+	end
+end
+
+function M.send_homing_exploding_hopper_projectile(source, target_entity)
+	local tp = target_entity.position
+	local dx = tp.x - source.x
+	local dy = tp.y - source.y
+	local dist = math.sqrt(dx * dx + dy * dy)
+	local number_of_hops = math.floor(dist / 6) + math.random(1, 2)
+
+	local new_target = calculate_hopper_target(source, target_entity.position, 2.5)
+	make_exploding_hopper_projectile(global.surface, source, new_target, target_entity, number_of_hops)
+end
+
+function M.small_explosion(surface, at, radius, damage)
 	surface.create_entity{
 		name = 'land-mine-explosion',
 		position = at,
 	}
-	deal_damage_to_player_entities(surface, at, 5, 100)
+	deal_damage_to_player_entities(surface, at, radius, damage)
+end
+
+function M.small_tree_explosion(surface, tree)
+	if tree == nil then return end
+	local at = tree.position
+	tree.destroy()
+	M.small_explosion(surface, at, 5, 100)
 end
 
 function M.spitter_projectile(surface, treepos, building)

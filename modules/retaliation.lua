@@ -29,6 +29,19 @@ local function register_tree_death_loc(event)
 	mx[chunk_y] = mx[chunk_y] + 1
 end
 
+local function find_tree_in_forested_area(surface, pos)
+	for i = 1,6 do
+		local random_area = util.box_around({
+			x = pos.x - 24 + math.random(1, 48),
+			y = pos.y - 24 + math.random(1, 48),
+		}, 8)
+		if area_util.count_trees(surface, random_area, 20) >= 20 then
+			return area_util.get_random_tree(surface, random_area)
+		end
+	end
+	return nil
+end
+
 local function check_for_minor_retaliation(surface, event)
 	local tree = event.entity
 	local treepos = tree.position
@@ -38,11 +51,18 @@ local function check_for_minor_retaliation(surface, event)
 	local rand = math.random()
 	if rand < 0.3 then
 		tree_events.spawn_biters(surface, treepos, math.random(1, 2), "retaliation")
-	elseif rand < 0.85 and enemy ~= nil then
+	elseif rand < 0.75 and enemy ~= nil then
 		local projectiles = tree_events.default_random_projectiles()
 		for i = 1,math.random(1, 2) do
 			local random_loc = util.random_offset(treepos, 2)
 			tree_events.spit_at(surface, random_loc, enemy, projectiles)
+		end
+	elseif rand < 0.85 and enemy ~= nil then
+		for i = 1,math.random(1, 3) do
+			local tree = find_tree_in_forested_area(surface, treepos)
+			if tree ~= nil then
+				tree_events.send_homing_exploding_hopper_projectile(tree.position, enemy)
+			end
 		end
 	else
 		tree_events.poison_cloud(surface, treepos)
@@ -80,18 +100,7 @@ local function check_for_major_retaliation(surface, event)
 		end
 	end
 
-	-- Try to find a forested place to spawn from
-	local spawn_tree = nil
-	for i = 1,6 do
-		local random_area = util.box_around({
-			x = treepos.x - 24 + math.random(1, 48),
-			y = treepos.y - 24 + math.random(1, 48),
-		}, 8)
-		if area_util.count_trees(surface, random_area, 20) >= 20 then
-			spawn_tree = area_util.get_random_tree(surface, random_area)
-			break
-		end
-	end
+	local spawn_tree = find_tree_in_forested_area(surface, treepos)
 
 	local biter_count
 	if spawn_tree == nil then

@@ -56,4 +56,16 @@ function M.random_offset(pos, offset)
 	}
 end
 
+function M.rotate(position, angle)
+	local x = position.x
+	local i_x = position.y
+	local c = math.cos(angle)
+	local i_c = math.sin(angle)
+	-- (x + i * i_x)(c + i * i_c) = xc - i_x * i_c + i * (x * i_c + i_x * c)
+	return {
+		x = x * c - i_x * i_c,
+		y = x * i_c + i_x * c,
+	}
+end
+
 return M
