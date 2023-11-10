@@ -94,7 +94,7 @@ script.on_event({defines.events.on_tick}, function(event)
 	end
 
 	if not global.config.player_events or #global.players_array == 0 then return end
-	local event_chance = #global.players_array / (global.config.player_event_frequency * 60)
+	local event_chance = #global.players_array / (global.config.player_event_frequency * 30)
 	if math.random() >= event_chance then return end
 	local player_info = global.players_array[math.random(1, #global.players_array)]
 	if not player_info.player.valid then return end

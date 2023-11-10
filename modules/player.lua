@@ -243,12 +243,12 @@ function M.spooky_story(player_info, surface)
 
 	-- Eternal TODO: add more events.
 
-	if threat >= 6 and is_near_a_few_trees then
+	if threat >= 10 and is_near_a_few_trees then
 		-- Large event. Happens about a fifth of the time a mid-sized event does.
 		if math.random() < 0.8 then
 			player_info.tree_threat = player_info.tree_threat + 1
 		else
-			player_info.tree_threat = threat - 6
+			player_info.tree_threat = threat - 10
 			player_info.big_tree_threat = 0
 
 			local add_flicker = is_night and math.random() < 0.25
@@ -259,14 +259,14 @@ function M.spooky_story(player_info, surface)
 		end
 	end
 
-	if threat >= 4 then
+	if threat >= 8 then
 		-- Mid-sized event.
 		local rand = math.random()
 		-- If we make a mid event, make a major event more likely in the future.
 		if rand < 0.5 + (player_info.big_tree_threat * 0.1) then
 			player_info.tree_threat = player_info.tree_threat + 1
 		else
-			player_info.tree_threat = threat - 4
+			player_info.tree_threat = threat - 8
 			player_info.big_tree_threat = player_info.big_tree_threat + 1
 
 			local add_flicker = is_night and math.random() < 0.25
