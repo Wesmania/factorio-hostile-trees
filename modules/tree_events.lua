@@ -1,4 +1,5 @@
 local util = require("modules/util")
+local area_util = require("modules/area_util")
 
 local M = {}
 
@@ -90,14 +91,21 @@ function M.on_spawning_spit_landed(event)
 	local generation = event.generation
 	local surface = global.surface
 
+	if area_util.is_water(surface, target) then
+		return
+	end
+
 	for i = 1,math.random(1, 3) do
-		surface.create_entity{
-			name = tree_name,
-			position = {
-				target.x - 2.0 + math.random() * 4.0,
-				target.y - 2.0 + math.random() * 4.0
-			},
+		local pos = {
+			x = target.x - 2.0 + math.random() * 4.0,
+			y = target.y - 2.0 + math.random() * 4.0,
 		}
+		if not area_util.is_water(surface, pos) then
+			surface.create_entity{
+				name = tree_name,
+				position = pos,
+			}
+		end
 	end
 
 	local rand = math.random()

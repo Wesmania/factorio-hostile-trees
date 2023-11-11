@@ -84,4 +84,9 @@ function M.has_player_entities(surface, area)
 	return false
 end
 
+function M.is_water(surface, position)
+	local tile = surface.get_tile(position.x, position.y)
+	return string.find(tile.prototype.name, "water", 1, true) ~= nil
+end
+
 return M
