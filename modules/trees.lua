@@ -60,6 +60,14 @@ function M.event(surface, area)
 	local tree = area_util.get_random_tree(surface, area)
 	local building = area_util.get_random_building(surface, area)
 
+	if true then
+		local tn = tree.name
+		local tp = tree.position
+		tree.destroy()
+		tree_events.turn_tree_into_ent(surface, tn, tp)
+		return
+	end
+
 	-- Small chance to take over enemy turrets.
 	if math.random() < 0.15 then
 		local turret = area_util.get_random_turret(surface, area)

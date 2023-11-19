@@ -95,6 +95,17 @@ M.squares_to_check_per_tick_per_chunk = function(seconds_per_square)
 	return squares_per_chunk / ticks_per_square
 end
 
+function M.cache_trees_that_can_turn_into_ents()
+	local names = {}
+	for name, _ in pairs(game.entity_prototypes) do
+		if string.sub(name, 1, 4) == "ent-" then
+			local n = string.sub(name, 5, string.len(name))
+			names[n] = true
+		end
+	end
+	global.entable_trees = names
+end
+
 -- This is also called when configuration changes. We don't have any long-term
 -- state we need to preserve except grace period, so it's okay.
 M.initialize = function()
@@ -133,6 +144,7 @@ M.initialize = function()
 	global.config = M.config
 	M.cache_players()
 	M.cache_evolution_rates()
+	M.cache_trees_that_can_turn_into_ents()
 end
 
 return M
