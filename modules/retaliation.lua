@@ -6,6 +6,7 @@ script.on_nth_tick(30 * 60, function()
 	global.tree_kill_count = 0
 	global.tree_kill_locs = {}
 	global.major_retaliation_threshold = 200	-- FIXME balance
+	global.robot_tree_deconstruct_count = 0
 end)
 
 local function pos_to_coords(pos)
@@ -141,4 +142,16 @@ script.on_event(defines.events.on_entity_died, function(event)
 end, {{
 	filter = "type",
 	type = "tree",
+}})
+
+script.on_event(defines.events.on_robot_mined_entity, function(event)
+	global.robot_tree_deconstruct_count = global.robot_tree_deconstruct_count + 1
+	if global.robot_tree_deconstruct_count % 20 == 0 and global.config.retaliation_enabled then
+		if math.random() < 0.05 then	-- TODO balance. Maybe too rare?
+			tree_events.turn_construction_bot_hostile(game.get_surface(1), event.robot)
+		end
+	end
+end, {{
+filter = "type",
+type = "tree",
 }})

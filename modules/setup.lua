@@ -96,7 +96,7 @@ M.squares_to_check_per_tick_per_chunk = function(seconds_per_square)
 end
 
 -- This is also called when configuration changes. We don't have any long-term
--- state we need to preserve, so it's okay.
+-- state we need to preserve except grace period, so it's okay.
 M.initialize = function()
 	global.players          = {}
 	global.players_array    = {}
@@ -105,6 +105,7 @@ M.initialize = function()
 	global.accum            = 0
 	global.tree_stories     = {}
 	global.tree_kill_count  = 0
+	global.robot_tree_deconstruct_count = 0
 	global.tree_kill_locs   = {}
 	global.major_retaliation_threshold = 200	-- FIXME balance
 	global.surface          = game.get_surface("nauvis")

@@ -479,6 +479,20 @@ local function unfocus_players()
 	end
 end
 
+function M.turn_construction_bot_hostile(surface, bot)
+	local pos = bot.position
+	bot.destroy()
+	local newbot = surface.create_entity({
+		name = "destroyer",
+		position = pos
+	})
+	if newbot == nil then return end
+	-- We can't make bots hostile, but we can make them follow the closest enemy until they die.
+	-- It's good enough and looks really cool.
+	local enemy = surface.find_nearest_enemy_entity_with_owner{position=pos, max_distance=50, force="enemy"}
+	newbot.combat_robot_owner = enemy
+end
+
 script.on_nth_tick(60, unfocus_players)
 
 return M
