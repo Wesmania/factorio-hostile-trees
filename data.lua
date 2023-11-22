@@ -109,39 +109,50 @@ local function generate_ent_animation(tree_data)
 		end
 	end
 
-	local adjust_frame_count = function(l, target)
+	local for_each_anim = function(l, action)
 		if l.layers ~= nil then
 			for _, ll in pairs(l.layers) do
-				ll.frame_count = target
+				action(ll)
 				if ll.hr_version ~= nil then
-					ll.hr_version.frame_count = target
+					action(ll.hr_version)
 				end
 			end
 		else
-			l.frame_count = target
+			action(l)
 			if l.hr_version ~= nil then
-				l.hr_version.frame_count = target
+				action(l.hr_version)
 			end
 		end
 	end
 
+	local adjust_frame_count = function(l, target)
+		for_each_anim(l, function(v)
+			v.frame_count = target
+		end)
+	end
+
+	local set_tint = function(l, tint)
+		for_each_anim(l, function(v)
+			v.tint = tint
+		end)
+	end
+
+	local s = table.deepcopy(v.trunk)
+	adjust_frame_count(s, 1)
+	add_layer(s)
+
 	for _, l in pairs({ v.leaves, v.overlay }) do
 		local ll = table.deepcopy(l)
 		adjust_frame_count(ll, 1)
+		set_tint(ll, {r=0.75, g=1.0, b=0.75, a=1})
 		add_layer(ll)
 	end
-
---	local fc = get_frame_count(v.leaves)
 
 	if v.shadow ~= nil then
 		local s = table.deepcopy(v.shadow)
 		adjust_frame_count(s, 1)
 		add_layer(s)
 	end
-
-	local s = table.deepcopy(v.trunk)
-	adjust_frame_count(s, 1)
-	add_layer(s)
 
 	return {
 		layers = layers
