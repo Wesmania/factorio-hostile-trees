@@ -78,8 +78,7 @@ local function can_generate_ent(tree_data)
 	return tree_data.variations ~= nil
 end
 
-local function generate_ent_animation(tree_data)
-	local v = tree_data.variations[1]
+local function generate_ent_animation(tree_data, v, color)
 	local layers = {}
 
 	local fixup_anim = function(a)
@@ -141,13 +140,17 @@ local function generate_ent_animation(tree_data)
 	adjust_frame_count(s, 1)
 	add_layer(s)
 
-	for _, l in pairs({ v.leaves, v.overlay }) do
-		local ll = table.deepcopy(l)
+	if v.leaves ~= nil then
+		local ll = table.deepcopy(v.leaves)
 		adjust_frame_count(ll, 1)
-		set_tint(ll, {r=0.75, g=1.0, b=0.75, a=1})
+		set_tint(ll, color)
 		add_layer(ll)
 	end
-
+	if v.overlay ~= nil then
+		local ll = table.deepcopy(v.overlay)
+		adjust_frame_count(ll, 1)
+		add_layer(ll)
+	end
 	if v.shadow ~= nil then
 		local s = table.deepcopy(v.shadow)
 		adjust_frame_count(s, 1)
@@ -161,24 +164,29 @@ end
 
 local function generate_ent(tree_data)
 	local unit = table.deepcopy(data.raw["unit"]["small-biter"])
-	unit.name = "ent-" .. tree_data.name
 	unit.icon = tree_data.icon
 	unit.corpse = tree_data.corpse
 	unit.dying_explosion = nil
-	unit.run_animation = generate_ent_animation(tree_data)
 	unit.dying_sound = nil
 	unit.working_sound = nil
 	unit.running_sound_animation_positions = nil
 	unit.walking_sound = nil
 	unit.water_reflection = nil
-	unit.attack_parameters.animation = generate_ent_animation(tree_data)
 	unit.attack_parameters.sound = nil
-	data:extend({unit})
+	unit.collision_box = tree_data.collision_box
+
+	for i, variation in ipairs(tree_data.variations) do
+		local vunit = table.deepcopy(unit)
+		local anim = generate_ent_animation(tree_data, variation, tree_data.colors[i])
+		vunit.attack_parameters.animation = anim
+		vunit.run_animation = anim
+		vunit.name = "hostile-trees-ent-" .. tree_data.name .. "-" .. string.format("%03d", i)
+		data:extend({vunit})
+	end
 end
 
 for _, tree in pairs(data.raw["tree"]) do
 	if can_generate_ent(tree) then
-		generate_ent_animation(tree)
 		generate_ent(tree)
 	end
 end

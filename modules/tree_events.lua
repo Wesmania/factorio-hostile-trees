@@ -493,12 +493,13 @@ function M.turn_construction_bot_hostile(surface, bot)
 	newbot.combat_robot_owner = enemy
 end
 
-function M.turn_tree_into_ent(surface, tree_name, tree_pos)
-	if global.entable_trees[tree_name] == nil then return false end
+function M.turn_tree_into_ent(surface, tree)
+	if global.entable_trees[tree.name] == nil then return false end
 	surface.create_entity{
-		name = "ent-" .. tree_name,
-		position = tree_pos,
+		name = "hostile-trees-ent-" .. tree.name .. "-" .. string.format("%03d", tree.graphics_variation),
+		position = tree.position,
 	}
+	tree.destroy()
 	return true
 end
 

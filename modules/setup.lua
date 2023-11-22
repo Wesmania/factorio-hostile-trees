@@ -98,8 +98,8 @@ end
 function M.cache_trees_that_can_turn_into_ents()
 	local names = {}
 	for name, _ in pairs(game.entity_prototypes) do
-		if string.sub(name, 1, 4) == "ent-" then
-			local n = string.sub(name, 5, string.len(name))
+		if string.sub(name, 1, 18) == "hostile-trees-ent-" then
+			local n = string.sub(name, 19, string.len(name) - 4)
 			names[n] = true
 		end
 	end
@@ -108,6 +108,7 @@ end
 
 -- This is also called when configuration changes. We don't have any long-term
 -- state we need to preserve except grace period, so it's okay.
+-- Also, Factorio deletes unknown entities for us, which is nice.
 M.initialize = function()
 	global.players          = {}
 	global.players_array    = {}
