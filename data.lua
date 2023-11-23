@@ -1,4 +1,5 @@
 local stdlib_util = require("__core__/lualib/util")
+local entity_sounds = require("__base__/prototypes/entity/sounds")
 
 local function edit_spitter_projectile(p, damage_mult)
 	for _, e in pairs(p.initial_action) do
@@ -162,6 +163,17 @@ local function generate_ent_animation(tree_data, v, color)
 	}
 end
 
+local ent_walk_sounds = {}
+local s = entity_sounds
+for _, t in ipairs({ s.plant, s.small_bush, s.big_bush }) do
+	for _, tt in ipairs(t) do
+		ent_walk_sounds[#ent_walk_sounds + 1] = {
+			filename = tt.filename,
+			volume = 0.4,
+		}
+	end
+end
+
 local function generate_ent(tree_data)
 	local unit = table.deepcopy(data.raw["unit"]["small-biter"])
 	unit.icon = tree_data.icon
@@ -169,8 +181,8 @@ local function generate_ent(tree_data)
 	unit.dying_explosion = nil
 	unit.dying_sound = nil
 	unit.working_sound = nil
-	unit.running_sound_animation_positions = nil
-	unit.walking_sound = nil
+	unit.running_sound_animation_positions = {120,}		-- TODO do specific values do anything?
+	unit.walking_sound = ent_walk_sounds
 	unit.water_reflection = nil
 	unit.attack_parameters.sound = nil
 	unit.collision_box = tree_data.collision_box
