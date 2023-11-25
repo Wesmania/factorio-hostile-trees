@@ -225,7 +225,7 @@ local function check_for_major_retaliation(surface, event)
 		maybe_nearby_player = maybe_character
 	end
 
-	if rand < 0.2 then
+	if rand < 0.2 or true then
 		entify_trees_in_cone(surface,
 		                     treepos,
 				     0.8, -- ~48 degrees

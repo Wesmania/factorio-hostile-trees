@@ -77,6 +77,6 @@ data:extend({tree_poison})
 
 for _, tree in pairs(data.raw["tree"]) do
 	if ents.can_generate_ent(tree) then
-		ents.generate_ent(tree)
+		ents.generate_ent(tree, "exploder")
 	end
 end
