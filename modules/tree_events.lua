@@ -494,13 +494,49 @@ function M.turn_construction_bot_hostile(surface, bot)
 end
 
 function M.turn_tree_into_ent(surface, tree)
-	if global.entable_trees[tree.name] == nil then return false end
-	surface.create_entity{
+	if global.entable_trees[tree.name] == nil then return nil end
+	local ent = surface.create_entity{
 		name = "hostile-trees-ent-" .. tree.name .. "-" .. string.format("%03d", tree.graphics_variation),
 		position = tree.position,
 	}
 	tree.destroy()
+	return ent
+end
+
+function M.event_ent_war(s)
+	local twt = s.trees_with_times
+	if s.idx > #twt or s.frame > 1200 then
+		return false
+	end
+	s.frame = s.frame + 1
+	while s.idx <= #twt and twt[s.idx][2] < s.frame do
+		local t = twt[s.idx][1]
+		s.idx = s.idx + 1
+		if not t.valid then goto continue end
+
+		local ent = M.turn_tree_into_ent(s.surface, t)
+		if not ent then goto continue end
+
+		if s.target ~= nil and s.target.valid then
+			ent.set_command({
+				type = defines.command.attack,
+				target = s.target,
+			})
+		end
+		::continue::
+	end
 	return true
+end
+
+function M.add_ent_war_story(surface, trees_with_times, target)
+	local s = {}
+	s.surface = surface
+	s.trees_with_times = trees_with_times
+	s.target = target
+	s.frame = 0
+	s.idx = 1
+	s.event_name = "event_ent_war"
+	global.tree_stories[#global.tree_stories + 1] = s
 end
 
 script.on_nth_tick(60, unfocus_players)

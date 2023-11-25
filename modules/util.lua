@@ -68,4 +68,21 @@ function M.rotate(position, angle)
 	}
 end
 
+function M.len2(pos1)
+	return pos1.x * pos1.x + pos1.y * pos1.y
+end
+
+function M.dist2(pos1, pos2)
+	local dx = pos1.x - pos2.x
+	local dy = pos1.y - pos2.y
+	return dx * dx + dy * dy
+end
+
+-- Is vec2 rotated clockwise relative to vec1?
+function M.clockwise(vec1, vec2)
+	-- Multiply vec2 by conjugate of vec1 to subtract angles. If i < 0, then vec2 is clockwise to vec1.
+	-- Re(vec2) * -Im(vec1) * i + Im(vec2) * Re(vec1) < 0
+	return vec2.x * (-vec1.y) + vec2.y * vec1.x < 0
+end
+
 return M

@@ -105,10 +105,16 @@ function M.event(surface, area)
 end
 
 -- Events from tree_events that we want available as tree stories.
+-- TODO separate file for tree stories?
 
 -- For tree_events.spawn_biters_over_time
 function M.event_spawn_biters(s)
 	return tree_events.event_spawn_biters(s)
+end
+
+-- For tree_events.add_ent_war_story
+function M.event_ent_war(s)
+	return tree_events.event_ent_war(s)
 end
 
 function M.run_coro(s)
