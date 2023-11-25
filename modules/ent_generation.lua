@@ -217,7 +217,7 @@ local function exploder_ammo_type(ent_data)
 					},
 					{
 						type = "create-entity",
-						entity_name = "explosion",
+						entity_name = "big-explosion",
 					},
 					{
 						type = "create-entity",
