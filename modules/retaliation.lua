@@ -226,12 +226,16 @@ local function check_for_major_retaliation(surface, event)
 	end
 
 	if rand < 0.2 or true then
+		local enemy = surface.find_nearest_enemy_entity_with_owner{position=treepos, max_distance=32, force="enemy"}
+		if enemy == nil then
+			enemy = maybe_nearby_player
+		end
 		entify_trees_in_cone(surface,
 		                     treepos,
 				     0.8, -- ~48 degrees
 				     8,
 				     4,
-				     maybe_nearby_player)
+				     enemy)
 		return
         end
 

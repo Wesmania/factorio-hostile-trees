@@ -29,7 +29,7 @@ local ent_balance = {
 			{
 				type = "physical",
 				decrease = 4,
-				percent = 82,
+				percent = 85,
 			},
 			{
 				type = "explosion",
