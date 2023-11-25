@@ -28,6 +28,34 @@ M.cache_players = function()
 	end
 end
 
+local function interpolate_evolution_rates(evolution, rates, new_entries, rate_adjust)
+	for _, entry in ipairs(rates) do
+		local unit = entry.unit
+		local unit_rates = entry.spawn_points
+		local probability = nil
+		if unit_rates[1].evolution_factor >= evolution then
+			probability = unit_rates[1].weight
+		end
+		if unit_rates[#unit_rates].evolution_factor <= evolution then
+			probability = unit_rates[#unit_rates].weight
+		end
+		for i = 1,#unit_rates - 1 do
+			-- Linear interpolation, rates are ascending by evolution_factor
+			if unit_rates[i].evolution_factor <= evolution and evolution < unit_rates[i + 1].evolution_factor then
+				local range = unit_rates[i + 1].evolution_factor - unit_rates[i].evolution_factor
+				local r1 = (evolution - unit_rates[i].evolution_factor) / range
+				probability = unit_rates[i].weight * r1 + unit_rates[i + 1].weight * (1 - r1)
+			end
+		end
+		if probability == nil then
+			probability = 0
+		end
+		if probability ~= 0 then
+			new_entries[#new_entries + 1] = { unit, probability * rate_adjust}
+		end
+	end
+end
+
 local function cache_evolution_for(evolution)
 	local new_entries = {}
 	local enemy_rates = {
@@ -38,32 +66,7 @@ local function cache_evolution_for(evolution)
 	-- Collect spawn rates from saved spawner tables.
 	for enemy_kind, rates in pairs(global.spawnrates) do
 		local rate_adjust = enemy_rates[enemy_kind]
-
-		for _, entry in ipairs(rates) do
-			local unit = entry.unit
-			local unit_rates = entry.spawn_points
-			local probability = nil
-			if unit_rates[1].evolution_factor >= evolution then
-				probability = unit_rates[1].weight
-			end
-			if unit_rates[#unit_rates].evolution_factor <= evolution then
-				probability = unit_rates[#unit_rates].weight
-			end
-			for i = 1,#unit_rates - 1 do
-				-- Linear interpolation, rates are ascending by evolution_factor
-				if unit_rates[i].evolution_factor <= evolution and evolution < unit_rates[i + 1].evolution_factor then
-					local range = unit_rates[i + 1].evolution_factor - unit_rates[i].evolution_factor
-					local r1 = (evolution - unit_rates[i].evolution_factor) / range
-					probability = unit_rates[i].weight * r1 + unit_rates[i + 1].weight * (1 - r1)
-				end
-			end
-			if probability == nil then
-				probability = 0
-			end
-			if probability ~= 0 then
-				new_entries[#new_entries + 1] = { unit, probability * rate_adjust}
-			end
-		end
+		interpolate_evolution_rates(evolution, rates, new_entries, rate_adjust)
 	end
 
 	local res = {}
