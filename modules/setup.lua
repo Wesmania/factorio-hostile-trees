@@ -1,3 +1,5 @@
+local ents = require("modules/ent_generation")
+
 local M = {}
 
 M.config = {}
@@ -56,21 +58,8 @@ local function interpolate_evolution_rates(evolution, rates, new_entries, rate_a
 	end
 end
 
-local function cache_evolution_for(evolution)
-	local new_entries = {}
-	local enemy_rates = {
-		biters = 0.75,
-		spitters = 0.25,
-	}
-
-	-- Collect spawn rates from saved spawner tables.
-	for enemy_kind, rates in pairs(global.spawnrates) do
-		local rate_adjust = enemy_rates[enemy_kind]
-		interpolate_evolution_rates(evolution, rates, new_entries, rate_adjust)
-	end
-
+local function normalize_rates(new_entries)
 	local res = {}
-	-- Now normalize rates and set values.
 	local total_prob = 0
 	for _, entry in ipairs(new_entries) do
 		total_prob = total_prob + entry[2]
@@ -84,11 +73,34 @@ local function cache_evolution_for(evolution)
 	return res
 end
 
+local function cache_evolution_for(evolution)
+	local new_entries = {}
+	local enemy_rates = {
+		biters = 0.75,
+		spitters = 0.25,
+	}
+
+	-- Collect spawn rates from saved spawner tables.
+	for enemy_kind, rates in pairs(global.spawnrates) do
+		local rate_adjust = enemy_rates[enemy_kind]
+		interpolate_evolution_rates(evolution, rates, new_entries, rate_adjust)
+	end
+
+	return normalize_rates(new_entries)
+end
+
+local function cache_evolution_for_ents(evolution)
+	local new_entries = {}
+	interpolate_evolution_rates(evolution, ents.spawnrates, new_entries, 1.0)
+	return normalize_rates(new_entries)
+end
+
 M.cache_evolution_rates = function()
 	local evolution = game.forces["enemy"].evolution_factor
 	global.spawntable = {
 		default = cache_evolution_for(evolution),
 		retaliation = cache_evolution_for(evolution + 0.1),
+		ents = cache_evolution_for_ents(evolution)
 	}
 end
 
@@ -101,9 +113,9 @@ end
 function M.cache_trees_that_can_turn_into_ents()
 	local names = {}
 	for name, _ in pairs(game.entity_prototypes) do
-		if string.sub(name, 1, 18) == "hostile-trees-ent-" then
-			local n = string.sub(name, 19, string.len(name) - 4)
-			names[n] = true
+		local parts = ents.split_ent_entity_name(name)
+		if parts ~= nil then
+			names[parts.name] = true
 		end
 	end
 	global.entable_trees = names

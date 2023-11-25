@@ -76,7 +76,9 @@ tree_poison.action.action_delivery.target_effects.action.force = "enemy"
 data:extend({tree_poison})
 
 for _, tree in pairs(data.raw["tree"]) do
-	if ents.can_generate_ent(tree) then
-		ents.generate_ent(tree, "exploder")
+	for _, ent_type in pairs(ents.spawnrates) do
+		if ents.can_generate_ent(tree) then
+			ents.generate_ent(tree, ent_type.unit)
+		end
 	end
 end

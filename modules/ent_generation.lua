@@ -9,7 +9,7 @@ end
 local function generate_ent_animation(tree_data, v, color, unit_type)
 	local layers = {}
 
-	if unit_type == "exploder" and color ~= nil then
+	if unit_type == "exp" and color ~= nil then
 		-- Make it red
 		if color ~= nil then
 			color = {
@@ -181,7 +181,7 @@ function M.generate_ent(tree_data, unit_type)
 	unit.attack_parameters.sound = nil
 	unit.collision_box = tree_data.collision_box
 
-	if unit_type == "exploder" then
+	if unit_type == "exp" then
 		unit.attack_parameters.ammo_type = exploder_ammo_type(unit)
 	end
 
@@ -190,9 +190,56 @@ function M.generate_ent(tree_data, unit_type)
 		local anim = generate_ent_animation(tree_data, variation, tree_data.colors[i], unit_type)
 		vunit.attack_parameters.animation = anim
 		vunit.run_animation = anim
-		vunit.name = "hostile-trees-ent-" .. tree_data.name .. "-" .. string.format("%03d", i)
+		vunit.name = M.make_ent_entity_name{
+			name = tree_data.name,
+			variation = i,
+			unit_variant = unit_type,
+		}
 		data:extend({vunit})
 	end
 end
+
+function M.split_ent_entity_name(name)
+		if string.sub(name, 1, 18) ~= "hostile-trees-ent-" then return nil end
+		local l = string.len(name)
+		return {
+			name = string.sub(name, 19, l - 8),
+			variation = tonumber(string.sub(name, l - 7, l - 4)),
+			unit_variant = string.sub(name, l - 3, l),
+		}
+end
+
+function M.make_ent_entity_name(params)
+		return "hostile-trees-ent-" .. params.name .. "-" .. string.format("%03d", params.variation) .. "-" .. params.unit_variant
+end
+
+M.spawnrates = {
+	{
+		unit = "ent",
+		spawn_points = {
+			{
+				evolution_factor = 0.0,
+				weight = 1.0,
+			},
+			{
+				evolution_factor = 1.0,
+				weight = 0.3,
+			},
+		},
+	},
+	{
+		unit = "exp",
+		spawn_points = {
+			{
+				evolution_factor = 0.2,
+				weight = 0.0,
+			},
+			{
+				evolution_factor = 1.0,
+				weight = 0.7,
+			},
+		},
+	},
+}
 
 return M

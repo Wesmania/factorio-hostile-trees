@@ -1,5 +1,6 @@
 local util = require("modules/util")
 local area_util = require("modules/area_util")
+local ents = require("modules/ent_generation")
 
 local M = {}
 
@@ -305,7 +306,7 @@ function M.default_random_projectiles()
 		end
 end
 
-function M.pick_random_enemy_type(rate_tree)
+function M.pick_random_enemy_type(rate_tree, default)
 	if rate_tree == nil then rate_tree = "default" end
 
 	local rand = math.random()
@@ -315,7 +316,7 @@ function M.pick_random_enemy_type(rate_tree)
 		res = entry[1]
 	end
 	if res == nil then
-		res = 'small-biter'
+		res = default
 	end
 	return res
 end
@@ -327,7 +328,7 @@ function M.spawn_biters(surface, treepos, count, rate_table)
 	}
 
 	for i = 1,count do
-		local biter = M.pick_random_enemy_type(rate_table)
+		local biter = M.pick_random_enemy_type(rate_table, 'small-biter')
 		actual_pos.x = treepos.x + math.random() * 5 - 2.5
 		actual_pos.y = treepos.y + math.random() * 5 - 2.5
 		surface.create_entity{
@@ -354,7 +355,7 @@ function M.event_spawn_biters(s)
 	s.wait_interval = s.wait_interval - 1
 	if s.wait_interval > 0 then return true end
 	s.spawned = s.spawned + 1
-	local biter = M.pick_random_enemy_type(s.rate_table)
+	local biter = M.pick_random_enemy_type(s.rate_table, 'small-biter')
 	s.actual_pos.x = s.position.x + math.random() * 5 - 2.5
 	s.actual_pos.y = s.position.y + math.random() * 5 - 2.5
 	s.surface.create_entity{
@@ -495,8 +496,13 @@ end
 
 function M.turn_tree_into_ent(surface, tree)
 	if global.entable_trees[tree.name] == nil then return nil end
+	local rand_ent = M.pick_random_enemy_type("ents", "ent")
 	local ent = surface.create_entity{
-		name = "hostile-trees-ent-" .. tree.name .. "-" .. string.format("%03d", tree.graphics_variation),
+		name = ents.make_ent_entity_name{
+			name = tree.name,
+			variation = tree.graphics_variation,
+			unit_variant = rand_ent,
+		},
 		position = tree.position,
 	}
 	tree.destroy()
