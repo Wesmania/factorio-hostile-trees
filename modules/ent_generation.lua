@@ -133,7 +133,7 @@ local function exploder_ammo_type(ent_data)
 					type = "damage",
 					affects_target = true,
 					show_in_tooltip = false,
-					damage = { amount = ent_data.max_health * 100 , type = "explosion"}
+					damage = { amount = ent_data.max_health * 2 , type = "explosion"}
 				},
 				target_effects = {
 					{
@@ -141,6 +141,7 @@ local function exploder_ammo_type(ent_data)
 						action = {
 							type = "area",
 							radius = 3,
+							force = "enemy",
 							action_delivery = {
 								type = "instant",
 								target_effects = {
