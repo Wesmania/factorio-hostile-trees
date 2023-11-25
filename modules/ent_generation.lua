@@ -1,5 +1,64 @@
 local entity_sounds = require("__base__/prototypes/entity/sounds")
 
+local ent_balance = {
+	ent = {		-- Should be between small and medium biter.
+		max_health = 30,
+		healing_per_tick = 0.01,
+		movement_speed = 0.2,
+		resistances = {
+			{
+				type = "physical",
+				decrease = 2,
+				percent = 10,
+			},
+			{
+				type = "explosion",
+				percent = 10,
+			},
+			{
+				type = "fire",
+				percent = 90,
+			},
+		},
+	},
+	exp = {		-- Should be between medium and large biter.
+		max_health = 30,	-- Low health but high resistances so that laser turrets and fire demolish it.
+		healing_per_tick = 0.01,
+		movement_speed = 0.25,
+		resistances = {
+			{
+				type = "physical",
+				decrease = 4,
+				percent = 82,
+			},
+			{
+				type = "explosion",
+				percent = 99,
+			},
+			{
+				type = "acid",
+				percent = 80,
+			},
+			{
+				type = "poison",
+				percent = 90,
+			},
+		},
+		explosion = {
+			radius = 4,
+			damage = 60,
+		}
+	},
+}
+
+local function apply_ent_balance(unit, type)
+	local params = ent_balance[type]
+	unit.max_health = params.max_health
+	unit.healing_per_tick = params.healing_per_tick
+	unit.resistances = params.resistances
+	unit.movement_speed = params.movement_speed
+end
+
 local M = {}
 
 function M.can_generate_ent(tree_data)
@@ -9,20 +68,21 @@ end
 local function generate_ent_animation(tree_data, v, color, unit_type)
 	local layers = {}
 
-	if unit_type == "exp" and color ~= nil then
+	if unit_type == "exp" then
 		-- Make it red
 		if color ~= nil then
-			color = {
-				r = color.g,
-				g = color.r,
+			local newcolor = {
+				r = (0.9 * 255) + color.g * 0.1,
+				g = 0.2 * color.r,
 				b = color.b,
 				a = color.a
 			}
+			color = newcolor
 		else
 			color = {
-				r = 1.0,
-				g = 0.5,
-				b = 0.5,
+				r = 0.9,
+				g = 0.2,
+				b = 0.2,
 				a = 1.0,
 			}
 		end
@@ -121,6 +181,7 @@ for _, t in ipairs({ s.plant, s.small_bush, s.big_bush }) do
 end
 
 local function exploder_ammo_type(ent_data)
+	local params = ent_balance.exp.explosion
 	return
 	{
 		category = "melee",
@@ -133,21 +194,21 @@ local function exploder_ammo_type(ent_data)
 					type = "damage",
 					affects_target = true,
 					show_in_tooltip = false,
-					damage = { amount = ent_data.max_health * 2 , type = "explosion"}
+					damage = { amount = ent_data.max_health * 2 , type = "fire"}
 				},
 				target_effects = {
 					{
 						type = "nested-result",
 						action = {
 							type = "area",
-							radius = 3,
+							radius = params.radius,
 							force = "enemy",
 							action_delivery = {
 								type = "instant",
 								target_effects = {
 									type = "damage",
 									damage = {
-										amount = 10,
+										amount = params.damage,
 										type = "explosion",
 									}
 								}
@@ -182,6 +243,7 @@ function M.generate_ent(tree_data, unit_type)
 	unit.attack_parameters.sound = nil
 	unit.collision_box = tree_data.collision_box
 
+	apply_ent_balance(unit, unit_type)
 	if unit_type == "exp" then
 		unit.attack_parameters.ammo_type = exploder_ammo_type(unit)
 	end
@@ -232,7 +294,7 @@ M.spawnrates = {
 		unit = "exp",
 		spawn_points = {
 			{
-				evolution_factor = 0.2,
+				evolution_factor = 0.25,
 				weight = 0.0,
 			},
 			{
