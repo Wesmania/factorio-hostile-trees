@@ -225,7 +225,7 @@ local function check_for_major_retaliation(surface, event)
 		maybe_nearby_player = maybe_character
 	end
 
-	if rand < 0.2 or true then
+	if rand < 0.2 then
 		local enemy = surface.find_nearest_enemy_entity_with_owner{position=treepos, max_distance=32, force="enemy"}
 		if enemy == nil then
 			enemy = maybe_nearby_player
