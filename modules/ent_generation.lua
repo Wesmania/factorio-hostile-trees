@@ -1,4 +1,5 @@
 local entity_sounds = require("__base__/prototypes/entity/sounds")
+require("__base__/prototypes/entity/spitter-animations")
 
 local ent_balance = {
 	ent = {		-- Should be between small and medium biter.
@@ -49,6 +50,92 @@ local ent_balance = {
 			damage = 60,
 		}
 	},
+	beh = {		-- Should be between medium and large biter.
+		max_health = 300,	-- Strong and has great resistances, but weak to explosions. Arm these landmines!
+		healing_per_tick = 0.10,
+		movement_speed = 0.1,
+		resistances = {
+			{
+				type = "physical",
+				decrease = 8,
+				percent = 85,
+			},
+			{
+				type = "explosion",
+				decrease = 50,
+			},
+			{
+				type = "acid",
+				percent = 90,
+			},
+			{
+				type = "poison",
+				percent = 60,
+			},
+			{
+				type = "laser",
+				percent = 96,
+			},
+			{
+				type = "fire",
+				percent = 96,
+			},
+			{
+				type = "electric",
+				percent = 80,
+			},
+		},
+		-- We'd like to re-use spitter projectile here, but base file
+		-- makes a require() that makes it impossible to import.
+		-- So, let's just copypaste.
+		attack_parameters = function() return {
+			type = "stream",
+			ammo_category = "biological",
+			cooldown = 100,
+			cooldown_deviation = 0.15,
+			range = 10,
+			range_mode = "bounding-box-to-bounding-box",
+			min_attack_distance = 2,
+			damage_modifier = 10,
+			warmup = 30,
+			projectile_creation_parameters = spitter_shoot_shiftings(1, 20),
+			use_shooter_direction = true,
+			lead_target_for_projectile_speed = 0.2* 0.75 * 1.5 *1.5, -- this is same as particle horizontal speed of flamethrower fire stream
+			ammo_type = {
+				category = "biological",
+				action = {
+					{
+						type = "direct",
+						action_delivery = {
+							type = "stream",
+							stream = "acid-stream-spitter-big",
+						}
+					},
+					{
+						type = "direct",
+						action_delivery = {
+							type = "stream",
+							stream = "flamethrower-fire-stream",
+						}
+					}
+				}
+			},
+			cyclic_sound = {
+				begin_sound = {
+					{ filename = "__base__/sound/creatures/spitter-spit-start-1.ogg", volume = 0.27 },
+					{ filename = "__base__/sound/creatures/spitter-spit-start-2.ogg", volume = 0.27 },
+					{ filename = "__base__/sound/creatures/spitter-spit-start-3.ogg", volume = 0.27 },
+					{ filename = "__base__/sound/creatures/spitter-spit-start-4.ogg", volume = 0.27 }
+				},
+				middle_sound = {
+					{ filename = "__base__/sound/fight/flamethrower-mid.ogg", volume = 0 }
+				},
+				end_sound = {
+					{ filename = "__base__/sound/creatures/spitter-spit-end-1.ogg", volume = 0 }
+				}
+			},
+		} end
+	},
 }
 
 local function apply_ent_balance(unit, type)
@@ -82,6 +169,25 @@ local function generate_ent_animation(tree_data, v, color, unit_type)
 			color = {
 				r = 0.9,
 				g = 0.2,
+				b = 0.2,
+				a = 1.0,
+			}
+		end
+	elseif unit_type == "beh" then
+		-- Make it yellow
+		if color ~= nil then
+			local avg = (color.r + color.g) / 2
+			local newcolor = {
+				r = (0.9 * 255) + avg * 0.1,
+				g = (0.6 * 255) + avg * 0.1,
+				b = color.b,
+				a = color.a
+			}
+			color = newcolor
+		else
+			color = {
+				r = 0.9,
+				g = 0.6,
 				b = 0.2,
 				a = 1.0,
 			}
@@ -231,6 +337,8 @@ local function exploder_ammo_type(ent_data)
 end
 
 function M.generate_ent(tree_data, unit_type)
+	local balance = ent_balance[unit_type]
+
 	local unit = table.deepcopy(data.raw["unit"]["small-biter"])
 	unit.icon = tree_data.icon
 	unit.corpse = tree_data.corpse
@@ -240,8 +348,12 @@ function M.generate_ent(tree_data, unit_type)
 	unit.running_sound_animation_positions = {120,}		-- TODO do specific values do anything?
 	unit.walking_sound = ent_walk_sounds
 	unit.water_reflection = nil
-	unit.attack_parameters.sound = nil
 	unit.collision_box = tree_data.collision_box
+
+	if balance.attack_parameters ~= nil then
+		unit.attack_parameters = balance.attack_parameters()
+	end
+	unit.attack_parameters.sound = nil
 
 	apply_ent_balance(unit, unit_type)
 	if unit_type == "exp" then
@@ -286,7 +398,7 @@ M.spawnrates = {
 			},
 			{
 				evolution_factor = 1.0,
-				weight = 0.3,
+				weight = 0.15,
 			},
 		},
 	},
@@ -298,8 +410,25 @@ M.spawnrates = {
 				weight = 0.0,
 			},
 			{
-				evolution_factor = 1.0,
+				evolution_factor = 0.6,
 				weight = 0.7,
+			},
+			{
+				evolution_factor = 1.0,
+				weight = 0.2,
+			},
+		},
+	},
+	{
+		unit = "beh",
+		spawn_points = {
+			{
+				evolution_factor = 0.6,
+				weight = 0.0,
+			},
+			{
+				evolution_factor = 1.0,
+				weight = 0.6,
 			},
 		},
 	},
