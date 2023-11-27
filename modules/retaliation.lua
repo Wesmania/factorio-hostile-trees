@@ -67,109 +67,6 @@ local function find_close_tree(surface, pos)
 	return closest_trees[math.random(1, 4)][2]
 end
 
-local function entify_trees_in_cone(surface, pos, angle, radius, speed, target)
-	local close_tree = find_close_tree(surface, pos)
-	if close_tree == nil then return end
-
-	local vec_to_tree = {
-		x = close_tree.position.x - pos.x,
-		y = close_tree.position.y - pos.y,
-	}
-
-	-- If we're really close, move the point further away.
-	local len2 = math.sqrt(util.len2(vec_to_tree))
-	if len2 == 0 then return end
-	local multiplier = 1
-	if len2 < radius * 0.75 then
-		multiplier = radius * 0.75 / len2
-	end
-
-	local point_away = {
-		x = pos.x - (vec_to_tree.x * multiplier),
-		y = pos.y - (vec_to_tree.y * multiplier),
-	}
-
-	local vec_towards = {
-		x = close_tree.position.x - point_away.x,
-		y = close_tree.position.y - point_away.y,
-	}
-
-	local cone_base = math.sqrt(vec_towards.x * vec_towards.x + vec_towards.y * vec_towards.y)
-	local cone_radius = cone_base + radius
-	local cone_radius2 = cone_radius * cone_radius
-
-	local vec_left = util.rotate(vec_towards, angle)
-	local vec_right = util.rotate(vec_towards, -angle)
-
-	if false then
-		local dl = function(o)
-			rendering.draw_line{
-				time_to_live = 600,
-				surface = surface,
-				color = o.color,
-				width = 10,
-				from = o.from,
-				to = o.to,
-			}
-		end
-		dl{
-			color = {r = 0.0, g = 1.0, b = 0.0, a = 1.0},
-			from = point_away,
-			to = close_tree.position,
-		}
-		dl{
-			color = {r = 1.0, g = 0.0, b = 0.0, a = 1.0},
-			from = point_away,
-			to = {
-				x = point_away.x + (vec_left.x * cone_radius / cone_base),
-				y = point_away.y + (vec_left.y * cone_radius / cone_base),
-			}
-		}
-		dl{
-			color = {r = 1.0, g = 0.0, b = 0.0, a = 1.0},
-			from = point_away,
-			to = {
-				x = point_away.x + (vec_right.x * cone_radius / cone_base),
-				y = point_away.y + (vec_right.y * cone_radius / cone_base),
-			}
-		}
-	end
-
-	local trees_around_close_tree = area_util.get_trees(surface, util.box_around(close_tree.position, radius * 1.5))
-
-	local trees_in_cone = {}
-	for _, tree in ipairs(trees_around_close_tree) do
-		local tree_vec = {
-			x = tree.position.x - point_away.x,
-			y = tree.position.y - point_away.y,
-		}
-		if
-			util.len2(tree_vec) <= cone_radius2
-			and util.clockwise(vec_left, tree_vec)
-			and util.clockwise(tree_vec, vec_right)
-		then
-			local tree_dist = math.sqrt(util.len2(tree_vec))
-			local tree_frame
-			if tree_dist < cone_base then
-				tree_frame = 0
-			else
-				tree_frame = math.floor((tree_dist - cone_base) * 60 / speed)
-			end
-			trees_in_cone[#trees_in_cone + 1] = {
-				tree,
-				tree_frame
-			}
-		end
-	end
-
-	table.sort(trees_in_cone, function(a, b) return a[2] < b[2] end)
-
-	if target == nil then
-		target = surface.find_nearest_enemy_entity_with_owner{position=close_tree.position, max_distance=32, force="enemy"}
-	end
-	tree_events.add_ent_war_story(surface, trees_in_cone, target)
-end
-
 local function check_for_minor_retaliation(surface, event)
 	local tree = event.entity
 	local treepos = tree.position
@@ -195,6 +92,30 @@ local function check_for_minor_retaliation(surface, event)
 	else
 		tree_events.poison_cloud(surface, treepos)
 	end
+end
+
+local function entify_trees_in_cone(surface, pos, angle, radius, speed, target)
+	local close_tree = find_close_tree(surface, pos)
+	if close_tree == nil then return end
+
+	local vec_to_tree = {
+		x = close_tree.position.x - pos.x,
+		y = close_tree.position.y - pos.y,
+	}
+
+	-- If we're really close, move the point further away.
+	local len2 = math.sqrt(util.len2(vec_to_tree))
+	if len2 == 0 then return end
+	local multiplier = 1
+	if len2 < radius * 0.75 then
+		multiplier = radius * 0.75 / len2
+	end
+
+	local point_away = {
+		x = pos.x - (vec_to_tree.x * multiplier),
+		y = pos.y - (vec_to_tree.y * multiplier),
+	}
+	tree_events.entify_trees_in_cone(surface, point_away, close_tree.position, angle, radius, speed, target)
 end
 
 local function check_for_major_retaliation(surface, event)
@@ -232,10 +153,10 @@ local function check_for_major_retaliation(surface, event)
 		end
 		entify_trees_in_cone(surface,
 		                     treepos,
-				     0.8, -- ~48 degrees
-				     8,
-				     4,
-				     enemy)
+		                     0.8, -- ~48 degrees
+		                     8,
+		                     4,
+		                     enemy)
 		return
         end
 

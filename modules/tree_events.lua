@@ -545,6 +545,54 @@ function M.add_ent_war_story(surface, trees_with_times, target)
 	global.tree_stories[#global.tree_stories + 1] = s
 end
 
+function M.entify_trees_in_cone(surface, from, to, angle, radius, speed, target)
+	local vec_towards = {
+		x = to.x - from.x,
+		y = to.y - from.y,
+	}
+
+	local cone_base = math.sqrt(vec_towards.x * vec_towards.x + vec_towards.y * vec_towards.y)
+	local cone_radius = cone_base + radius
+	local cone_radius2 = cone_radius * cone_radius
+
+	local vec_left = util.rotate(vec_towards, angle)
+	local vec_right = util.rotate(vec_towards, -angle)
+
+	local trees_around_to = area_util.get_trees(surface, util.box_around(to, radius * 1.5))
+
+	local trees_in_cone = {}
+	for _, tree in ipairs(trees_around_to) do
+		local tree_vec = {
+			x = tree.position.x - from.x,
+			y = tree.position.y - from.y,
+		}
+		if
+			util.len2(tree_vec) <= cone_radius2
+			and util.clockwise(vec_left, tree_vec)
+			and util.clockwise(tree_vec, vec_right)
+		then
+			local tree_dist = math.sqrt(util.len2(tree_vec))
+			local tree_frame
+			if tree_dist < cone_base then
+				tree_frame = 0
+			else
+				tree_frame = math.floor((tree_dist - cone_base) * 60 / speed)
+			end
+			trees_in_cone[#trees_in_cone + 1] = {
+				tree,
+				tree_frame
+			}
+		end
+	end
+
+	table.sort(trees_in_cone, function(a, b) return a[2] < b[2] end)
+
+	if target == nil then
+		target = surface.find_nearest_enemy_entity_with_owner{position=to, max_distance=32, force="enemy"}
+	end
+	M.add_ent_war_story(surface, trees_in_cone, target)
+end
+
 script.on_nth_tick(60, unfocus_players)
 
 return M
