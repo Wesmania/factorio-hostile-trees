@@ -55,50 +55,71 @@ M.building_spit_assault = function(surface, area, tree_projectiles)
 	return s
 end
 
+local events = {
+	sum = 1.0,
+	e = {
+		{ 0.25, function(a)
+			local turret = area_util.get_random_turret(a.s, a.a)
+			if turret ~= nil then
+				tree_events.take_over_turret(turret)
+			else
+				return "resume_next"
+			end
+		end },
+		{ 0.75, {
+			sum = 1.0,
+			e = {
+				{ 0.07, function(a) tree_events.spit_trees_towards_buildings(a.s, a.t, a.b) end },
+				{ 0.18, function(a) tree_events.spread_trees_towards_buildings(a.s, a.t, a.b) end },
+				{ 0.15, function(a) tree_events.set_tree_on_fire(a.s, a.t) end },
+				{ 0.10, function(a) tree_events.small_tree_explosion(a.s, a.t) end },
+				{ 0.05, function(a) tree_events.turn_tree_into_ent(a.s, a.t) end },
+				{ 0.05, function(a) tree_events.spawn_biters(a.s, a.t.position, math.random(3, 5)) end},
+				{ 0.25, function(a) tree_events.spitter_projectile(a.s, a.t.position, a.b.position) end },
+				{ 0.10, function(a) tree_events.fire_stream(a.s, a.t.position, a.b.position) end },
+				{ 0.05, function(a)
+					local projectile_kinds = {
+						{ "spitter_projectile" },
+						{ "fire_stream" },
+						{ "spitter_projectile", "fire_stream" },
+					}
+					local pk = projectile_kinds[math.random(1, #projectile_kinds)]
+					global.tree_stories[#global.tree_stories + 1] = M.building_spit_assault(a.s, a.a, pk)
+				end },
+			}
+		} }
+	}
+}
+
+function pick_event(e, args)
+	if type(e) == "function" then
+		return e(args)
+	else
+		local rand = math.random() * e.sum
+		local tot = 0.0
+		for _, entry in ipairs(e.e) do
+			tot = tot + entry[1]
+			if rand <= tot then
+				local ret = pick_event(entry[2], args)
+				if ret ~= "resume_next" then return end
+			end
+		end
+	end
+end
+
 function M.event(surface, area)
 	local random = math.random()
 	local tree = area_util.get_random_tree(surface, area)
 	local building = area_util.get_random_building(surface, area)
 
-	-- Small chance to take over enemy turrets.
-	if math.random() < 0.15 then
-		local turret = area_util.get_random_turret(surface, area)
-		if turret ~= nil then
-			tree_events.take_over_turret(turret)
-			return
-		end
-	end
+	if tree == nil or building == nil then return end
 
-	if random < 0.07 then
-		tree_events.spit_trees_towards_buildings(surface, tree, building)
-	elseif random < 0.25 then
-		tree_events.spread_trees_towards_buildings(surface, tree, building)
-	elseif random < 0.4 then
-		tree_events.set_tree_on_fire(surface, tree)
-	elseif random < 0.5 then
-		tree_events.small_tree_explosion(surface, tree)
-	elseif random < 0.55 then
-		tree_events.turn_tree_into_ent(surface, tree)
-	elseif random < 0.6 then
-		if tree ~= nil then
-			tree_events.spawn_biters(surface, tree.position, math.random(3, 5))
-		end
-	elseif random < 0.85 then
-		if tree ~= nil and building ~= nil then
-			tree_events.spitter_projectile(surface, tree.position, building.position)
-		end
-	elseif random < 0.95 then
-		if tree ~= nil and building ~= nil then
-			tree_events.fire_stream(surface, tree.position, building.position)
-		end
-	else
-		local projectile_kinds = {
-			{ "spitter_projectile" },
-			{ "fire_stream" },
-			{ "spitter_projectile", "fire_stream" },
-		}
-		global.tree_stories[#global.tree_stories + 1] = M.building_spit_assault(surface, area, projectile_kinds[math.random(1, #projectile_kinds)])
-	end
+	pick_event(events, {
+		s = surface,
+		a = area,
+		t = tree,
+		b = building,
+	})
 end
 
 -- Events from tree_events that we want available as tree stories.
