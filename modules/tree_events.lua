@@ -534,7 +534,7 @@ function M.event_ent_war(s)
 	return true
 end
 
-function M.add_ent_war_story(surface, trees_with_times, target)
+function M.get_ent_war_story(surface, trees_with_times, target)
 	local s = {}
 	s.surface = surface
 	s.trees_with_times = trees_with_times
@@ -542,10 +542,16 @@ function M.add_ent_war_story(surface, trees_with_times, target)
 	s.frame = 0
 	s.idx = 1
 	s.event_name = "event_ent_war"
-	global.tree_stories[#global.tree_stories + 1] = s
+	return s
 end
 
 function M.entify_trees_in_cone(surface, from, to, angle, radius, speed, target)
+	local coro = M.entify_trees_in_cone_coro(surface, from, to, angle, radius, speed, target)
+	global.tree_stories[#global.tree_stories + 1] = coro
+end
+-- Radius is *extra* radius on top of distance from "from" to "to"!
+
+function M.entify_trees_in_cone_coro(surface, from, to, angle, radius, speed, target)
 	angle = angle / 360 * 6.28
 	local vec_towards = {
 		x = to.x - from.x,
@@ -591,7 +597,7 @@ function M.entify_trees_in_cone(surface, from, to, angle, radius, speed, target)
 	if target == nil then
 		target = surface.find_nearest_enemy_entity_with_owner{position=to, max_distance=32, force="enemy"}
 	end
-	M.add_ent_war_story(surface, trees_in_cone, target)
+	return M.get_ent_war_story(surface, trees_in_cone, target)
 end
 
 script.on_nth_tick(60, unfocus_players)

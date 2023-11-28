@@ -388,6 +388,10 @@ function M.make_ent_entity_name(params)
 		return "hostile-trees-ent-" .. params.name .. "-" .. string.format("%03d", params.variation) .. "-" .. params.unit_variant
 end
 
+function M.can_make_ents(params)
+	return game.forces["enemy"].evolution_factor >= 0.1
+end
+
 M.spawnrates = {
 	{
 		unit = "ent",

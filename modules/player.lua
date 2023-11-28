@@ -1,6 +1,7 @@
 local util = require("modules/util")
 local area_util = require("modules/area_util")
 local tree_events = require("modules/tree_events")
+local ents = require("modules/ent_generation")
 
 local M = {}
 
@@ -98,6 +99,16 @@ local stages = {
 				s._coroutine = nil
 				coro_next_stage(s)
 			end
+		end
+	end,
+	turn_tree_into_ent = function(s)
+		tree_events.turn_tree_into_ent(s.surface, s.tree)
+		coro_next_stage(s)
+	end,
+	ent_war = function(s)
+		if not tree_events.run_coro(s.ent_war) then
+			s.ent_war = nil
+			coro_next_stage(s)
 		end
 	end,
 
@@ -271,7 +282,12 @@ function M.spooky_story(player_info, surface, player_is_focused_on)
 
 			local add_flicker = is_night and math.random() < 0.25
 			local rand2 = math.random()
-			if rand2 < 0.80 then
+			if rand2 < 0.20 then
+				sl[#sl + 1] = { "ent_war", {
+					ent_war = tree_events.entify_trees_in_cone_coro(surface, ppos, tree.position,
+					                                                   15, 2, 3, player)
+				}}
+			elseif rand2 < 0.80 then
 				complex_random_assault(sl, tree, add_flicker, false, is_in_forest, math.random(180, 360))
 			elseif rand2 < 0.9 then
 				sl[#sl + 1] = { "spit_assault", {
@@ -314,6 +330,8 @@ function M.spooky_story(player_info, surface, player_is_focused_on)
 			sl[#sl + 1] = { "spit_fire", {treepos = tree.position}}
 		elseif rand < 0.5 then
 			sl[#sl + 1] = { "poison_cloud", {treepos = tree.position}}
+		elseif rand < 0.65 and ents.can_make_ents() then
+			sl[#sl + 1] = { "turn_tree_into_ent", {tree = tree}}
 		else
 			sl[#sl + 1] = { "spit", {treepos = tree.position}}
 		end
@@ -330,6 +348,8 @@ function M.spooky_story(player_info, surface, player_is_focused_on)
 			}}
 		elseif rand < 0.2 then
 			sl[#sl + 1] = { "spit_fire", {treepos = tree.position}}
+		elseif rand < 0.3 and ents.can_make_ents() then
+			sl[#sl + 1] = { "turn_tree_into_ent", {tree = tree}}
 		elseif rand < 0.65 then
 			sl[#sl + 1] = { "spit", {treepos = tree.position}}
 		end
