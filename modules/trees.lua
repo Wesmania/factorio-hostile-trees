@@ -67,7 +67,7 @@ local events = {
 			end
 		end },
 		{ 0.75, {
-			sum = 100,
+			sum = 105,
 			e = {
 				{ 18, function(a) tree_events.spread_trees_towards_buildings(a.s, a.t, a.b) end },
 				{ 7, function(a) tree_events.spit_trees_towards_buildings(a.s, a.t, a.b) end },
@@ -85,6 +85,9 @@ local events = {
 					}
 					local pk = projectile_kinds[math.random(1, #projectile_kinds)]
 					global.tree_stories[#global.tree_stories + 1] = M.building_spit_assault(a.s, a.a, pk)
+				end },
+				{ 5, function(a)
+					tree_events.entify_trees_in_cone(a.s, a.b.position, a.t.position, 36, 6, 3, a.b)
 				end },
 			}
 		} }

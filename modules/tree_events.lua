@@ -546,6 +546,7 @@ function M.add_ent_war_story(surface, trees_with_times, target)
 end
 
 function M.entify_trees_in_cone(surface, from, to, angle, radius, speed, target)
+	angle = angle / 360 * 6.28
 	local vec_towards = {
 		x = to.x - from.x,
 		y = to.y - from.y,

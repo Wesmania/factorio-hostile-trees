@@ -153,7 +153,7 @@ local function check_for_major_retaliation(surface, event)
 		end
 		entify_trees_in_cone(surface,
 		                     treepos,
-		                     0.8, -- ~48 degrees
+		                     48, -- ~48 degrees each direction
 		                     8,
 		                     4,
 		                     enemy)
