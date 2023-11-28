@@ -1,21 +1,33 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.2.0
+Date: 28/11/2023
+  Changes:
+    - Trees are now dimly aware of construction bots.
+    - New and exciting trees. Have you watched that "Brothers Grimm" movie
+      from 2005?
+---------------------------------------------------------------------------------------------------
 Version: 0.1.8
-Date: 11. 11. 2023
+Date: 11/11/2023
   Changes:
     - Fixed trees spreading way too far into water sometimes.
 ---------------------------------------------------------------------------------------------------
 Version: 0.1.7
-Date: 11. 11. 2023
+Date: 11/11/2023
   Changes:
     - Fixed a crash when killing trees with poison capsules.
     - New and exciting retaliation event.
 ---------------------------------------------------------------------------------------------------
 Version: 0.1.6
-Date: 10. 11. 2023
+Date: 11/10/2023
   Changes:
     - Fixed a bug where trees would start to ignore the player forever.
     - Added rudimentary backwards compatibility. Future changes should be much less likely to break saves.
     - New retaliation event.
     - New and exciting way for trees to spread.
     - Added changelog.
+---------------------------------------------------------------------------------------------------
+Version: 0.1.5
+Date: 1/10/2023
+  Changes:
+    - First version. Makes the mod not broken.
 ---------------------------------------------------------------------------------------------------
