@@ -81,35 +81,15 @@ local stages = {
 		tree_events.fire_stream(s.surface, s.treepos, s.player)
 		coro_next_stage(s)
 	end,
-	fake_biters = function(s)
-		if s._coroutine == nil then
-			s._coroutine = tree_events.fake_biters(s.surface, s.player, s.count, s.wait_low, s.wait_high)
-		else
-			if not tree_events.run_coro(s._coroutine) then
-				s._coroutine = nil
-				coro_next_stage(s)
-			end
-		end
-	end,
-	biter_onslaught = function(s)
-		if s._coroutine == nil then
-			s._coroutine = tree_events.spawn_biters_over_time(s.surface, s.treepos, s.count, s.biter_rate_table)
-		else
-			if not tree_events.run_coro(s._coroutine) then
-				s._coroutine = nil
-				coro_next_stage(s)
-			end
+	tree_event = function(s)
+		if not tree_events.run_coro(s._coroutine) then
+			s._coroutine = nil
+			coro_next_stage(s)
 		end
 	end,
 	turn_tree_into_ent = function(s)
 		tree_events.turn_tree_into_ent(s.surface, s.tree)
 		coro_next_stage(s)
-	end,
-	ent_war = function(s)
-		if not tree_events.run_coro(s.ent_war) then
-			s.ent_war = nil
-			coro_next_stage(s)
-		end
 	end,
 
 	-- FIXME duplication with building spit assault
@@ -172,7 +152,7 @@ local function surround_with_flicker(sl)
 	sl[#sl + 1] = { "unflicker_light", {}}
 end
 
-local function complex_random_assault(sl, tree, add_flicker, spook_player, is_in_forest, duration, biter_assault)
+local function complex_random_assault(surface, player, sl, tree, add_flicker, spook_player, is_in_forest, duration, biter_assault)
 	if spook_player then
 		-- Spook and warn the player.
 		sl[#sl + 1] = { "pause", {until_next = math.random(60, 90)} }
@@ -188,7 +168,9 @@ local function complex_random_assault(sl, tree, add_flicker, spook_player, is_in
 		else
 			count = math.random(10, 25)
 		end
-		sl[#sl + 1] = { "biter_onslaught", {treepos = tree.position, count = count, biter_rate_table = "retaliation"}}
+		sl[#sl + 1] = { "tree_event", {
+			_coroutine = tree_events.spawn_biters_over_time(surface, tree.position, count, "retaliation")
+		}}
 	else
 		local projectiles = tree_events.default_random_projectiles()
 		local biter_stats = {}
@@ -264,7 +246,7 @@ function M.spooky_story(player_info, surface, player_is_focused_on)
 
 			local add_flicker = is_night and math.random() < 0.25
 			local spook_player = is_in_forest and add_flicker and math.random() < 0.6
-			complex_random_assault(sl, tree, add_flicker, spook_player, is_in_forest, math.random(420, 720), true)
+			complex_random_assault(surface, player, sl, tree, add_flicker, spook_player, is_in_forest, math.random(420, 720), true)
 
 			goto finish
 		end
@@ -283,12 +265,12 @@ function M.spooky_story(player_info, surface, player_is_focused_on)
 			local add_flicker = is_night and math.random() < 0.25
 			local rand2 = math.random()
 			if rand2 < 0.20 then
-				sl[#sl + 1] = { "ent_war", {
-					ent_war = tree_events.entify_trees_in_cone_coro(surface, ppos, tree.position,
+				sl[#sl + 1] = { "tree_event", {
+					_coroutine = tree_events.entify_trees_in_cone_coro(surface, ppos, tree.position,
 					                                                   15, 2, 3, player)
 				}}
 			elseif rand2 < 0.80 then
-				complex_random_assault(sl, tree, add_flicker, false, is_in_forest, math.random(180, 360))
+				complex_random_assault(surface, player, sl, tree, add_flicker, false, is_in_forest, math.random(180, 360))
 			elseif rand2 < 0.9 then
 				sl[#sl + 1] = { "spit_assault", {
 					duration = math.random(480, 660),
@@ -299,7 +281,9 @@ function M.spooky_story(player_info, surface, player_is_focused_on)
 				}}
 			else
 				sl[#sl + 1] = { "pause", {until_next = 20}}
-				sl[#sl + 1] = { "fake_biters", {count = 20, wait_low = 10, wait_high = 25}}
+				sl[#sl + 1] = { "tree_event", {
+					_coroutine = tree_events.fake_biters(surface, player, 20, 10, 25)
+				}}
 				if add_flicker then
 					surround_with_flicker(sl)
 				end
