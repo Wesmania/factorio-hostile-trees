@@ -252,11 +252,11 @@ function M.spooky_story(player_info, surface, player_is_focused_on)
 		end
 	end
 
-	if threat >= 8 then
+	if threat >= 5 then
 		-- Mid-sized event.
 		local rand = math.random()
 		-- If we make a mid event, make a major event more likely in the future.
-		if rand < 0.5 + (player_info.big_tree_threat * 0.1) and not player_is_focused_on then
+		if rand < 0.45 + (player_info.big_tree_threat * 0.07) and not player_is_focused_on then
 			player_info.tree_threat = player_info.tree_threat + 1
 		else
 			player_info.tree_threat = threat - 8
