@@ -1,3 +1,4 @@
+local util = require("modules/util")
 local ents = require("modules/ent_generation")
 
 local M = {}
@@ -121,6 +122,34 @@ function M.cache_trees_that_can_turn_into_ents()
 	global.entable_trees = names
 end
 
+local function collect_chunks()
+	local global = global
+	global.chunks = {
+		list = {},
+		dict = {},
+	}
+	for c in global.surface.get_chunks() do
+		util.ldict2_add(global.chunks, c.x, c.y, {
+			x = c.x,
+			y = c.y,
+		})
+	end
+end
+
+script.on_event(defines.events.on_chunk_generated, function(args)
+	local p = args.position
+	util.ldict2_add(global.chunks, p.x, p.y, {
+		x = p.x,
+		y = p.y,
+	})
+end)
+
+script.on_event(defines.events.on_chunk_deleted, function(args)
+	for _, p in ipairs(args.positions) do
+		util.ldict2_remove(global.chunks, p.x, p.y)
+	end
+end)
+
 -- This is also called when configuration changes. We don't have any long-term
 -- state we need to preserve except grace period, so it's okay.
 -- Also, Factorio deletes unknown entities for us, which is nice.
@@ -128,7 +157,6 @@ M.initialize = function()
 	global.players          = {}
 	global.players_array    = {}
 	global.tick_mod_10_s    = 0
-	global.chunks           = 0
 	global.accum            = 0
 	global.tree_stories     = {}
 	global.tree_kill_count  = 0
@@ -141,6 +169,8 @@ M.initialize = function()
 		dict = {},
 	}
 	global.entity_destroyed_script_events = {}
+
+	collect_chunks()
 
 	global.spawnrates = {}
 	local biter_spawner = game.get_filtered_entity_prototypes{{filter="name", name="biter-spawner"}}["biter-spawner"]

@@ -85,4 +85,41 @@ function M.clockwise(vec1, vec2)
 	return vec2.x * (-vec1.y) + vec2.y * vec1.x < 0
 end
 
+function M.ldict2_add(ldict, key1, key2, item)
+	local l = ldict.list
+	local d = ldict.dict
+
+	if d[key1] == nil then
+		d[key1] = {}
+	end
+	if d[key1][key2] == nil then
+		d[key1][key2] = #l + 1
+		l[#l + 1] = { key1, key2, item }
+	end
+end
+
+function M.ldict2_remove(ldict, key1, key2)
+	local l = ldict.list
+	local d = ldict.dict
+
+	local l1 = d[key1]
+	if l1 == nil then return end
+	local pos_to_remove = l1[key2]
+	if pos_to_remove == nil then return end
+
+	local last_on_list = l[#l]
+	l[#l] = nil
+	l[pos_to_remove] = last_on_list
+	d[last_on_list[1]][last_on_list[2]] = pos_to_remove
+	l1[key2] = nil
+end
+
+function M.ldict2_get(ldict, key1, key2)
+	return ldict.list[ldict.dict[key1][key2]][3]
+end
+
+function M.ldict2_get_random(ldict)
+	return ldict.list[math.random(1, #ldict.list)][3]
+end
+
 return M

@@ -7,16 +7,8 @@ local trees = require("modules/trees")
 
 local retaliation = require("modules/retaliation")
 
-local function count_chunks(surface)
-	local global = global
-	global.chunks = 0
-	for _ in surface.get_chunks() do
-		global.chunks = global.chunks + 1
-	end
-end
-
 local function squares_to_check_per_tick()
-	return global.chunks * global.config.factory_events_per_tick_per_chunk
+	return #global.chunks.list * global.config.factory_events_per_tick_per_chunk
 end
 
 script.on_init(function()
@@ -39,7 +31,6 @@ script.on_event({defines.events.on_tick}, function(event)
 
 	global.tick_mod_10_s = (global.tick_mod_10_s + 1) % 600
 	if global.tick_mod_10_s == 0 then
-		count_chunks(surface)
 		setup.cache_players()
 		setup.cache_evolution_rates()
 	end
@@ -77,13 +68,14 @@ script.on_event({defines.events.on_tick}, function(event)
 
 	if global.config.factory_events then
 
+		local chunks = global.chunks
 		global.accum = global.accum + squares_to_check_per_tick()
 		local tocheck = math.floor(global.accum)
 		global.accum = global.accum - tocheck
 
 		for i = 1,tocheck do
 			-- TODO do we define these as globals to avoid allocation cost?
-			local chunk = surface.get_random_chunk()
+			local chunk = util.ldict2_get_random(chunks)
 			local map_pos = {
 				x = chunk.x * 32 + math.random(0, 32),
 				y = chunk.y * 32 + math.random(0, 32),
