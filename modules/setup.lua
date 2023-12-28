@@ -184,6 +184,16 @@ M.initialize = function()
 		dict = {},
 	}
 	global.entity_destroyed_script_events = {}
+	-- Clearing this makes existing cars immune to being booby trapped. Oh well.
+	global.player_cars = {
+		list = {},
+		dict = {},
+		armed = {
+			cars = {},
+			players = {},
+			early = {},
+		},
+	}
 
 	collect_chunks()
 

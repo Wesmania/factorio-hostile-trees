@@ -102,7 +102,7 @@ data:extend({{
           {
             {
               type = "create-entity",
-              entity_name = "big-explosion"
+              entity_name = "massive-explosion"
             },
             {
               type = "create-entity",
@@ -132,7 +132,7 @@ data:extend({{
           {
             {
               type = "damage",
-              damage = {amount = 300, type = "explosion"}
+              damage = {amount = 500, type = "explosion"}	-- Enough to destroy a car
             },
             {
               type = "create-entity",

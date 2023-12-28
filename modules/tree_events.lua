@@ -162,13 +162,6 @@ function M.on_spawning_spit_landed(event)
 	end
 end
 
-script.on_event(defines.events.on_entity_destroyed, function(data)
-	local event = global.entity_destroyed_script_events[data.registration_number]
-	if event ~= nil then
-		M[event.action](event)
-	end
-end)
-
 local function make_exploding_hopper_projectile(surface, source, target, target_entity, generation)
 	local s = surface.create_entity{
 		name = 'tree-spawner-projectile',
