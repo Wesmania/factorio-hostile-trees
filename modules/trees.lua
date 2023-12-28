@@ -25,7 +25,7 @@ function M.event_building_spit_assault(s)
 
 	local new_min = 999
 	for _, tree in pairs(s.trees) do
-		if not tree[2].valid then break end
+		if not tree[2].valid then goto continue end
 
 		if s.total_ticks >= tree[1] then
 			tree[1] = tree[1] + math.random(60, 90)
@@ -35,6 +35,7 @@ function M.event_building_spit_assault(s)
 			end
 		end
 		if tree[1] < new_min then new_min = tree[1] end
+		::continue::
 	end
 	s.next_event = new_min
 	return true
