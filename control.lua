@@ -29,6 +29,7 @@ script.on_event({defines.events.on_tick}, function(event)
 	if global.tick_mod_10_s == 0 then
 		setup.cache_players()
 		setup.cache_evolution_rates()
+		setup.cache_game_forces()
 	end
 
 	if config.grace_period ~= nil then

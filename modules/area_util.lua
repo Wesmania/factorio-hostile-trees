@@ -2,12 +2,10 @@ local M = {}
 
 function M.get_buildings(surface, area)
 	local out = {}
-	for _, force in pairs(game.forces) do
-		if #force.players > 0 then
-			for _, e in ipairs(surface.find_entities_filtered{area = area, force = force}) do
-				if e.prototype.is_building then
-					out[#out + 1] = e
-				end
+	for _, force in pairs(global.game_forces) do
+		for _, e in ipairs(surface.find_entities_filtered{area = area, force = force}) do
+			if e.prototype.is_building then
+				out[#out + 1] = e
 			end
 		end
 	end
@@ -38,11 +36,9 @@ end
 
 -- Only call it after we did an entity / tree check
 function M.has_buildings(surface, area)
-	for _, force in pairs(game.forces) do
-		if #force.players > 0 then
-			for _, e in ipairs(surface.find_entities_filtered{area = area, force = force}) do
-				if e.prototype.is_building then return true end
-			end
+	for _, force in pairs(global.game_forces) do
+		for _, e in ipairs(surface.find_entities_filtered{area = area, force = force}) do
+			if e.prototype.is_building then return true end
 		end
 	end
 	return false
@@ -74,11 +70,9 @@ function M.get_trees(surface, area)
 end
 
 function M.has_player_entities(surface, area)
-	for _, force in pairs(game.forces) do
-		if #force.players > 0 then
-			if surface.count_entities_filtered{area = area, force = force, limit = 1} > 0 then
-				return true
-			end
+	for _, force in pairs(global.game_forces) do
+		if surface.count_entities_filtered{area = area, force = force, limit = 1} > 0 then
+			return true
 		end
 	end
 	return false

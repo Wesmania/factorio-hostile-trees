@@ -5,12 +5,10 @@ local ents = require("modules/ent_generation")
 local M = {}
 
 local function deal_damage_to_player_entities(surface, position, radius, amount)
-	for _, force in pairs(game.forces) do
-		if #force.players > 0 then
-			for _, item in ipairs(surface.find_entities_filtered{position = position, radius = radius, force = force}) do
-				if item.is_entity_with_health then
-					item.damage(amount, "enemy", "explosion")
-				end
+	for _, force in pairs(global.game_forces) do
+		for _, item in ipairs(surface.find_entities_filtered{position = position, radius = radius, force = force}) do
+			if item.is_entity_with_health then
+				item.damage(amount, "enemy", "explosion")
 			end
 		end
 	end

@@ -126,6 +126,15 @@ function M.cache_squares_to_check_per_tick()
 	global.squares_to_check_per_tick = #global.chunks.list * global.config.factory_events_per_tick_per_chunk
 end
 
+function M.cache_game_forces()
+	global.game_forces = {}
+	for _, force in pairs(game.forces) do
+		if #force.players > 0 then
+			global.game_forces[#global.game_forces + 1] = force
+		end
+	end
+end
+
 local function collect_chunks()
 	local global = global
 	global.chunks = {
@@ -198,6 +207,7 @@ M.initialize = function()
 	M.cache_evolution_rates()
 	M.cache_trees_that_can_turn_into_ents()
 	M.cache_squares_to_check_per_tick()
+	M.cache_game_forces()
 end
 
 return M
