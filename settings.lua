@@ -44,4 +44,11 @@ data:extend({
 		default_value = 0,
 		order = "d-a"
 	},
+	{
+		type = "bool-setting",
+		name = "hostile-trees-are-trees-damp",
+		setting_type = "startup",
+		default_value = true,
+		order = "c-a"
+	},
 })
