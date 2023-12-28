@@ -7,10 +7,6 @@ local trees = require("modules/trees")
 
 local retaliation = require("modules/retaliation")
 
-local function squares_to_check_per_tick()
-	return #global.chunks.list * global.config.factory_events_per_tick_per_chunk
-end
-
 script.on_init(function()
 	setup.initialize()
 end)
@@ -69,7 +65,7 @@ script.on_event({defines.events.on_tick}, function(event)
 	if global.config.factory_events then
 
 		local chunks = global.chunks
-		global.accum = global.accum + squares_to_check_per_tick()
+		global.accum = global.accum + global.squares_to_check_per_tick
 		local tocheck = math.floor(global.accum)
 		global.accum = global.accum - tocheck
 

@@ -122,6 +122,10 @@ function M.cache_trees_that_can_turn_into_ents()
 	global.entable_trees = names
 end
 
+function M.cache_squares_to_check_per_tick()
+	global.squares_to_check_per_tick = #global.chunks.list * global.config.factory_events_per_tick_per_chunk
+end
+
 local function collect_chunks()
 	local global = global
 	global.chunks = {
@@ -142,12 +146,14 @@ script.on_event(defines.events.on_chunk_generated, function(args)
 		x = p.x,
 		y = p.y,
 	})
+	M.cache_squares_to_check_per_tick()
 end)
 
 script.on_event(defines.events.on_chunk_deleted, function(args)
 	for _, p in ipairs(args.positions) do
 		util.ldict2_remove(global.chunks, p.x, p.y)
 	end
+	M.cache_squares_to_check_per_tick()
 end)
 
 -- This is also called when configuration changes. We don't have any long-term
@@ -191,6 +197,7 @@ M.initialize = function()
 	M.cache_players()
 	M.cache_evolution_rates()
 	M.cache_trees_that_can_turn_into_ents()
+	M.cache_squares_to_check_per_tick()
 end
 
 return M
