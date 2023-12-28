@@ -82,3 +82,150 @@ for _, tree in pairs(data.raw["tree"]) do
 		end
 	end
 end
+
+-- Volatile saplings
+
+-- Copied and modified grenade settings
+data:extend({{
+    type = "projectile",
+    name = "volatile-sapling",
+    flags = {"not-on-map"},
+    acceleration = 0.005,
+    action =
+    {
+      {
+        type = "direct",
+        action_delivery =
+        {
+          type = "instant",
+          target_effects =
+          {
+            {
+              type = "create-entity",
+              entity_name = "big-explosion"
+            },
+            {
+              type = "create-entity",
+              entity_name = "small-scorchmark-tintable",
+              check_buildability = true
+            },
+            {
+              type = "destroy-decoratives",
+              from_render_layer = "decorative",
+              to_render_layer = "object",
+              include_soft_decoratives = true, -- soft decoratives are decoratives with grows_through_rail_path = true
+              include_decals = false,
+              invoke_decorative_trigger = true,
+              decoratives_with_trigger_only = false, -- if true, destroys only decoratives that have trigger_effect set
+              radius = 2.25 -- large radius for demostrative purposes
+            }
+          }
+        }
+      },
+      {
+        type = "area",
+        radius = 4.5,
+        action_delivery =
+        {
+          type = "instant",
+          target_effects =
+          {
+            {
+              type = "damage",
+              damage = {amount = 300, type = "explosion"}
+            },
+            {
+              type = "create-entity",
+              entity_name = "explosion"
+            }
+          }
+        }
+      }
+    },
+    animation =
+    {
+      filename = "__base__/graphics/entity/tree/06/tree-06-a-trunk.png",
+      draw_as_glow = true,
+      frame_count = 1,
+      line_length = 1,
+      animation_speed = 0.250,
+      width = 60,
+      height = 62,
+      shift = util.by_pixel(1, 1),
+      priority = "high",
+      hr_version =
+      {
+        filename = "__base__/graphics/entity/tree/06/hr-tree-06-a-trunk.png",
+        draw_as_glow = true,
+        frame_count = 1,
+        line_length = 1,
+        animation_speed = 0.250,
+        width = 118,
+        height = 120,
+        shift = util.by_pixel(0.5, 0.5),
+        priority = "high",
+        scale = 0.5
+      }
+
+    },
+    shadow =
+    {
+      filename = "__base__/graphics/entity/tree/06/tree-06-a-shadow.png",
+      frame_count = 4,
+      line_length = 4,
+      animation_speed = 0.250,
+      width = 170,
+      height = 76,
+      shift = util.by_pixel(2, 6),
+      priority = "high",
+      draw_as_shadow = true,
+      hr_version =
+      {
+        filename = "__base__/graphics/entity/tree/06/hr-tree-06-a-shadow.png",
+        frame_count = 4,
+        line_length = 4,
+        animation_speed = 0.250,
+        width = 338,
+        height = 148,
+        shift = util.by_pixel(2, 6),
+        priority = "high",
+        draw_as_shadow = true,
+        scale = 0.5
+      }
+    }
+  }
+})
+
+data:extend({{
+    type = "capsule",
+    name = "volatile-sapling",
+    icon = "__base__/graphics/icons/tree-06-brown.png",
+    icon_size = 64, icon_mipmaps = 4,
+    subgroup = "trees",
+    stack_size = 1,
+    capsule_action = {
+	    type = "throw",
+	    attack_parameters = {
+		    type = "projectile",
+		    activation_type = "throw",
+		    ammo_category = "grenade",
+		    cooldown = 30,
+		    projectile_creation_distance = 0.6,
+		    range = 15,
+		    ammo_type = {
+			    category = "grenade",
+			    target_type = "position",
+			    action = {
+				    {
+					    type = "direct",
+					    action_delivery = {
+						    type = "projectile",
+						    projectile = "volatile-sapling",
+						    starting_speed = 0.3
+					    }
+				    },
+			    }
+		    }
+	    }
+    }
+}})
