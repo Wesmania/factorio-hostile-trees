@@ -349,6 +349,8 @@ function M.generate_ent(tree_data, unit_type)
 	unit.walking_sound = ent_walk_sounds
 	unit.water_reflection = nil
 	unit.collision_box = tree_data.collision_box
+	unit.localised_name = {"entity-name.hostile-trees-ent-" .. unit_type}
+	unit.localised_description = {"entity-description.hostile-trees-ent-" .. unit_type}
 
 	if balance.attack_parameters ~= nil then
 		unit.attack_parameters = balance.attack_parameters()
