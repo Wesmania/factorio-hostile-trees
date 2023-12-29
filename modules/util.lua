@@ -85,48 +85,84 @@ function M.clockwise(vec1, vec2)
 	return vec2.x * (-vec1.y) + vec2.y * vec1.x < 0
 end
 
-function M.ldict2_add(ldict, key1, key2, item)
-	local l = ldict.list
-	local d = ldict.dict
 
+-- List mixin for random selection of items in a dict.
+-- Expects value to be a table and keeps its list index there.
+function M.l_add(list, item)
+	item.idx = #list + 1
+	list[#list + 1] = item
+end
+
+function M.l_get_random(list)
+	return list[math.random(1, #list)]
+end
+
+function M.l_remove(list, item)
+	local victim = list[#list]
+	victim.idx = item.idx
+	list[item.idx] = victim
+	list[#list] = nil
+end
+
+
+function M.dict2_add(d, key1, key2, item)
 	if d[key1] == nil then
 		d[key1] = {}
 	end
 	if d[key1][key2] == nil then
-		d[key1][key2] = #l + 1
-		l[#l + 1] = { key1, key2, item }
+		d[key1][key2] = item
+		return true
+	else
+		return false
+	end
+end
+
+function M.dict2_get(d, key1, key2)
+	local l1 = d[key1]
+	if l1 == nil then return nil end
+	return l1[key2]
+end
+
+function M.dict2_remove(d, key1, key2)
+	local l1 = d[key1]
+	if l1 == nil then return nil end
+	local val = l1[key2]
+	l1[key2] = nil
+	if not next(l1) then
+		d[key1] = nil
+	end
+	return val
+end
+
+
+function M.ldict2_add(ldict, key1, key2, item)
+	local l = ldict.list
+	local d = ldict.dict
+	if M.dict2_add(d, key1, key2, item) then
+		M.l_add(l, item)
 	end
 end
 
 function M.ldict2_remove(ldict, key1, key2)
 	local l = ldict.list
 	local d = ldict.dict
-
-	local l1 = d[key1]
-	if l1 == nil then return end
-	local pos_to_remove = l1[key2]
-	if pos_to_remove == nil then return end
-
-	local last_on_list = l[#l]
-	l[#l] = nil
-	l[pos_to_remove] = last_on_list
-	d[last_on_list[1]][last_on_list[2]] = pos_to_remove
-	l1[key2] = nil
+	local val = M.dict2_remove(d, key1, key2)
+	if val ~= nil then
+		M.l_remove(l, val)
+	end
 end
 
 function M.ldict2_get(ldict, key1, key2)
-	return ldict.list[ldict.dict[key1][key2]][3]
+	return M.dict2_get(key1, key2)
 end
 
 function M.ldict2_get_random(ldict)
-	return ldict.list[math.random(1, #ldict.list)][3]
+	return M.l_get_random(ldict.list)
 end
-
 
 function M.ldict_add(ldict, key, item)
 	if ldict.dict[key] ~= nil then return end
-	item.idx = #ldict.list + 1
-	ldict.list[#ldict.list + 1] = key
+	M.l_add(item)
 end
 
 function M.ldict_get(ldict, key)
@@ -136,18 +172,12 @@ end
 function M.ldict_remove(ldict, key)
 	if ldict.dict[key] == nil then return end
 
-	local idx = ldict.dict[key].idx
-	local swap_idx = #ldict.list
-	local swap_key = ldict.list[swap_idx].idx
-
-	ldict.dict[swap_key].idx = idx
-	ldict.list[idx] = swap_key
-	ldict.list[swap_idx] = nil
+	M.l_remove(ldict.dict[key])
 	ldict.dict[key] = nil
 end
 
 function M.ldict_get_random(ldict, key)
-	return ldict.dict[ldict.list[math.random(1, #ldict.list)]]
+	M.l_get_random(ldict.list)
 end
 
 return M
