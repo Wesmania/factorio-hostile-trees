@@ -76,7 +76,6 @@ script.on_event({defines.events.on_tick}, function(event)
 		for i = 1,tocheck do
 			-- TODO do we define these as globals to avoid allocation cost?
 			local chunk = chunks.pick_random_active_chunk(cks)
-			game.print("Event " .. chunk.x .. " " .. chunk.y)
 			local map_pos = {
 				x = chunk.x * 32 + math.random(0, 32),
 				y = chunk.y * 32 + math.random(0, 32),

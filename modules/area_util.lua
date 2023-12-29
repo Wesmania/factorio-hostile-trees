@@ -34,6 +34,18 @@ function M.get_random_turret(surface, area)
 	end
 end
 
+function M.get_big_electric(surface, area)
+	local items = surface.find_entities_filtered{
+		area = area,
+		type = { "electric-pole" },
+	}
+	if #items == 0 then
+		return nil
+	else
+		return items[math.random(1, #items)]
+	end
+end
+
 -- Only call it after we did an entity / tree check
 function M.has_buildings(surface, area)
 	for _, force in pairs(global.game_forces) do

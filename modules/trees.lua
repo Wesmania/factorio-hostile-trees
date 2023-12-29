@@ -2,6 +2,7 @@ local area_util = require("modules/area_util")
 local util = require("modules/util")
 local tree_events = require("modules/tree_events")
 local ents = require("modules/ent_generation")
+local electricity = require("modules/electricity")
 
 local M = {}
 
@@ -58,12 +59,20 @@ M.building_spit_assault = function(surface, area, tree_projectiles)
 end
 
 local events = {
-	sum = 1.0,
+	sum = 1001,
 	e = {
 		{ 0.25, function(a)
 			local turret = area_util.get_random_turret(a.s, a.a)
 			if turret ~= nil then
 				tree_events.take_over_turret(turret)
+			else
+				return "resume_next"
+			end
+		end },
+		{ 1000, function(a)
+			local e = area_util.get_big_electric(a.s, a.a)
+			if e ~= nil then
+				electricity.try_to_hook_up_electricity(a.t, e)
 			else
 				return "resume_next"
 			end

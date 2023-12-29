@@ -36,25 +36,25 @@ function M.on_chunk_deleted(cs, c)
 	cache_squares_to_check_per_tick(cs)
 end
 
-function M.chunk_mask_inc(cs, c)
-	local cmask = util.dict2_setdefault(cs.masked, c.x, c.y, {c = 0})
+function M.chunk_mask_inc(cs, x, y)
+	local cmask = util.dict2_setdefault(cs.masked, x, y, {c = 0})
 	if cmask.c == 0 then
-		util.ldict2_remove(cs.active, c.x, c.y)
+		util.ldict2_remove(cs.active, x, y)
 		cache_squares_to_check_per_tick(cs)
 	end
 	cmask.c = cmask.c + 1
 end
 
-function M.mask_chunk_dec(cs, c)
-	local cmask = util.dict2_get(cs.masked, c.x, c.y)
+function M.chunk_mask_dec(cs, x, y)
+	local cmask = util.dict2_get(cs.masked, x, y)
 	if cmask == nil then return end
 	cmask.c = cmask.c - 1
 	if cmask.c > 0 then return end
 
-	util.dict2_remove(cs.masked, c.x, c.y)
-	local masked_chunk = util.dict2_get(cs.all, c.x, c.y)
+	util.dict2_remove(cs.masked, x, y)
+	local masked_chunk = util.dict2_get(cs.all, x, y)
 	if masked_chunk ~= nil then
-		util.ldict2_add(c.x, c.y, masked_chunk)
+		util.ldict2_add(cs.active, x, y, masked_chunk)
 		cache_squares_to_check_per_tick(cs)
 	end
 end

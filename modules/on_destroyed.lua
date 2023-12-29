@@ -1,6 +1,7 @@
 local M = {}
 local tree_events = require("modules/tree_events")
 local car = require("modules/car")
+local electricity = require("modules/electricity")
 
 script.on_event(defines.events.on_entity_destroyed, function(data)
 	local event = global.entity_destroyed_script_events[data.registration_number]
@@ -20,4 +21,8 @@ end
 
 function M.on_car_destroyed(e)
 	car.on_car_destroyed(e)
+end
+
+function M.on_electric_tree_destroyed(e)
+	electricity.on_electric_tree_destroyed(e)
 end
