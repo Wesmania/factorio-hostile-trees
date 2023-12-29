@@ -9,7 +9,6 @@ local function on_placed_vehicle(e)
 
 	local car = e.created_entity
 	local pc = global.player_cars
-	if pc.dict[car.unit_number] ~= nil then return end
 
 	-- Don't tank performance if player's a psycho that places down hundreds of cars
 	if #pc.list >= 250 then return end
@@ -19,28 +18,13 @@ local function on_placed_vehicle(e)
 		action = "on_car_destroyed",
 		id = car.unit_number,
 	}
-	pc.dict[car.unit_number] = {
-		idx = #pc.list + 1,
+	util.ldict_add(pc, car.unit_number, {
 		e = car,
-	}
-	pc.list[#pc.list + 1] = car.unit_number
+	})
 end
 
 function M.on_car_destroyed(e)
-	local pc = global.player_cars
-	local car_id = e.id
-
-	if pc.dict[car_id] == nil then return end
-
-	local car_idx = pc.dict[car_id].idx
-	local swap_car_idx = #pc.list
-	local swap_car_id = pc.list[swap_car_idx]
-
-	pc.dict[swap_car_id].idx = car_idx
-	pc.list[car_idx] = swap_car_id
-	pc.list[swap_car_idx] = nil
-
-	pc.dict[car_id] = nil
+	util.ldict_remove(global.player_cars, e.id)
 end
 
 local function car_has_sapling(car)
@@ -149,7 +133,7 @@ function M.car_tree_events()
 	local event_chance = ccount / (global.config.player_event_frequency * 5)
 	if math.random() >= event_chance then return end
 
-	local victim_info = global.player_cars.dict[global.player_cars.list[math.random(1, ccount)]]
+	local victim_info = util.ldict_get_random(global.player_cars)
 	local victim = victim_info.e
 
 	-- Is the car empty?

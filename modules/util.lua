@@ -122,4 +122,32 @@ function M.ldict2_get_random(ldict)
 	return ldict.list[math.random(1, #ldict.list)][3]
 end
 
+
+function M.ldict_add(ldict, key, item)
+	if ldict.dict[key] ~= nil then return end
+	item.idx = #ldict.list + 1
+	ldict.list[#ldict.list + 1] = key
+end
+
+function M.ldict_get(ldict, key)
+	return ldict.dict[key]
+end
+
+function M.ldict_remove(ldict, key)
+	if ldict.dict[key] == nil then return end
+
+	local idx = ldict.dict[key].idx
+	local swap_idx = #ldict.list
+	local swap_key = ldict.list[swap_idx].idx
+
+	ldict.dict[swap_key].idx = idx
+	ldict.list[idx] = swap_key
+	ldict.list[swap_idx] = nil
+	ldict.dict[key] = nil
+end
+
+function M.ldict_get_random(ldict, key)
+	return ldict.dict[ldict.list[math.random(1, #ldict.list)]]
+end
+
 return M
