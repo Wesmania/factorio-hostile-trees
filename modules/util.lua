@@ -94,7 +94,12 @@ function M.l_add(list, item)
 end
 
 function M.l_get_random(list)
-	return list[math.random(1, #list)]
+	local c = #list
+	if c == 0 then
+		return nil
+	else
+		return list[math.random(1, c)]
+	end
 end
 
 function M.l_remove(list, item)

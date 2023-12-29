@@ -6,6 +6,7 @@ local player_stories = require("modules/player")
 local tree_events = require("modules/tree_events")
 local trees = require("modules/trees")
 local car = require("modules/car")
+local chunks = require("modules/chunks")
 
 local retaliation = require("modules/retaliation")
 
@@ -67,14 +68,15 @@ script.on_event({defines.events.on_tick}, function(event)
 
 	if global.config.factory_events then
 
-		local chunks = global.chunks
-		global.accum = global.accum + global.squares_to_check_per_tick
+		local cks = global.chunks
+		global.accum = global.accum + chunks.active_per_tick(cks)
 		local tocheck = math.floor(global.accum)
 		global.accum = global.accum - tocheck
 
 		for i = 1,tocheck do
 			-- TODO do we define these as globals to avoid allocation cost?
-			local chunk = util.ldict2_get_random(chunks)
+			local chunk = chunks.pick_random_active_chunk(cks)
+			game.print("Event " .. chunk.x .. " " .. chunk.y)
 			local map_pos = {
 				x = chunk.x * 32 + math.random(0, 32),
 				y = chunk.y * 32 + math.random(0, 32),

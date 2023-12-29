@@ -4,8 +4,6 @@ local ents = require("modules/ent_generation")
 
 local M = {}
 
-M.config = {}
-
 M.cache_players = function()
 	local old_players = global.players
 	global.players = {}
@@ -123,10 +121,6 @@ function M.cache_trees_that_can_turn_into_ents()
 	global.entable_trees = names
 end
 
-function M.cache_squares_to_check_per_tick()
-	global.squares_to_check_per_tick = #global.chunks.list * global.config.factory_events_per_tick_per_chunk
-end
-
 function M.cache_game_forces()
 	global.game_forces = {}
 	for _, force in pairs(game.forces) do
@@ -136,13 +130,28 @@ function M.cache_game_forces()
 	end
 end
 
-script.on_event(defines.events.on_chunk_generated, chunks.on_chunk_generated)
-script.on_event(defines.events.on_chunk_deleted, chunks.on_chunk_deleted)
+script.on_event(defines.events.on_chunk_generated, function(e)
+	chunks.on_chunk_generated(global.chunks, e.position)
+end)
+script.on_event(defines.events.on_chunk_deleted, function(e)
+	chunks.on_chunk_deleted(global.chunk, e.position)
+end)
 
 -- This is also called when configuration changes. We don't have any long-term
 -- state we need to preserve except grace period, so it's okay.
 -- Also, Factorio deletes unknown entities for us, which is nice.
 M.initialize = function()
+
+	local config = {}
+	config.factory_events = settings.global["hostile-trees-do-trees-hate-your-factory"].value
+	local fe_intvl = settings.global["hostile-trees-how-often-do-trees-hate-your-factory"].value
+	config.factory_events_per_tick_per_chunk = M.squares_to_check_per_tick_per_chunk(fe_intvl)
+	config.player_events = settings.global["hostile-trees-do-trees-hate-you"].value
+	config.player_event_frequency = settings.global["hostile-trees-how-often-do-trees-hate-you"].value
+	config.retaliation_enabled = settings.global["hostile-trees-do-trees-retaliate"].value
+	config.grace_period = settings.global["hostile-trees-how-long-do-trees-withhold-their-hate"].value * 60
+	global.config = config
+
 	global.players          = {}
 	global.players_array    = {}
 	global.tick_mod_10_s    = 0
@@ -179,19 +188,9 @@ M.initialize = function()
 	global.spawnrates.spitters = spitter_spawner.result_units
 	global.spawn_table = {}
 
-	M.config.factory_events = settings.global["hostile-trees-do-trees-hate-your-factory"].value
-	local fe_intvl = settings.global["hostile-trees-how-often-do-trees-hate-your-factory"].value
-	M.config.factory_events_per_tick_per_chunk = M.squares_to_check_per_tick_per_chunk(fe_intvl)
-
-	M.config.player_events = settings.global["hostile-trees-do-trees-hate-you"].value
-	M.config.player_event_frequency = settings.global["hostile-trees-how-often-do-trees-hate-you"].value
-	M.config.retaliation_enabled = settings.global["hostile-trees-do-trees-retaliate"].value
-	M.config.grace_period = settings.global["hostile-trees-how-long-do-trees-withhold-their-hate"].value * 60
-	global.config = M.config
 	M.cache_players()
 	M.cache_evolution_rates()
 	M.cache_trees_that_can_turn_into_ents()
-	M.cache_squares_to_check_per_tick()
 	M.cache_game_forces()
 end
 
