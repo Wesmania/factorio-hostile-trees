@@ -1,4 +1,5 @@
 local util = require("modules/util")
+local chunks = require("modules/chunks")
 local ents = require("modules/ent_generation")
 
 local M = {}
@@ -135,35 +136,8 @@ function M.cache_game_forces()
 	end
 end
 
-local function collect_chunks()
-	local global = global
-	global.chunks = {
-		list = {},
-		dict = {},
-	}
-	for c in global.surface.get_chunks() do
-		util.ldict2_add(global.chunks, c.x, c.y, {
-			x = c.x,
-			y = c.y,
-		})
-	end
-end
-
-script.on_event(defines.events.on_chunk_generated, function(args)
-	local p = args.position
-	util.ldict2_add(global.chunks, p.x, p.y, {
-		x = p.x,
-		y = p.y,
-	})
-	M.cache_squares_to_check_per_tick()
-end)
-
-script.on_event(defines.events.on_chunk_deleted, function(args)
-	for _, p in ipairs(args.positions) do
-		util.ldict2_remove(global.chunks, p.x, p.y)
-	end
-	M.cache_squares_to_check_per_tick()
-end)
+script.on_event(defines.events.on_chunk_generated, chunks.on_chunk_generated)
+script.on_event(defines.events.on_chunk_deleted, chunks.on_chunk_deleted)
 
 -- This is also called when configuration changes. We don't have any long-term
 -- state we need to preserve except grace period, so it's okay.
@@ -195,7 +169,8 @@ M.initialize = function()
 		},
 	}
 
-	collect_chunks()
+	global.chunks = chunks.chunks_new()
+	chunks.reinitialize_chunks(global.chunks)
 
 	global.spawnrates = {}
 	local biter_spawner = game.get_filtered_entity_prototypes{{filter="name", name="biter-spawner"}}["biter-spawner"]

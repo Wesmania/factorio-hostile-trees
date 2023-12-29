@@ -104,7 +104,6 @@ function M.l_remove(list, item)
 	list[#list] = nil
 end
 
-
 function M.dict2_add(d, key1, key2, item)
 	if d[key1] == nil then
 		d[key1] = {}
@@ -134,6 +133,18 @@ function M.dict2_remove(d, key1, key2)
 	return val
 end
 
+function M.dict2_setdefault(d, key1, key2, default)
+	if d[key1] == nil then
+		d[key1] = {}
+	end
+	local l = d[key1]
+	if l[key2] == nil then
+		l[key2] = default
+		return default
+	else
+		return l[key2]
+	end
+end
 
 function M.ldict2_add(ldict, key1, key2, item)
 	local l = ldict.list
