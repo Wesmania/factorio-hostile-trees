@@ -238,7 +238,8 @@ data:extend({{
 data:extend({{
 	type = "electric-energy-interface",
 	name = "electric-tree-consumption",
-	localised_name = "foobar",
+	-- HACK this should ensure it never dies before the associated tree
+	max_health = 1000000,
 	flags = {
 		"hidden",
 		"hide-alt-info",
@@ -253,9 +254,9 @@ data:extend({{
 	energy_source = {
 		type = "electric",
 		buffer_capacity = "500kJ",
-		-- We can hack around this hardcoded value by tweaking
-		-- electric_buffer_size. Every point is 60 W.
-		input_flow_limit = "500MW",
+		--
+		-- This should be enough for all non-modded games.
+		input_flow_limit = "100GW",
 		usage_priority = "primary-input",	-- bwahaha
 	},
 	energy_usage = "500kW",

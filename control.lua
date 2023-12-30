@@ -9,6 +9,7 @@ local car = require("modules/car")
 local chunks = require("modules/chunks")
 local retaliation = require("modules/retaliation")
 local cache_evolution = require("modules/cache_evolution")
+local electricity = require("modules/electricity")
 
 script.on_init(function()
 	setup.initialize_fresh()
@@ -123,5 +124,11 @@ script.on_event({defines.events.on_tick}, function(event)
 	-- Call only once per second, booby trapping cars doesn't have to be precise
 	if global.tick_mod_10_s % 60 == 0 then
 		car.car_tree_events()
+	end
+
+	-- Same wih electrified trees
+	-- FIXME
+	if global.tick_mod_10_s % 2 == 1 then
+		electricity.check_electrified_trees()
 	end
 end)

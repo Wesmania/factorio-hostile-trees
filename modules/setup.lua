@@ -145,6 +145,9 @@ local function before_0_2_1()
 
 	-- New chunk format in 0.2.1
 	chunks.fresh_setup()
+
+	-- Electrified trees, new in 0.2.1
+	electricity.fresh_setup()
 end
 
 -- Any version fixups will come here. First version with info is 0.2.1.
@@ -193,6 +196,9 @@ function M.initialize_fresh()
 
 	-- Stateful, holds active chunk mask info.
 	chunks.fresh_setup()
+
+	-- Stateful, keeps electrified tree state.
+	electricity.fresh_setup()
 end
 
 return M

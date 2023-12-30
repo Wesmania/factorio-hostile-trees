@@ -178,7 +178,8 @@ end
 
 function M.ldict_add(ldict, key, item)
 	if ldict.dict[key] ~= nil then return end
-	M.l_add(item)
+	ldict.dict[key] = item
+	M.l_add(ldict.list, item)
 end
 
 function M.ldict_get(ldict, key)
@@ -187,13 +188,12 @@ end
 
 function M.ldict_remove(ldict, key)
 	if ldict.dict[key] == nil then return end
-
-	M.l_remove(ldict.dict[key])
+	M.l_remove(ldict.list, ldict.dict[key])
 	ldict.dict[key] = nil
 end
 
 function M.ldict_get_random(ldict, key)
-	M.l_get_random(ldict.list)
+	return M.l_get_random(ldict.list)
 end
 
 return M

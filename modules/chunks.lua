@@ -75,8 +75,8 @@ function M.pick_random_active_chunk(cs)
 end
 
 function M.fresh_setup()
-	global.chunks = chunks.chunks_new()
-	chunks.reinitialize_chunks(global.chunks)
+	global.chunks = M.chunks_new()
+	M.reinitialize_chunks(global.chunks)
 end
 
 return M
