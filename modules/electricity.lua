@@ -5,6 +5,12 @@ local area_util = require("modules/area_util")
 local util = require("modules/util")
 local tree_images = require("modules/tree_images")
 
+local tree_events
+if data == nil then
+	tree_events = require("modules/tree_events")
+end
+
+
 local M = {}
 
 function M.fresh_setup()
@@ -17,7 +23,8 @@ function M.fresh_setup()
 		mature = {
 			dict = {},
 			list = {},
-		}
+		},
+		tick = 0,
 	}
 end
 
@@ -144,6 +151,7 @@ function M.new_electrified_tree(etree, power_entity)
 		spawned_trees = 0,
 		expansions = 0,
 		expansion_attempts = 0,
+		starvation = 2,
 	}
 	local et = global.electric_tree_state
 	local id = etree.unit_number
@@ -162,11 +170,11 @@ function M.destroy_electrified_tree(id)
 	local tree = et.all[id]
 	et.all[id] = nil
 	util.ldict_remove(et[tree.state], id)
-	if et.power.valid then
-		et.power.destroy()
+	if tree.power.valid then
+		tree.power.destroy()
 	end
-	if et.e.valid then
-		et.e.destroy()
+	if tree.e.valid then
+		tree.e.destroy()
 	end
 end
 
@@ -197,11 +205,26 @@ local function can_spawn_trees(etree)
 	return etree.spawned_trees < 50
 end
 
+local function check_starvation(etree)
+	local p = etree.power.energy / etree.power.electric_buffer_size
+	if p < 0.99 then
+		etree.starvation = etree.starvation - (1 - p)
+		game.print("Starving " .. etree.starvation)
+		if etree.starvation <= 0 then
+			tree_events.set_tree_on_fire(etree.e.surface, etree.e)
+		end
+	else
+		etree.starvation = 2
+	end
+end
+
 -- Called once per second.
 function M.check_electrified_trees()
 	-- Mature trees increase power consumption once every 5 minutes on average.
 	local et = global.electric_tree_state
 	local gcount = #et.mature.list / 300
+
+	et.tick = (et.tick + 1) % 10
 
 	while gcount > 1 or (gcount > 0 and math.random() < gcount) do
 		gcount = gcount - 1
@@ -275,6 +298,16 @@ function M.check_electrified_trees()
 		end
 		::continue::
 	end
+
+	-- Update starvation status for trees.
+	if et.tick % 10 == 0 then
+		for _, t in pairs(et.growing.dict) do
+			check_starvation(t)
+		end
+		for _, t in pairs(et.mature.dict) do
+			check_starvation(t)
+		end
+	end
 end
 
 -- Below is data stage.
@@ -325,7 +358,7 @@ function M.generate_electric_tree(tree_data)
 			water_reflection = tree_data.water_reflection,
 			light = {
 				intensity = 1,
-				size = 5,
+				size = 10,
 			}
 		}
 		data:extend({unit})
