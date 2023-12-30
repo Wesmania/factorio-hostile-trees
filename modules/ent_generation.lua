@@ -1,4 +1,5 @@
 local entity_sounds = require("__base__/prototypes/entity/sounds")
+local tree_images = require("modules/tree_images")
 require("__base__/prototypes/entity/spitter-animations")
 
 local ent_balance = {
@@ -153,8 +154,6 @@ function M.can_generate_ent(tree_data)
 end
 
 local function generate_ent_animation(tree_data, v, color, unit_type)
-	local layers = {}
-
 	if unit_type == "exp" then
 		-- Make it red
 		if color ~= nil then
@@ -194,85 +193,7 @@ local function generate_ent_animation(tree_data, v, color, unit_type)
 		end
 	end
 
-	local fixup_anim = function(a)
-		a.direction_count = 1
-		if a.hr_version ~= nil then
-			a.hr_version.direction_count = 1
-		end
-	end
-
-	local add_layer = function(l)
-		if l.layers ~= nil then
-			for ll in l.layers do
-				fixup_anim(ll)
-				layers[#layers + 1] = ll
-			end
-		else
-			fixup_anim(l)
-			layers[#layers + 1] = l
-		end
-	end
-
-	local get_frame_count = function(l)
-		if l.layers ~= nil then
-			return l.layers[1].frame_count
-		else
-			return l.frame_count
-		end
-	end
-
-	local for_each_anim = function(l, action)
-		if l.layers ~= nil then
-			for _, ll in pairs(l.layers) do
-				action(ll)
-				if ll.hr_version ~= nil then
-					action(ll.hr_version)
-				end
-			end
-		else
-			action(l)
-			if l.hr_version ~= nil then
-				action(l.hr_version)
-			end
-		end
-	end
-
-	local adjust_frame_count = function(l, target)
-		for_each_anim(l, function(v)
-			v.frame_count = target
-		end)
-	end
-
-	local set_tint = function(l, tint)
-		for_each_anim(l, function(v)
-			v.tint = tint
-		end)
-	end
-
-	local s = table.deepcopy(v.trunk)
-	adjust_frame_count(s, 1)
-	add_layer(s)
-
-	if v.leaves ~= nil then
-		local ll = table.deepcopy(v.leaves)
-		adjust_frame_count(ll, 1)
-		set_tint(ll, color)
-		add_layer(ll)
-	end
-	if v.overlay ~= nil then
-		local ll = table.deepcopy(v.overlay)
-		adjust_frame_count(ll, 1)
-		add_layer(ll)
-	end
-	if v.shadow ~= nil then
-		local s = table.deepcopy(v.shadow)
-		adjust_frame_count(s, 1)
-		add_layer(s)
-	end
-
-	return {
-		layers = layers
-	}
+	return tree_images.generate_tree_image(tree_data, v, color)
 end
 
 local ent_walk_sounds = {}
@@ -347,7 +268,7 @@ function M.generate_ent(tree_data, unit_type)
 	unit.working_sound = nil
 	unit.running_sound_animation_positions = {120,}		-- TODO do specific values do anything?
 	unit.walking_sound = ent_walk_sounds
-	unit.water_reflection = nil
+	unit.water_reflection = tree_data.water_reflection
 	unit.collision_box = tree_data.collision_box
 	unit.localised_name = {"entity-name.hostile-trees-ent-" .. unit_type}
 	unit.localised_description = {"entity-description.hostile-trees-ent-" .. unit_type}

@@ -1,6 +1,7 @@
 local util = require("modules/util")
 local chunks = require("modules/chunks")
 local ents = require("modules/ent_generation")
+local electricity = require("modules/electricity")
 
 local M = {}
 
@@ -121,6 +122,18 @@ function M.cache_trees_that_can_turn_into_ents()
 	global.entable_trees = names
 end
 
+function M.cache_electric_trees()
+	local names = {}
+	for name, _ in pairs(game.entity_prototypes) do
+		local parts = electricity.split_electric_tree_name(name)
+		if parts ~= nil then
+			names[parts.name] = true
+		end
+	end
+	global.electric_trees = names
+end
+
+
 function M.cache_game_forces()
 	global.game_forces = {}
 	for _, force in pairs(game.forces) do
@@ -191,6 +204,7 @@ M.initialize = function()
 	M.cache_players()
 	M.cache_evolution_rates()
 	M.cache_trees_that_can_turn_into_ents()
+	M.cache_electric_trees()
 	M.cache_game_forces()
 end
 

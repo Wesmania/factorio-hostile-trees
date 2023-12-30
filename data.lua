@@ -1,5 +1,6 @@
 local stdlib_util = require("__core__/lualib/util")
 local ents = require("modules/ent_generation")
+local electricity = require("modules/electricity")
 
 local function edit_spitter_projectile(p, damage_mult)
 	for _, e in pairs(p.initial_action) do
@@ -80,6 +81,9 @@ for _, tree in pairs(data.raw["tree"]) do
 		if ents.can_generate_ent(tree) then
 			ents.generate_ent(tree, ent_type.unit)
 		end
+	end
+	if ents.can_generate_ent(tree) then -- FIXME refactor
+		electricity.generate_electric_tree(tree)
 	end
 end
 
@@ -228,122 +232,4 @@ data:extend({{
 		    }
 	    }
     }
-}})
-
-data:extend({{
-	type = "electric-pole",
-	name = "tree-electric-pole",
-	icon = "__base__/graphics/icons/big-electric-pole.png",
-	icon_size = 64, icon_mipmaps = 4,
-	flags = {"placeable-neutral", "breaths-air", "not-deconstructable", "not-repairable", "not-blueprintable", "hidden", "hide-alt-info", "not-upgradable", "not-in-made-in"},
-	max_health = 150,
-	corpse = "big-electric-pole-remnants",
-	dying_explosion = "big-electric-pole-explosion",
-	collision_box = {{-0.65, -0.65}, {0.65, 0.65}},
-	selection_box = {{-1, -1}, {1, 1}},
-	drawing_box = {{-1, -3}, {1, 0.5}},
-	maximum_wire_distance = 30,
-	supply_area_distance = 0,
-	pictures =
-	{
-		layers =
-		{
-			{
-				filename = "__base__/graphics/entity/big-electric-pole/big-electric-pole.png",
-				priority = "extra-high",
-				width = 76,
-				height = 156,
-				direction_count = 4,
-				shift = stdlib_util.by_pixel(1, -51),
-				hr_version =
-				{
-					filename = "__base__/graphics/entity/big-electric-pole/hr-big-electric-pole.png",
-					priority = "extra-high",
-					width = 148,
-					height = 312,
-					direction_count = 4,
-					shift = stdlib_util.by_pixel(0, -51),
-					scale = 0.5
-				}
-			},
-			{
-				filename = "__base__/graphics/entity/big-electric-pole/big-electric-pole-shadow.png",
-				priority = "extra-high",
-				width = 188,
-				height = 48,
-				direction_count = 4,
-				shift = stdlib_util.by_pixel(60, 0),
-				draw_as_shadow = true,
-				hr_version =
-				{
-					filename = "__base__/graphics/entity/big-electric-pole/hr-big-electric-pole-shadow.png",
-					priority = "extra-high",
-					width = 374,
-					height = 94,
-					direction_count = 4,
-					shift = stdlib_util.by_pixel(60, 0),
-					draw_as_shadow = true,
-					scale = 0.5
-				}
-			}
-		}
-	},
-	connection_points =
-	{
-		{
-			shadow =
-			{
-				copper = stdlib_util.by_pixel_hr(245.0, -34.0),
-			},
-			wire =
-			{
-				copper = stdlib_util.by_pixel_hr(0, -246.0),
-			}
-		},
-		{
-			shadow =
-			{
-				copper = stdlib_util.by_pixel_hr(279.0, -24.0),
-			},
-			wire =
-			{
-				copper = stdlib_util.by_pixel_hr(34.0, -235.0),
-			}
-		},
-		{
-			shadow =
-			{
-				copper = stdlib_util.by_pixel_hr(292.0, 0.0),
-			},
-			wire =
-			{
-				copper = stdlib_util.by_pixel_hr(47.0, -212.0),
-			}
-		},
-		{
-			shadow =
-			{
-				copper = stdlib_util.by_pixel_hr(277.0, 23.0),
-			},
-			wire =
-			{
-				copper = stdlib_util.by_pixel_hr(33.0, -188.0),
-			}
-		}
-	},
-	water_reflection =
-	{
-		pictures =
-		{
-			filename = "__base__/graphics/entity/big-electric-pole/big-electric-pole-reflection.png",
-			priority = "extra-high",
-			width = 16,
-			height = 32,
-			shift = stdlib_util.by_pixel(0, 60),
-			variation_count = 1,
-			scale = 5
-		},
-		rotate = false,
-		orientation_to_variation = false
-	}
 }})
