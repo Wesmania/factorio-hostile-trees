@@ -152,9 +152,13 @@ function M.event_spawn_biters(s)
 	return tree_events.event_spawn_biters(s)
 end
 
--- For tree_events.add_ent_war_story
-function M.event_ent_war(s)
-	return tree_events.event_ent_war(s)
+-- For tree_events.gradual_tree_transform_story
+function M.event_spawn_trees_on_timer(s)
+	return tree_events.event_spawn_trees_on_timer(s)
+end
+
+function M.event_wait_then_burst_electric_tree(s)
+	return electricity.event_wait_then_burst_electric_tree(s)
 end
 
 function M.run_coro(s)

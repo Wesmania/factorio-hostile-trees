@@ -72,6 +72,7 @@ M.cache_evolution_rates = function()
 	global.spawntable = {
 		default = cache_evolution_for(evolution),
 		retaliation = cache_evolution_for(evolution + 0.1),
+		half_retaliation = cache_evolution_for(evolution + 0.05),
 		ents = cache_evolution_for_ents(evolution)
 	}
 end

@@ -60,7 +60,9 @@ script.on_event({defines.events.on_tick}, function(event)
 		if trees.run_coro(story) then
 			i = i + 1
 		else
-			util.list_remove(global.tree_stories, i)
+			local tmp = global.tree_stories[#global.tree_stories]
+			global.tree_stories[i] = tmp
+			global.tree_stories[#global.tree_stories] = nil
 			-- New entity under same i
 		end
 	end

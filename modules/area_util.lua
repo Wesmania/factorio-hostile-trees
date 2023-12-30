@@ -81,6 +81,10 @@ function M.get_trees(surface, area)
 	return surface.find_entities_filtered{area = area, type = "tree"}
 end
 
+function M.get_trees_radius(surface, position, radius)
+	return surface.find_entities_filtered{position = position, radius = radius, type = "tree"}
+end
+
 function M.has_player_entities(surface, area)
 	for _, force in pairs(global.game_forces) do
 		if surface.count_entities_filtered{area = area, force = force, limit = 1} > 0 then

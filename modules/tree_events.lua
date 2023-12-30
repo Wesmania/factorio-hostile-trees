@@ -500,7 +500,23 @@ function M.turn_tree_into_ent(surface, tree)
 	return ent
 end
 
-function M.event_ent_war(s)
+function M.turn_tree_into_ent_or_biter(surface, tree)
+	if math.random() < 0.5 then
+		local maybe_ent = M.turn_tree_into_ent(surface, tree) 
+		if maybe_ent ~= nil then
+			return maybe_ent
+		end
+	end
+	local rand_ent = M.pick_random_enemy_type("half_retaliation", "small_biter")
+	local biter = surface.create_entity{
+		name = rand_ent,
+		position = tree.position,
+	}
+	tree.destroy()
+	return biter
+end
+
+function M.event_spawn_trees_on_timer(s)
 	local twt = s.trees_with_times
 	if s.idx > #twt or s.frame > 1200 then
 		return false
@@ -511,7 +527,7 @@ function M.event_ent_war(s)
 		s.idx = s.idx + 1
 		if not t.valid then goto continue end
 
-		local ent = M.turn_tree_into_ent(s.surface, t)
+		local ent = M[s.spawn_fn](s.surface, t)
 		if not ent then goto continue end
 
 		if s.target ~= nil and s.target.valid then
@@ -525,14 +541,15 @@ function M.event_ent_war(s)
 	return true
 end
 
-function M.get_ent_war_story(surface, trees_with_times, target)
+function M.gradual_tree_transform_story(surface, trees_with_times, target, spawn_fn)
 	local s = {}
 	s.surface = surface
 	s.trees_with_times = trees_with_times
 	s.target = target
 	s.frame = 0
 	s.idx = 1
-	s.event_name = "event_ent_war"
+	s.event_name = "event_spawn_trees_on_timer"
+	s.spawn_fn = spawn_fn
 	return s
 end
 
@@ -588,7 +605,7 @@ function M.entify_trees_in_cone_coro(surface, from, to, angle, radius, speed, ta
 	if target == nil then
 		target = surface.find_nearest_enemy_entity_with_owner{position=to, max_distance=32, force="enemy"}
 	end
-	return M.get_ent_war_story(surface, trees_in_cone, target)
+	return M.gradual_tree_transform_story(surface, trees_in_cone, target, "turn_tree_into_ent")
 end
 
 script.on_nth_tick(60, unfocus_players)

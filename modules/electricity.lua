@@ -152,16 +152,22 @@ function M.new_electrified_tree(etree, power_entity)
 		expansions = 0,
 		expansion_attempts = 0,
 		starvation = 2,
+		gaggle = {},
 	}
 	local et = global.electric_tree_state
 	local id = etree.unit_number
 	if et.all[id] == nil then
 		et.all[id] = tree
 		util.ldict_add(et.growing, id, tree)
+		tree.gaggle[id] = true
 		return tree
 	else
 		return nil
 	end
+end
+
+function M.get_electrified_tree(id)
+	return global.electric_tree_state.all[id]
 end
 
 function M.destroy_electrified_tree(id)
@@ -209,9 +215,17 @@ local function check_starvation(etree)
 	local p = etree.power.energy / etree.power.electric_buffer_size
 	if p < 0.99 then
 		etree.starvation = etree.starvation - (1 - p)
-		game.print("Starving " .. etree.starvation)
 		if etree.starvation <= 0 then
-			tree_events.set_tree_on_fire(etree.e.surface, etree.e)
+			-- Burst the whole gaggle.
+			for tid, _ in pairs(etree.gaggle) do
+				local g_etree = M.get_electrified_tree(tid)
+				if g_etree ~= nil then
+					-- Safeguard against triggering it again too soon
+					g_etree.starvation = 2
+					local event = M.burst_electric_tree_story(g_etree)
+					global.tree_stories[#global.tree_stories + 1] = event
+				end
+			end
 		end
 	else
 		etree.starvation = 2
@@ -226,10 +240,13 @@ function M.check_electrified_trees()
 
 	et.tick = (et.tick + 1) % 10
 
+	-- Be careful, check if their trees are valid!
+	-- We could've destroyed a tree before the on_destroy call went through!
+
 	while gcount > 1 or (gcount > 0 and math.random() < gcount) do
 		gcount = gcount - 1
 		local tree = M.get_random_mature_tree()
-		if tree == nil then goto continue_mature end
+		if tree == nil or not tree.e.valid then goto continue_mature end
 		local more = 1.3 + math.random() * 0.4
 		tree.power.power_usage = tree.power.power_usage * more
 		tree.power.electric_buffer_size = tree.power.electric_buffer_size * more
@@ -245,7 +262,7 @@ function M.check_electrified_trees()
 	while gcount > 1 or (gcount > 0 and math.random() < gcount) do
 		gcount = gcount - 1
 		local tree = M.get_random_growing_tree()
-		if tree == nil then goto continue end
+		if tree == nil or not tree.e.valid then goto continue end
 
 		local pos = {}
 		local treepos = tree.e.position
@@ -254,8 +271,10 @@ function M.check_electrified_trees()
 			local newtrees = math.random(3, 5)
 			local tname = M.split_electric_tree_name(tree.e.name).name
 			for i = 1,math.random(3, 5) do
-				pos.x = treepos.x - 5 + (math.random() * 10)
-				pos.y = treepos.y - 5 + (math.random() * 10)
+				local dst = math.sqrt(math.random() * 64)
+				local angle = math.random() * math.pi * 2
+				pos.x = treepos.x + math.sin(angle) * dst
+				pos.y = treepos.y + math.cos(angle) * dst
 				tree.e.surface.create_entity{
 					name = tname,
 					position = pos
@@ -268,7 +287,7 @@ function M.check_electrified_trees()
 			tree.expansion_attempts = tree.expansion_attempts + 1
 			-- Pick random direction and distance.
 			local angle = math.random() * math.pi * 2
-			local dist = 8 + math.random() * 3
+			local dist = 9 + math.random() * 4
 			local newpos = {
 				x = treepos.x + math.sin(angle) * dist,
 				y = treepos.y + math.cos(angle) * dist,
@@ -276,7 +295,7 @@ function M.check_electrified_trees()
 
 			-- Are there few trees in this direction? And is it land?
 			if not area_util.is_water(tree.e.surface, newpos)
-			   and area_util.count_trees(tree.e.surface, util.box_around(newpos, 4), 15) < 15
+			   and area_util.count_trees(tree.e.surface, util.box_around(newpos, 4), 12) < 12
 			then
 				-- Yes! Expand here then!
 				local newetree = tree.e.surface.create_entity{
@@ -288,6 +307,8 @@ function M.check_electrified_trees()
 					if newetree_data ~= nil then
 						tree.expansions = tree.expansions + 1
 						newetree_data.gen = tree.gen + 1
+						newetree_data.gaggle = tree.gaggle
+						tree.gaggle[newetree_data.e.unit_number] = true
 					else
 						newetree.destroy()
 					end
@@ -310,6 +331,60 @@ function M.check_electrified_trees()
 			check_starvation(t)
 		end
 	end
+end
+
+function M.burst_electric_tree_story(etree)
+
+	local story = {
+		etree = etree,
+		wait = math.random(15, 60),
+		event_name = "event_wait_then_burst_electric_tree",
+	}
+	return story
+end
+
+function M.event_wait_then_burst_electric_tree(s)
+	if s.wait > 0 then
+		s.wait = s.wait - 1
+		return true
+	end
+	if not s.etree.e.valid then return false end
+
+	local surface = s.etree.e.surface
+	local pos = s.etree.e.position
+	tree_events.set_tree_on_fire(surface, s.etree.e)
+
+	-- Okay, now collect trees in a radius.
+	local speed = 3
+	local trees_around = area_util.get_trees_radius(surface, pos, 8)
+	local timed_trees = {}
+
+	for _, tree in ipairs(trees_around) do
+		local tree_vec = {
+			x = tree.position.x - pos.x,
+			y = tree.position.y - pos.y,
+		}
+		local tree_dist = math.sqrt(util.len2(tree_vec))
+		local tree_frame = math.floor(tree_dist * 60 / speed)
+		timed_trees[#timed_trees + 1] = {
+			tree,
+			tree_frame
+		}
+	end
+	table.sort(timed_trees, function(a, b) return a[2] < b[2] end)
+	if s.etree.state == "growing" then
+		while #timed_trees > s.etree.spawned_trees do
+			timed_trees[#timed_trees] = nil
+		end
+	end
+
+	local target = surface.find_nearest_enemy_entity_with_owner{position=pos, max_distance=32, force="enemy"}
+
+	local tstory = tree_events.gradual_tree_transform_story(surface, timed_trees, target, "turn_tree_into_ent_or_biter")
+	for k, v in pairs(tstory) do
+		s[k] = v
+	end
+	return true
 end
 
 -- Below is data stage.
