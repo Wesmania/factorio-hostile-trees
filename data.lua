@@ -233,3 +233,27 @@ data:extend({{
 	    }
     }
 }})
+
+
+data:extend({{
+	type = "electric-energy-interface",
+	name = "electric-tree-consumption",
+	flags = {
+		"hidden",
+		"hide-alt-info",
+		"placeable-off-grid",
+		"not-on-map",
+		"not-selectable-in-game",
+		"not-flammable",
+		"not-in-kill-statistics",
+		"not-in-made-in",
+		"not-upgradable",
+	},
+	energy_source = {
+		type = "electric",
+		buffer_capacity = "500kJ",
+		input_flow_limit = "500kW",
+		usage_priority = "primary-input",	-- bwahaha
+	},
+	energy_usage = "500kW",
+}})

@@ -36,7 +36,6 @@ function M.try_to_hook_up_electricity(tree, electric)
 	local treepos = tree.position
 	local pole = M.electrify_tree(tree)
 	if pole == nil then
-		game.print("Not electrifiable")
 		return
 	end
 
@@ -44,10 +43,14 @@ function M.try_to_hook_up_electricity(tree, electric)
 	-- there's no way to find out connection status (?????)
 	pole.disconnect_neighbour(electric)
 	if not pole.connect_neighbour(electric) then
-		game.print("Not connected")
 		pole.destroy()
 		return
 	end
+
+	local electric = tree.surface.create_entity{
+		name = "electric-tree-consumption",
+		position = tree.position,
+	}
 
 	tree.destroy()
 	local rid = script.register_on_entity_destroyed(pole)
@@ -97,7 +100,7 @@ function M.generate_electric_tree(tree_data)
 			selection_box = tree_data.selection_box,
 			drawing_box = tree_data.drawing_box,
 			maximum_wire_distance = 30,
-			supply_area_distance = 0,
+			supply_area_distance = 1,
 			pictures = tree_images.generate_tree_image(tree_data, variation, tree_data.colors[i]) ,
 			connection_points = {	-- FIXME
 				{
