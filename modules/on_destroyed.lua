@@ -5,7 +5,7 @@ local electricity = require("modules/electricity")
 
 script.on_event(defines.events.on_entity_destroyed, function(data)
 	local event = global.entity_destroyed_script_events[data.registration_number]
-	if event ~= nil then
+	if event ~= nil and event.action ~= nil and M[event.action] ~= nil then
 		M[event.action](event)
 	end
 	global.entity_destroyed_script_events[data.registration_number] = nil

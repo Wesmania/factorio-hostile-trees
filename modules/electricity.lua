@@ -51,6 +51,7 @@ function M.try_to_hook_up_electricity(tree, electric)
 		name = "electric-tree-consumption",
 		position = tree.position,
 	}
+	electric.electric_buffer_size = 10
 
 	tree.destroy()
 	local rid = script.register_on_entity_destroyed(pole)

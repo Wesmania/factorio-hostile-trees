@@ -2,6 +2,8 @@ local util = require("modules/util")
 local chunks = require("modules/chunks")
 local ents = require("modules/ent_generation")
 local electricity = require("modules/electricity")
+local cache_evolution = require("modules/cache_evolution")
+local car = require("modules/car")
 
 local M = {}
 
@@ -29,80 +31,6 @@ M.cache_players = function()
 			end
 		end
 	end
-end
-
-local function interpolate_evolution_rates(evolution, rates, new_entries, rate_adjust)
-	for _, entry in ipairs(rates) do
-		local unit = entry.unit
-		local unit_rates = entry.spawn_points
-		local probability = nil
-		if unit_rates[1].evolution_factor >= evolution then
-			probability = unit_rates[1].weight
-		end
-		if unit_rates[#unit_rates].evolution_factor <= evolution then
-			probability = unit_rates[#unit_rates].weight
-		end
-		for i = 1,#unit_rates - 1 do
-			-- Linear interpolation, rates are ascending by evolution_factor
-			if unit_rates[i].evolution_factor <= evolution and evolution < unit_rates[i + 1].evolution_factor then
-				local range = unit_rates[i + 1].evolution_factor - unit_rates[i].evolution_factor
-				local r1 = (evolution - unit_rates[i].evolution_factor) / range
-				probability = unit_rates[i].weight * r1 + unit_rates[i + 1].weight * (1 - r1)
-			end
-		end
-		if probability == nil then
-			probability = 0
-		end
-		if probability ~= 0 then
-			new_entries[#new_entries + 1] = { unit, probability * rate_adjust}
-		end
-	end
-end
-
-local function normalize_rates(new_entries)
-	local res = {}
-	local total_prob = 0
-	for _, entry in ipairs(new_entries) do
-		total_prob = total_prob + entry[2]
-	end
-
-	local sum = 0
-	for _, entry in ipairs(new_entries) do
-		res[#res+ 1] = {entry[1], sum}
-		sum = sum + entry[2] / total_prob
-	end
-	return res
-end
-
-local function cache_evolution_for(evolution)
-	local new_entries = {}
-	local enemy_rates = {
-		biters = 0.75,
-		spitters = 0.25,
-	}
-
-	-- Collect spawn rates from saved spawner tables.
-	for enemy_kind, rates in pairs(global.spawnrates) do
-		local rate_adjust = enemy_rates[enemy_kind]
-		interpolate_evolution_rates(evolution, rates, new_entries, rate_adjust)
-	end
-
-	return normalize_rates(new_entries)
-end
-
-local function cache_evolution_for_ents(evolution)
-	local new_entries = {}
-	interpolate_evolution_rates(evolution, ents.spawnrates, new_entries, 1.0)
-	return normalize_rates(new_entries)
-end
-
-M.cache_evolution_rates = function()
-	local evolution = game.forces["enemy"].evolution_factor
-	global.spawntable = {
-		default = cache_evolution_for(evolution),
-		retaliation = cache_evolution_for(evolution + 0.1),
-		ents = cache_evolution_for_ents(evolution)
-	}
 end
 
 M.squares_to_check_per_tick_per_chunk = function(seconds_per_square)
@@ -150,11 +78,14 @@ script.on_event(defines.events.on_chunk_deleted, function(e)
 	chunks.on_chunk_deleted(global.chunk, e.position)
 end)
 
--- This is also called when configuration changes. We don't have any long-term
--- state we need to preserve except grace period, so it's okay.
--- Also, Factorio deletes unknown entities for us, which is nice.
-M.initialize = function()
+function M.refresh_caches()
+	M.cache_players()
+	cache_evolution.cache_evolution_rates()
+	M.cache_game_forces()
+end
 
+-- All things that can be safely initialized again without losing important state.
+function M.reinitialize()
 	local config = {}
 	config.factory_events = settings.global["hostile-trees-do-trees-hate-your-factory"].value
 	local fe_intvl = settings.global["hostile-trees-how-often-do-trees-hate-your-factory"].value
@@ -167,45 +98,101 @@ M.initialize = function()
 
 	global.players          = {}
 	global.players_array    = {}
+
+	-- Used by main on-tick tree loop.
 	global.tick_mod_10_s    = 0
 	global.accum            = 0
-	global.tree_stories     = {}
+
+	-- Used by tree events. Nothing here should affect long-lasting state.
+	global.tree_stories  = {}
+
+	-- Used by retaliation, not important.
 	global.tree_kill_count  = 0
 	global.robot_tree_deconstruct_count = 0
 	global.tree_kill_locs   = {}
 	global.major_retaliation_threshold = 200	-- FIXME balance
+	
 	global.surface          = game.get_surface("nauvis")
+
+	-- Players temporarily focused on as retaliation, not important
 	global.players_focused_on = {
 		list = {},
 		dict = {},
 	}
-	global.entity_destroyed_script_events = {}
-	-- Clearing this makes existing cars immune to being booby trapped. Oh well.
-	global.player_cars = {
-		list = {},
-		dict = {},
-		armed = {
-			cars = {},
-			players = {},
-			early = {},
-		},
-	}
 
-	global.chunks = chunks.chunks_new()
-	chunks.reinitialize_chunks(global.chunks)
-
+	-- Spawn rates
 	global.spawnrates = {}
 	local biter_spawner = game.get_filtered_entity_prototypes{{filter="name", name="biter-spawner"}}["biter-spawner"]
 	global.spawnrates.biters = biter_spawner.result_units
 	local spitter_spawner = game.get_filtered_entity_prototypes{{filter="name", name="spitter-spawner"}}["spitter-spawner"]
 	global.spawnrates.spitters = spitter_spawner.result_units
-	global.spawn_table = {}
 
-	M.cache_players()
-	M.cache_evolution_rates()
+	M.refresh_caches()
+
+	-- One time caches
 	M.cache_trees_that_can_turn_into_ents()
 	M.cache_electric_trees()
-	M.cache_game_forces()
+end
+
+-- Set things up to *some* defaults like we used to.
+local function before_0_2_1()
+	if global.entity_destroyed_script_events == nil then
+		global.entity_destroyed_script_events = {}
+	end
+
+	-- No cars before 0.2.1
+	car.fresh_setup()
+
+	-- New chunk format in 0.2.1
+	chunks.fresh_setup()
+end
+
+-- Any version fixups will come here. First version with info is 0.2.1.
+local version_changes = {
+	-- 0.2.1: car bombs, electricity sapping
+	{201, before_0_2_1}
+}
+
+local function version_to_number(s)
+	a, b, c = string.find(s, "(%d+).(%d+).(%d+)")
+	return a * 10000 + b * 100 + c
+end
+
+-- Reinitialize new and stateful features.
+-- TODO
+function M.port_state(old_version, new_version)
+	local old_version = version_to_number(old_version)
+	local new_version = version_to_number(new_version)
+
+	for _, v in ipairs(version_changes) do
+		local vv = v[1]
+		local fn = v[2]
+		if old_version < vv and vv <= new_version then
+			fn()
+		end
+	end
+end
+
+function M.initialize(mod_info)
+	M.reinitialize()
+
+	if mod_info.mod_changes["hostile-trees"] ~= nil then
+		local mi = mod_info.mod_changes["hostile-trees"]
+		M.port_state(mi.old_version, mi.new_version)
+	end
+end
+
+function M.initialize_fresh()
+	M.reinitialize()
+
+	-- Stateful, keeps track of existing entities.
+	global.entity_destroyed_script_events = {}
+
+	-- Stateful, keeps track of cars.
+	car.fresh_setup()
+
+	-- Stateful, holds active chunk mask info.
+	chunks.fresh_setup()
 end
 
 return M

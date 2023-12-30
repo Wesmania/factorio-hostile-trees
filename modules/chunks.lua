@@ -74,4 +74,9 @@ function M.pick_random_active_chunk(cs)
 	return util.ldict2_get_random(cs.active)
 end
 
+function M.fresh_setup()
+	global.chunks = chunks.chunks_new()
+	chunks.reinitialize_chunks(global.chunks)
+end
+
 return M

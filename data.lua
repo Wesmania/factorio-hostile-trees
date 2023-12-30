@@ -238,6 +238,7 @@ data:extend({{
 data:extend({{
 	type = "electric-energy-interface",
 	name = "electric-tree-consumption",
+	localised_name = "foobar",
 	flags = {
 		"hidden",
 		"hide-alt-info",
@@ -252,7 +253,9 @@ data:extend({{
 	energy_source = {
 		type = "electric",
 		buffer_capacity = "500kJ",
-		input_flow_limit = "500kW",
+		-- We can hack around this hardcoded value by tweaking
+		-- electric_buffer_size. Every point is 60 W.
+		input_flow_limit = "500MW",
 		usage_priority = "primary-input",	-- bwahaha
 	},
 	energy_usage = "500kW",

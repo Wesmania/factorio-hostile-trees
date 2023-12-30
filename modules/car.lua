@@ -195,6 +195,18 @@ local function arm_held_sapling(e)
 	}
 end
 
+function M.fresh_setup()
+	global.player_cars = {
+		list = {},
+		dict = {},
+		armed = {
+			cars = {},
+			players = {},
+			early = {},
+		},
+	}
+end
+
 script.on_event(defines.events.on_built_entity, on_placed_vehicle, {{ filter = "vehicle" }})
 script.on_event(defines.events.on_player_driving_changed_state, arm_booby_trap)
 script.on_event(defines.events.on_player_main_inventory_changed, arm_held_sapling)

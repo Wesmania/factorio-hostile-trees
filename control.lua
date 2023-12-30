@@ -7,18 +7,18 @@ local tree_events = require("modules/tree_events")
 local trees = require("modules/trees")
 local car = require("modules/car")
 local chunks = require("modules/chunks")
-
 local retaliation = require("modules/retaliation")
+local cache_evolution = require("modules/cache_evolution")
 
 script.on_init(function()
-	setup.initialize()
+	setup.initialize_fresh()
 end)
 
 script.on_configuration_changed(function(info)
 	local old_grace_period = global.config.grace_period
 
 	if info.old_version ~= nil or info.mod_changes["hostile-trees"] ~= nil or info.mod_startup_settings_changed then
-		setup.initialize()
+		setup.initialize(info)
 		global.config.grace_period = old_grace_period
 	end
 end)
@@ -30,9 +30,7 @@ script.on_event({defines.events.on_tick}, function(event)
 
 	global.tick_mod_10_s = (global.tick_mod_10_s + 1) % 600
 	if global.tick_mod_10_s == 0 then
-		setup.cache_players()
-		setup.cache_evolution_rates()
-		setup.cache_game_forces()
+		setup.refresh_caches()
 	end
 
 	if config.grace_period ~= nil then
