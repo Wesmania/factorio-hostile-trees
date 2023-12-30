@@ -274,8 +274,10 @@ function M.check_electrified_trees()
 				y = treepos.y + math.cos(angle) * dist,
 			}
 
-			-- Are there few trees in this direction?
-			if area_util.count_trees(tree.e.surface, util.box_around(newpos, 4), 15) < 15 then
+			-- Are there few trees in this direction? And is it land?
+			if not area_util.is_water(tree.e.surface, newpos)
+			   and area_util.count_trees(tree.e.surface, util.box_around(newpos, 4), 15) < 15
+			then
 				-- Yes! Expand here then!
 				local newetree = tree.e.surface.create_entity{
 					name = tree.e.name,
