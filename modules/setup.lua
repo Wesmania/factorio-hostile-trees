@@ -157,12 +157,11 @@ local version_changes = {
 }
 
 local function version_to_number(s)
-	a, b, c = string.find(s, "(%d+).(%d+).(%d+)")
-	return a * 10000 + b * 100 + c
+	_, _, a, b, c = string.find(s, "(%d+).(%d+).(%d+)")
+	return tonumber(a) * 10000 + tonumber(b) * 100 + tonumber(c)
 end
 
 -- Reinitialize new and stateful features.
--- TODO
 function M.port_state(old_version, new_version)
 	local old_version = version_to_number(old_version)
 	local new_version = version_to_number(new_version)
