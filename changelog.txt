@@ -1,11 +1,12 @@
 ---------------------------------------------------------------------------------------------------
 Version: 0.2.1
-Date: ??/??/????
+Date: 31/12/2023
   Changes:
     - Some profiling-guided performance improvements.
     - Trees now commit acts of terrorism.
     - New and exciting ways for trees to thrive at your expense.
     - Trees are damp by default now.
+    - Happy new year. Report any crashes and bugs pls.
 ---------------------------------------------------------------------------------------------------
 Version: 0.2.0
 Date: 28/11/2023
