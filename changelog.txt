@@ -4,6 +4,7 @@ Date: ??/??/????
   Changes:
     - Some profiling-guided performance improvements.
     - Trees now commit acts of terrorism.
+    - New and exciting ways for trees to thrive at your expense.
 ---------------------------------------------------------------------------------------------------
 Version: 0.2.0
 Date: 28/11/2023
