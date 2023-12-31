@@ -59,7 +59,7 @@ M.building_spit_assault = function(surface, area, tree_projectiles)
 end
 
 local events = {
-	sum = 1001,
+	sum = 1.25,
 	e = {
 		{ 0.25, function(a)
 			local turret = area_util.get_random_turret(a.s, a.a)
@@ -69,8 +69,8 @@ local events = {
 				return "resume_next"
 			end
 		end },
-		{ 1000, function(a)
-			local e = area_util.get_big_electric(a.s, a.a)
+		{ 0.25, function(a)
+			local e = area_util.get_electric_pole(a.s, a.a)
 			if e ~= nil then
 				electricity.try_to_hook_up_electricity(a.t, e)
 			else

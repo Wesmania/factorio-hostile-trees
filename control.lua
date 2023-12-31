@@ -130,8 +130,7 @@ script.on_event({defines.events.on_tick}, function(event)
 	end
 
 	-- Same wih electrified trees
-	-- FIXME
-	if global.tick_mod_10_s % 2 == 1 then
+	if global.tick_mod_10_s % 60 == 30 then
 		electricity.check_electrified_trees()
 	end
 end)

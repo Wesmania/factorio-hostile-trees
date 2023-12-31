@@ -77,9 +77,6 @@ function M.try_to_hook_up_electricity(tree, electric)
 		power_usage = power_usage * 2
 	end
 
-	-- FIXME
-	power_usage = 1000 * 1000 / 60
-
 	if M.register_new_electric_tree(pole, electric, power_usage) ~= nil then
 		tree.destroy()
 	else
@@ -226,7 +223,7 @@ end
 function M.check_electrified_trees()
 	-- Mature trees increase power consumption once every 5 minutes on average.
 	local et = global.electric_tree_state
-	local gcount = #et.mature.list / 300000		-- FIXME
+	local gcount = #et.mature.list / 300
 
 	et.tick = (et.tick + 1) % 10
 

@@ -34,7 +34,7 @@ function M.get_random_turret(surface, area)
 	end
 end
 
-function M.get_big_electric(surface, area)
+function M.get_electric_pole(surface, area)
 	local items = surface.find_entities_filtered{
 		area = area,
 		type = { "electric-pole" },
