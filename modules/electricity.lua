@@ -76,7 +76,10 @@ function M.try_to_hook_up_electricity(tree, electric)
 	if total_power > 1200000 then
 		power_usage = power_usage * 2
 	end
-	
+
+	-- FIXME
+	power_usage = 1000 * 1000 / 60
+
 	if M.register_new_electric_tree(pole, electric, power_usage) ~= nil then
 		tree.destroy()
 	else
@@ -166,10 +169,6 @@ function M.new_electrified_tree(etree, power_entity)
 	end
 end
 
-function M.get_electrified_tree(id)
-	return global.electric_tree_state.all[id]
-end
-
 function M.destroy_electrified_tree(id)
 	local et = global.electric_tree_state
 	if et.all[id] == nil then return end
@@ -216,16 +215,7 @@ local function check_starvation(etree)
 	if p < 0.99 then
 		etree.starvation = etree.starvation - (1 - p)
 		if etree.starvation <= 0 then
-			-- Burst the whole gaggle.
-			for tid, _ in pairs(etree.gaggle) do
-				local g_etree = M.get_electrified_tree(tid)
-				if g_etree ~= nil then
-					-- Safeguard against triggering it again too soon
-					g_etree.starvation = 2
-					local event = M.burst_electric_tree_story(g_etree)
-					global.tree_stories[#global.tree_stories + 1] = event
-				end
-			end
+			M.burst_electric_tree_gaggle(etree.gaggle)
 		end
 	else
 		etree.starvation = 2
@@ -236,7 +226,7 @@ end
 function M.check_electrified_trees()
 	-- Mature trees increase power consumption once every 5 minutes on average.
 	local et = global.electric_tree_state
-	local gcount = #et.mature.list / 300
+	local gcount = #et.mature.list / 300000		-- FIXME
 
 	et.tick = (et.tick + 1) % 10
 
@@ -333,8 +323,20 @@ function M.check_electrified_trees()
 	end
 end
 
-function M.burst_electric_tree_story(etree)
+function M.burst_electric_tree_gaggle(gaggle)
+	local et = global.electric_tree_state.all
+	for tid, _ in pairs(gaggle) do
+		local g_etree = et[tid]
+		if g_etree ~= nil then
+			-- Safeguard against triggering it again too soon
+			g_etree.starvation = 2
+			local event = M.burst_electric_tree_story(g_etree)
+			global.tree_stories[#global.tree_stories + 1] = event
+		end
+	end
+end
 
+function M.burst_electric_tree_story(etree)
 	local story = {
 		etree = etree,
 		wait = math.random(15, 60),
@@ -387,10 +389,31 @@ function M.event_wait_then_burst_electric_tree(s)
 	return true
 end
 
+-- One last check: trigger bursting when one of trees dies.
+function M.pole_died(e)
+	if not M.is_electric_tree_name(e.entity.name) then return end
+	local etree = global.electric_tree_state.all[e.entity.unit_number]
+	if etree ~= nil then
+		M.burst_electric_tree_gaggle(etree.gaggle)
+	end
+end
+
+function M.pole_bot_deconstructed(event)
+	M.pole_died(event)
+end
+
+function M.pole_mined(event)
+	M.pole_died(event)
+end
+
 -- Below is data stage.
 
 function M.make_electric_tree_name(params)
 		return "tree-electric-pole-" .. params.name .. "-" .. string.format("%03d", params.variation)
+end
+
+function M.is_electric_tree_name(name)
+	return string.sub(name, 1, 19) == "tree-electric-pole-"
 end
 
 function M.split_electric_tree_name(name)
@@ -417,7 +440,7 @@ function M.generate_electric_tree(tree_data)
 				"not-upgradable",
 				"not-in-made-in"
 			},
-			max_health = 150,
+			max_health = 25,
 			corpse = tree_data.corpse,
 			--dying_explosion = "big-electric-pole-explosion",
 			collision_box = tree_data.collision_box,

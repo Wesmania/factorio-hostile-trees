@@ -10,6 +10,7 @@ local chunks = require("modules/chunks")
 local retaliation = require("modules/retaliation")
 local cache_evolution = require("modules/cache_evolution")
 local electricity = require("modules/electricity")
+local _on_entity_died = require("modules/on_entity_died")
 
 script.on_init(function()
 	setup.initialize_fresh()

@@ -2,6 +2,8 @@ local util = require("modules/util")
 local area_util = require("modules/area_util")
 local tree_events = require("modules/tree_events")
 
+local M = {}
+
 script.on_nth_tick(30 * 60, function()
 	global.tree_kill_count = 0
 	global.tree_kill_locs = {}
@@ -190,7 +192,7 @@ local function check_for_major_retaliation(surface, event)
 	global.major_retaliation_threshold = global.tree_kill_count + 200
 end
 
-script.on_event(defines.events.on_entity_died, function(event)
+function M.tree_died(event)
 	global.tree_kill_count = global.tree_kill_count + 1
 	if global.tree_kill_count % 40 == 0 and global.config.retaliation_enabled then
 		local surface = game.get_surface(1)
@@ -203,19 +205,15 @@ script.on_event(defines.events.on_entity_died, function(event)
 			check_for_major_retaliation(surface, event)
 		end
 	end
-end, {{
-	filter = "type",
-	type = "tree",
-}})
+end
 
-script.on_event(defines.events.on_robot_mined_entity, function(event)
+function M.tree_bot_deconstructed(event)
 	global.robot_tree_deconstruct_count = global.robot_tree_deconstruct_count + 1
 	if global.robot_tree_deconstruct_count % 20 == 0 and global.config.retaliation_enabled then
 		if math.random() < 0.05 then	-- TODO balance. Maybe too rare?
 			tree_events.turn_construction_bot_hostile(game.get_surface(1), event.robot)
 		end
 	end
-end, {{
-filter = "type",
-type = "tree",
-}})
+end
+
+return M

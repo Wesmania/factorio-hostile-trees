@@ -238,6 +238,7 @@ data:extend({{
 data:extend({{
 	type = "electric-energy-interface",
 	name = "electric-tree-consumption",
+	localised_name = {"entity-name.electric-tree-consumption"},
 	-- HACK this should ensure it never dies before the associated tree
 	max_health = 1000000,
 	flags = {
