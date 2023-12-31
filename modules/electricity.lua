@@ -63,8 +63,17 @@ function M.try_to_hook_up_electricity(tree, electric)
 	-- Hopefully this isn't too costly.
 	local stats = electric.electric_network_statistics
 	local total_power = 0
-	for _, input in pairs(stats.input_counts) do
-		total_power = total_power + input
+	for name, _ in pairs(stats.output_counts) do
+		local pn = game.entity_prototypes[name]
+		if not pn or pn.type ~= "electric-energy-interface" then
+			local fc = stats.get_flow_count{
+				name = name,
+				input = false,
+				precision_index = defines.flow_precision_index.five_seconds
+				}
+			-- Reports usage per tick.
+			total_power = total_power + fc
+		end
 	end
 
 	-- Every point is 60 W. This is 250 kW.
