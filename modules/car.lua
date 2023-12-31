@@ -80,6 +80,7 @@ local function arming_events()
 				rider.damage(500, "enemy", "explosion")
 			end
 		end
+
 		::next::
 	end
 	for id, item in pairs(ps) do
@@ -103,16 +104,20 @@ local function arming_events()
 		item.time = item.time - 1
 
 		-- Wait a few seconds in case we got booby trapped immediately after leaving the car.
-		if item.time > 295 then
+		if item.time > 595 then
 			goto next_3
 		end
 
 		if item.time <= 0 or not car.valid then
-			es[item] = nil
+			es[id] = nil
 			goto next_3
 		end
-		if dvr == nil or not dvr.valid then goto next_3 end
+		if dvr == nil or not dvr.valid then
+			es[id] = nil
+			goto next_3
+		end
 		if util.dist2(car.position, dvr.position) < 256 and math.random() < 0.8 then
+			es[id] = nil
 			blow_up(car)
 		end
 
