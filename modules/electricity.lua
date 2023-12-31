@@ -439,6 +439,7 @@ function M.generate_electric_tree(tree_data)
 				name = tree_data.name,
 				variation = i,
 			},
+			localised_name = {"entity-name.hostile-trees-electrified-tree"},
 			flags = {
 				"breaths-air",
 				"hidden",
