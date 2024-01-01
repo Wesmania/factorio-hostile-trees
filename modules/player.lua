@@ -70,7 +70,7 @@ local stages = {
 		coro_next_stage(s)
 	end,
 	biter_attack = function(s)
-		tree_events.spawn_biters(s.surface, s.treepos, s.biter_count, s.biter_rate_table)
+		tree_events.spawn_biters(s.surface, s.treepos, s.biter_count, s.biter_rate_table, s.target)
 		coro_next_stage(s)
 	end,
 	spit = function(s)
@@ -121,7 +121,7 @@ local stages = {
 		if tree == nil then return end
 
 		if s.biter_chance ~= false and math.random() < s.biter_chance then
-			tree_events.spawn_biters(s.surface, tree.position, math.random(s.biter_low, s.biter_high), s.biter_rate_table)
+			tree_events.spawn_biters(s.surface, tree.position, math.random(s.biter_low, s.biter_high), s.biter_rate_table, s.target)
 		else
 			tree_events.spit_at(s.surface, tree.position, s.player, s.projectiles)
 		end
@@ -169,7 +169,7 @@ local function complex_random_assault(surface, player, sl, tree, add_flicker, sp
 			count = math.random(10, 25)
 		end
 		sl[#sl + 1] = { "tree_event", {
-			_coroutine = tree_events.spawn_biters_over_time(surface, tree.position, count, "retaliation")
+			_coroutine = tree_events.spawn_biters_over_time(surface, tree.position, count, "retaliation", player)
 		}}
 	else
 		local projectiles = tree_events.default_random_projectiles()
@@ -197,6 +197,7 @@ local function complex_random_assault(surface, player, sl, tree, add_flicker, sp
 			biter_low = biter_stats.biter_low,
 			biter_high = biter_stats.biter_high,
 			biter_rate_table = biter_stats.biter_rate_table,
+			target = player,
 		}}
 	end
 
@@ -278,6 +279,7 @@ function M.spooky_story(player_info, surface, player_is_focused_on)
 					until_high = 240,
 					biter_chance = false,
 					projectiles = { "poison_cloud" },
+					target = player,
 				}}
 			else
 				sl[#sl + 1] = { "pause", {until_next = 20}}
@@ -309,6 +311,7 @@ function M.spooky_story(player_info, surface, player_is_focused_on)
 				treepos = tree.position,
 				biter_count = math.random(2, 4),
 				biter_rate_table = biter_rate_table,
+				target = player,
 			}}
 		elseif rand < 0.45 then
 			sl[#sl + 1] = { "spit_fire", {treepos = tree.position}}
@@ -329,6 +332,7 @@ function M.spooky_story(player_info, surface, player_is_focused_on)
 				treepos = tree.position,
 				biter_count = math.random(1, 2),
 				biter_rate_table = "default",
+				target = player,
 			}}
 		elseif rand < 0.2 then
 			sl[#sl + 1] = { "spit_fire", {treepos = tree.position}}

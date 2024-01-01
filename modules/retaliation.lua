@@ -1,6 +1,10 @@
 local util = require("modules/util")
 local area_util = require("modules/area_util")
 local tree_events = require("modules/tree_events")
+local ents = require("modules/ent_generation")
+
+-- Avoid find_nearest_enemy_entity_with_owner if possible for retaliation.
+-- Large forest fires can trigger a lot of retaliations and this call is SLOW.
 
 local M = {}
 
@@ -32,21 +36,22 @@ local function register_tree_death_loc(event)
 	mx[chunk_y] = mx[chunk_y] + 1
 end
 
-local function find_tree_in_forested_area(surface, pos)
+local function find_forested_area(surface, pos)
 	for i = 1,6 do
-		local random_area = util.box_around({
-			x = pos.x - 24 + math.random(1, 48),
-			y = pos.y - 24 + math.random(1, 48),
-		}, 8)
-		if area_util.count_trees(surface, random_area, 20) >= 20 then
-			return area_util.get_random_tree(surface, random_area)
+		local random_pos = {
+			x = pos.x - 20 + math.random(1, 40),
+			y = pos.y - 20 + math.random(1, 40),
+		}
+		local random_area = util.box_around(random_pos, 4)
+		if area_util.count_trees(surface, random_area, 12) >= 12 then
+			return random_pos
 		end
 	end
 	return nil
 end
 
-local function find_close_tree(surface, pos)
-	local close_by = util.box_around(pos, 16)
+local function find_close_tree_in(surface, pos, range)
+	local close_by = util.box_around(pos, range)
 	local trees = area_util.get_trees(surface, close_by)
 	if #trees == 0 then return nil end
 	if #trees < 4 then return trees[math.random(1, #trees)] end
@@ -69,25 +74,61 @@ local function find_close_tree(surface, pos)
 	return closest_trees[math.random(1, 4)][2]
 end
 
+local function find_close_tree(surface, pos)
+	-- Check small radius first
+	local ret = find_close_tree_in(surface, pos, 4)
+	if ret ~= nil then
+		return ret
+	end
+	return find_close_tree_in(surface, pos, 16)
+end
+
+local function get_valid_target(cause)
+	if cause == nil or not cause.valid then return nil end
+	if cause.is_entity_with_health then
+		return cause
+	end
+
+	-- There are multiple reasons for no cause. Poison capsules have a
+	-- cause that's the poison cloud. Drive-by shooting reports no cause.
+	-- In that case, just find the closest cached player. Shouldn't be too
+	-- expensive.
+	return area_util.find_closest_player(cause.position)
+end
+
 local function check_for_minor_retaliation(surface, event)
 	local tree = event.entity
 	local treepos = tree.position
 
-	local enemy = surface.find_nearest_enemy_entity_with_owner{position=treepos, max_distance=32, force="enemy"}
+	local enemy = get_valid_target(event.cause)
+	local edist2 = 0
+
+	if enemy ~= nil then
+		edist2 = util.dist2(enemy.position, treepos)
+	end
 
 	local rand = math.random()
 	if rand < 0.3 then
-		tree_events.spawn_biters(surface, treepos, math.random(1, 2), "retaliation")
-	elseif rand < 0.75 and enemy ~= nil then
-		local projectiles = tree_events.default_random_projectiles()
-		for i = 1,math.random(1, 2) do
-			local random_loc = util.random_offset(treepos, 2)
-			tree_events.spit_at(surface, random_loc, enemy, projectiles)
+		local maybe_enemy = enemy
+		if enemy == nil or edist2 > 1600 then
+			maybe_enemy = false
 		end
-	elseif rand < 0.85 and enemy ~= nil then
-		for i = 1,math.random(1, 3) do
-			local tree = find_tree_in_forested_area(surface, treepos)
-			if tree ~= nil then
+		tree_events.spawn_biters(surface, treepos, math.random(1, 2), "retaliation", maybe_enemy)
+	elseif rand < 0.75 then
+		if enemy ~= nil and edist2 < 1024 then
+			local projectiles = tree_events.default_random_projectiles()
+			for i = 1,math.random(1, 2) do
+				local random_loc = util.random_offset(treepos, 2)
+				tree_events.spit_at(surface, random_loc, enemy, projectiles)
+			end
+		end
+	elseif rand < 0.85 then
+		if enemy ~= nil and edist2 < 2500 then
+			for i = 1,math.random(1, 3) do
+				local pos = find_forested_area(surface, treepos)
+				if pos == nil then return end
+				local tree = area_util.get_random_tree(surface, util.box_around(pos, 4))
+				if tree == nil then return end
 				tree_events.send_homing_exploding_hopper_projectile(tree.position, enemy)
 			end
 		end
@@ -140,18 +181,28 @@ local function check_for_major_retaliation(surface, event)
 
 	if counts < 5 then return end
 
-	local rand = math.random()
+	-- Clear counts in neighbouring chunks
+	for i = chunk_x - 2,chunk_x + 2 do
+		local mx = global.tree_kill_locs[i]
+		if mx ~= nil then
+			for j = chunk_y - 2,chunk_y + 2 do
+				mx[j] = nil
+			end
+		end
+	end
+	global.major_retaliation_threshold = global.tree_kill_count + 200
 
-	local maybe_nearby_player = nil
-	local maybe_character = event.cause
-	if maybe_character ~= nil and maybe_character.name == "character" then
-		maybe_nearby_player = maybe_character
+	local enemy = get_valid_target(event.cause)
+	local edist2 = 0
+	if enemy ~= nil then
+		edist2 = util.dist2(enemy.position, treepos)
 	end
 
-	if rand < 0.2 then
-		local enemy = surface.find_nearest_enemy_entity_with_owner{position=treepos, max_distance=32, force="enemy"}
-		if enemy == nil then
-			enemy = maybe_nearby_player
+	local rand = math.random()
+
+	if rand < 0.2 and ents.can_make_ents() then
+		if enemy == nil or edist2 > 3600 then
+			enemy = false
 		end
 		entify_trees_in_cone(surface,
 		                     treepos,
@@ -162,34 +213,28 @@ local function check_for_major_retaliation(surface, event)
 		return
         end
 
+       local maybe_nearby_player = nil
+       if enemy ~= nil and enemy.name == "character" and edist2 < 3600 then
+               maybe_nearby_player = enemy
+       end
+
 	-- Chance for forest to just focus on player
 	if rand < 0.55 and maybe_nearby_player ~= nil then
 		tree_events.focus_on_player(maybe_nearby_player.unit_number, 15)
 	end
 
-	local spawn_tree = find_tree_in_forested_area(surface, treepos)
-
+	local spawn_pos = find_forested_area(surface, treepos)
 	local biter_count
-	if spawn_tree == nil then
-		spawn_tree = tree
+	if spawn_pos == nil then
+		spawn_pos = tree.position
 		biter_count = math.random(10, 15)
 	else
 		biter_count = math.random(25, 40)
 	end
-
-	global.tree_stories[#global.tree_stories + 1] = tree_events.spawn_biters_over_time(surface, spawn_tree.position, biter_count, "retaliation")
-
-	-- Clear counts in neighbouring chunks
-	for i = chunk_x - 2,chunk_x + 2 do
-		local mx = global.tree_kill_locs[i]
-		if mx ~= nil then
-			for j = chunk_y - 2,chunk_y + 2 do
-				mx[j] = nil
-			end
-		end
+	if enemy == nil or edist2 > 3600 then
+		enemy = false
 	end
-
-	global.major_retaliation_threshold = global.tree_kill_count + 200
+	global.tree_stories[#global.tree_stories + 1] = tree_events.spawn_biters_over_time(surface, spawn_pos, biter_count, "retaliation", enemy)
 end
 
 function M.tree_died(event)

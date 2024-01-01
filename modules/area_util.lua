@@ -68,7 +68,7 @@ function M.get_tree(surface, area)
 	return surface.find_entities_filtered{area = area, type = "tree", limit = 1}[1]
 end
 
--- More expensive, but there's no other way to get a random tree.
+-- More expensive, but there's no other way to get a truly random tree.
 function M.get_random_tree(surface, area)
 	local trees = surface.find_entities_filtered{area = area, type = "tree"}
 	if #trees == 0 then
@@ -97,6 +97,25 @@ end
 function M.is_water(surface, position)
 	local tile = surface.get_tile(position.x, position.y)
 	return string.find(tile.prototype.name, "water", 1, true) ~= nil
+end
+
+function M.find_closest_player(position)
+	local dist2 = 1000000000
+	local res = nil
+	for _, p in ipairs(global.players_array) do
+		if p.player.valid then
+			local pos = p.player.position
+			local dx = position.x - pos.x
+			local dy = position.y - pos.y
+			local d2 = dx * dx + dy * dy
+			if d2 < dist2 then
+				dist2 = d2
+				res = p.player
+			end
+		end
+	end
+
+	return res
 end
 
 return M

@@ -302,7 +302,9 @@ function M.pick_random_enemy_type(rate_tree, default)
 
 	local rand = math.random()
 	local res = nil
-	for _, entry in ipairs(global.spawntable[rate_tree]) do
+	local nxt = global.spawntable[rate_tree]
+	for i = 1,#nxt do
+		local entry = nxt[i]
 		if rand < entry[2] then break end
 		res = entry[1]
 	end
@@ -312,7 +314,7 @@ function M.pick_random_enemy_type(rate_tree, default)
 	return res
 end
 
-function M.spawn_biters(surface, treepos, count, rate_table)
+function M.spawn_biters(surface, treepos, count, rate_table, enemy)
 	local actual_pos = {
 		x = treepos.x,
 		y = treepos.y,
@@ -328,8 +330,15 @@ function M.spawn_biters(surface, treepos, count, rate_table)
 		}
 	end
 
-	local enemy = surface.find_nearest_enemy_entity_with_owner{position=treepos, max_distance=50, force="enemy"}
-	if enemy ~= nil then
+	-- Use provided target, or no target if explicitly disabled.
+	-- find_nearest_enemy_entity_with_owner is EXPENSIVE!
+	if enemy == nil then
+		enemy = surface.find_nearest_enemy_entity_with_owner{position=treepos, max_distance=50, force="enemy"}
+	elseif enemy == false then
+		enemy = nil
+	end
+
+	if enemy ~= nil and enemy.valid then
 		surface.set_multi_command{
 			command = {
 				type = defines.command.attack,
@@ -342,20 +351,30 @@ function M.spawn_biters(surface, treepos, count, rate_table)
 end
 
 function M.event_spawn_biters(s)
-	if not s.surface.valid then return false end
 	s.wait_interval = s.wait_interval - 1
 	if s.wait_interval > 0 then return true end
+	s.wait_interval = math.random(4, 6)
+	if not s.surface.valid then return false end	-- unlikely
 	s.spawned = s.spawned + 1
 	local biter = M.pick_random_enemy_type(s.rate_table, 'small-biter')
-	s.actual_pos.x = s.position.x + math.random() * 5 - 2.5
-	s.actual_pos.y = s.position.y + math.random() * 5 - 2.5
+	local spos = s.position
+	s.actual_pos.x = spos.x + math.random() * 5 - 2.5
+	s.actual_pos.y = spos.y + math.random() * 5 - 2.5
 	s.surface.create_entity{
 		name = biter,
 		position = s.actual_pos,
 	}
 	if s.spawned % 12 == 0 or s.spawned == s.count then
-		local enemy = s.surface.find_nearest_enemy_entity_with_owner{position=s.position, max_distance=50}
-		if enemy ~= nil then
+		local enemy
+		if s.enemy == nil then
+			enemy = s.surface.find_nearest_enemy_entity_with_owner{position=spos, max_distance=50, force="enemy"}
+		elseif s.enemy == false then
+			enemy = nil
+		else
+			enemy = s.enemy
+		end
+
+		if enemy ~= nil and enemy.valid then
 			s.surface.set_multi_command{
 				command = {
 					type = defines.command.attack,
@@ -369,7 +388,7 @@ function M.event_spawn_biters(s)
 	return s.spawned < s.count
 end
 
-function M.spawn_biters_over_time(surface, position, count, rate_table)
+function M.spawn_biters_over_time(surface, position, count, rate_table, enemy)
 	local s = {}
 	s.surface = surface
 	s.position = position
@@ -380,6 +399,7 @@ function M.spawn_biters_over_time(surface, position, count, rate_table)
 	s.count = count
 	s.spawned = 0
 	s.rate_table = rate_table
+	s.enemy = enemy
 	s.wait_interval = math.random(4, 6)
 	s.event_name = "event_spawn_biters"
 	return s
@@ -530,7 +550,7 @@ function M.event_spawn_trees_on_timer(s)
 		local ent = M[s.spawn_fn](s.surface, t)
 		if not ent then goto continue end
 
-		if s.target ~= nil and s.target.valid then
+		if s.target ~= nil and s.target ~= false and s.target.valid then
 			ent.set_command({
 				type = defines.command.attack,
 				target = s.target,
