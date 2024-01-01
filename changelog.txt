@@ -1,4 +1,13 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.2.2
+Date: 01/01/2024
+
+  Changes:
+    - More profiling-guided performance improvements. Big forest fires should
+      be 5 times more efficient now.
+    - Some small bugfixes.
+
+---------------------------------------------------------------------------------------------------
 Version: 0.2.1
 Date: 31/12/2023
 
@@ -15,7 +24,8 @@ Date: 28/11/2023
 
   Changes:
     - Trees are now dimly aware of construction bots.
-    - New and exciting trees. Have you watched that "Brothers Grimm" movie from 2005?
+    - New and exciting trees. Have you watched that "Brothers Grimm" movie
+      from 2005?
 
 ---------------------------------------------------------------------------------------------------
 Version: 0.1.8
