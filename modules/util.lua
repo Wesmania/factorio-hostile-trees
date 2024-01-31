@@ -192,7 +192,7 @@ function M.ldict_remove(ldict, key)
 	ldict.dict[key] = nil
 end
 
-function M.ldict_get_random(ldict, key)
+function M.ldict_get_random(ldict)
 	return M.l_get_random(ldict.list)
 end
 

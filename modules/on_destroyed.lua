@@ -1,5 +1,6 @@
 local M = {}
 local tree_events = require("modules/tree_events")
+local belttrees = require("modules/belttrees")
 local car = require("modules/car")
 local electricity = require("modules/electricity")
 
@@ -13,6 +14,14 @@ end)
 
 function M.on_spawning_spit_landed(e)
 	tree_events.on_spawning_spit_landed(e)
+end
+
+function M.on_belttree_spawning_spit_landed(e)
+	belttrees.on_belttree_spawning_spit_landed(e)
+end
+
+function M.on_belttree_final_spit_landed(e)
+	belttrees.on_belttree_final_spit_landed(e)
 end
 
 function M.on_exploding_hopper_landed(e)

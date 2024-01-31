@@ -22,28 +22,31 @@ function M.get_random_building(surface, area)
 	end
 end
 
-function M.get_random_turret(surface, area)
-	local turrets = surface.find_entities_filtered{
-		area = area,
-		type = { "ammo-turret", "fluid-turret", "electric-turret", "artillery-turret" },
-	}
-	if #turrets == 0 then
-		return nil
-	else
-		return turrets[math.random(1, #turrets)]
-	end
+function M.is_turret(building)
+	local t = building.type
+	return t == "ammo-turret" or t == "fluid-turret" or t == "electric-turret" or t == "artillery-turret"
 end
 
-function M.get_electric_pole(surface, area)
-	local items = surface.find_entities_filtered{
-		area = area,
-		type = { "electric-pole" },
-	}
-	if #items == 0 then
-		return nil
-	else
-		return items[math.random(1, #items)]
-	end
+function M.is_electric_pole(building)
+	local t = building.type
+	return t == "electric-pole"
+end
+
+function M.is_belt(building)
+	local t = building.type
+	return t == "transport-belt" or t == "underground-belt" or t == "splitter"
+end
+
+function M.get_random_belt(surface, area)
+       local items = surface.find_entities_filtered{
+               area = area,
+               type = { "transport-belt", "underground-belt", "splitter" },
+       }
+       if #items == 0 then
+               return nil
+       else
+               return items[math.random(1, #items)]
+       end
 end
 
 -- Only call it after we did an entity / tree check

@@ -10,6 +10,7 @@ local chunks = require("modules/chunks")
 local retaliation = require("modules/retaliation")
 local cache_evolution = require("modules/cache_evolution")
 local electricity = require("modules/electricity")
+local belttrees = require("modules/belttrees")
 local _on_entity_died = require("modules/on_entity_died")
 
 script.on_init(function()
@@ -100,7 +101,7 @@ script.on_event({defines.events.on_tick}, function(event)
 		if not player_info.player.valid then goto after_player_check end
 		if player_info.story ~= nil then goto after_player_check end
 
-		local story = player_stories.spooky_story(player_info, surface, false)
+		local story = player_stories.spooky_story(player_info, false)
 		if story ~= nil then
 			player_info.story = story
 		end
@@ -117,12 +118,14 @@ script.on_event({defines.events.on_tick}, function(event)
 		if player_info == nil or not player_info.player.valid then goto after_focus_check end
 		if player_info.story ~= nil then goto after_focus_check end
 
-		local story = player_stories.spooky_story(player_info, surface, true)
+		local story = player_stories.spooky_story(player_info, true)
 		if story ~= nil then
 			player_info.story = story
 		end
 	end
 	::after_focus_check::
+
+	belttrees.check_jumping_belt_trees()
 
 	-- Call only once per second, booby trapping cars doesn't have to be precise
 	if global.tick_mod_10_s % 60 == 0 then
@@ -132,5 +135,10 @@ script.on_event({defines.events.on_tick}, function(event)
 	-- Same wih electrified trees
 	if global.tick_mod_10_s % 60 == 30 then
 		electricity.check_electrified_trees()
+	end
+
+	-- Same wih matuing belt trees
+	if global.tick_mod_10_s % 60 == 15 then
+		belttrees.mature_travelling_belt_trees()
 	end
 end)

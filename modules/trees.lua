@@ -3,6 +3,7 @@ local util = require("modules/util")
 local tree_events = require("modules/tree_events")
 local ents = require("modules/ent_generation")
 local electricity = require("modules/electricity")
+local belttrees = require("modules/belttrees")
 
 local M = {}
 
@@ -59,20 +60,15 @@ M.building_spit_assault = function(surface, area, tree_projectiles)
 end
 
 local events = {
-	sum = 1.25,
+	sum = 1.5,
 	e = {
-		{ 0.25, function(a)
-			local turret = area_util.get_random_turret(a.s, a.a)
-			if turret ~= nil then
-				tree_events.take_over_turret(turret)
-			else
-				return "resume_next"
-			end
-		end },
-		{ 0.25, function(a)
-			local e = area_util.get_electric_pole(a.s, a.a)
-			if e ~= nil then
-				electricity.try_to_hook_up_electricity(a.t, e)
+		{ 0.75, function(a)
+			if area_util.is_belt(a.b) then
+				belttrees.spit_on_belt(a.t, a.b)
+			elseif area_util.is_electric_pole(a.b) then
+				electricity.try_to_hook_up_electricity(a.t, a.b)
+			elseif area_util.is_turret(a.b) then
+				tree_events.take_over_turret(a.b)
 			else
 				return "resume_next"
 			end

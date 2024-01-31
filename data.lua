@@ -1,6 +1,7 @@
 local stdlib_util = require("__core__/lualib/util")
 local ents = require("modules/ent_generation")
 local electricity = require("modules/electricity")
+local belttrees = require("modules/belttrees")
 
 local function edit_spitter_projectile(p, damage_mult)
 	for _, e in pairs(p.initial_action) do
@@ -20,21 +21,32 @@ edit_spitter_projectile(tree_spitter_projectile, 30)
 
 data:extend({tree_spitter_projectile})
 
-local ts = table.deepcopy(data.raw["stream"]["acid-stream-worm-small"])
-ts.initial_action = {
-	{
-		type = "direct",
-		action_delivery = {
-			type = "instant",
-			target_effects = {
-				type = "script",
-				effect_id = "tree-spawner-projectile",
+local function script_projectile(n, eid)
+	local ts = table.deepcopy(data.raw["stream"]["acid-stream-worm-small"])
+	ts.initial_action = {
+		{
+			type = "direct",
+			action_delivery = {
+				type = "instant",
+				target_effects = {
+					type = "script",
+					effect_id = eid,
+				}
 			}
 		}
 	}
-}
-ts.name = "tree-spawner-projectile"
+	ts.name = n
+	return ts
+end
+
+local ts = script_projectile("tree-spawner-projectile", "tree-spawner-projectile")
 data:extend({ts})
+
+local bts = script_projectile("belt-tree-spawner-projectile", "belt-tree-spawner-projectile")
+data:extend({bts})
+
+local bts = script_projectile("belt-tree-final-projectile", "belt-tree-final-projectile")
+data:extend({bts})
 
 function fake_biter_sounds(name, soundlist)
 	data:extend({
@@ -84,6 +96,7 @@ for _, tree in pairs(data.raw["tree"]) do
 	end
 	if ents.can_generate_ent(tree) then -- FIXME refactor
 		electricity.generate_electric_tree(tree)
+		belttrees.generate_belt_tree(tree)
 	end
 end
 
