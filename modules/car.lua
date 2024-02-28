@@ -5,6 +5,7 @@ local M = {}
 
 local function on_placed_vehicle(e)
 	-- Identifying cars 101
+	if e.created_entity.type ~= "car" then return end
 	if not string.find(e.created_entity.name, "car") then return end
 
 	local car = e.created_entity
