@@ -2,6 +2,7 @@ local util = require("modules/util")
 local area_util = require("modules/area_util")
 local tree_events = require("modules/tree_events")
 local ents = require("modules/ent_generation")
+local poltergeist = require("modules/poltergeist")
 
 local M = {}
 
@@ -91,6 +92,12 @@ local stages = {
 		tree_events.turn_tree_into_ent(s.surface, s.tree)
 		coro_next_stage(s)
 	end,
+	spawn_poltergeist = function(s)
+		if s.target.valid and poltergeist.can_introduce() then
+			poltergeist.throw_poltergeist(s.surface, s.treepos, s.target.position, math.random() * 2 + 4)
+		end
+		coro_next_stage(s)
+	end,
 
 	-- FIXME duplication with building spit assault
 	-- Args s.duration, s.until_low, s.until_high, s.projectiles
@@ -152,6 +159,10 @@ local function surround_with_flicker(sl)
 	sl[#sl + 1] = { "unflicker_light", {}}
 end
 
+local function put_in_random_stage(sl, stage)
+	table.insert(sl, math.random(1, #sl), stage)
+end
+
 local function complex_random_assault(player, sl, tree, add_flicker, spook_player, is_in_forest, duration, biter_assault)
 	local surface = player.surface
 
@@ -206,6 +217,13 @@ local function complex_random_assault(player, sl, tree, add_flicker, spook_playe
 	if add_flicker then
 		surround_with_flicker(sl)
 	end
+
+	if math.random() < 0.3 then
+		put_in_random_stage(sl, { "spawn_poltergeist", {
+			target = player,
+			treepos = tree.position,
+		}})
+	end
 end
 
 function M.spooky_story(player_info, player_is_focused_on)
@@ -240,50 +258,55 @@ function M.spooky_story(player_info, player_is_focused_on)
 
 	-- Eternal TODO: add more events.
 
-	if threat >= 10 and is_near_a_few_trees then
+	if threat >= 7 and is_near_a_few_trees then
 		-- Large event. Happens about a fifth of the time a mid-sized event does.
-		if math.random() < 0.8 and not player_is_focused_on then
+		if not player_is_focused_on then
 			player_info.tree_threat = player_info.tree_threat + 1
-		else
-			player_info.tree_threat = threat - 10
-			player_info.big_tree_threat = 0
-
-			local add_flicker = is_night and math.random() < 0.25
-			local spook_player = is_in_forest and add_flicker and math.random() < 0.6
-			complex_random_assault(player, sl, tree, add_flicker, spook_player, is_in_forest, math.random(420, 720), true)
-
-			goto finish
 		end
+		player_info.tree_threat = threat - 7
+		player_info.big_tree_threat = 0
+
+		local add_flicker = is_night and math.random() < 0.25
+		local spook_player = is_in_forest and add_flicker and math.random() < 0.6
+		local rand = math.random()
+		if rand < 0.7 then
+			complex_random_assault(player, sl, tree, add_flicker, spook_player, is_in_forest, math.random(420, 720), true)
+		else
+			sl[#sl + 1] = { "spit_assault", {
+				duration = math.random(480, 660),
+				until_low = 120,
+				until_high = 240,
+				biter_chance = false,
+				projectiles = { "poison_cloud" },
+				target = player,
+			}}
+		end
+		goto finish
 	end
 
-	if threat >= 5 then
+	if threat >= 5 and is_near_a_few_trees then
 		-- Mid-sized event.
 		local rand = math.random()
 		-- If we make a mid event, make a major event more likely in the future.
-		if rand < 0.45 + (player_info.big_tree_threat * 0.07) and not player_is_focused_on then
-			player_info.tree_threat = player_info.tree_threat + 1
+		if rand > 0.8 - (player_info.big_tree_threat * 0.15) then
+			if not player_is_focused_on then
+				player_info.tree_threat = player_info.tree_threat + 1
+			end
 		else
-			player_info.tree_threat = threat - 8
-			player_info.big_tree_threat = player_info.big_tree_threat + 1
+			player_info.tree_threat = threat - 5
+			if not player_is_focused_on then
+				player_info.big_tree_threat = player_info.big_tree_threat + 1
+			end
 
 			local add_flicker = is_night and math.random() < 0.25
 			local rand2 = math.random()
 			if rand2 < 0.20 then
 				sl[#sl + 1] = { "tree_event", {
 					_coroutine = tree_events.entify_trees_in_cone_coro(surface, ppos, tree.position,
-					                                                   15, 2, 3, player)
+											   15, 2, 3, player)
 				}}
-			elseif rand2 < 0.80 then
+			elseif rand2 < 0.85 then
 				complex_random_assault(player, sl, tree, add_flicker, false, is_in_forest, math.random(180, 360))
-			elseif rand2 < 0.9 then
-				sl[#sl + 1] = { "spit_assault", {
-					duration = math.random(480, 660),
-					until_low = 120,
-					until_high = 240,
-					biter_chance = false,
-					projectiles = { "poison_cloud" },
-					target = player,
-				}}
 			else
 				sl[#sl + 1] = { "pause", {until_next = 20}}
 				sl[#sl + 1] = { "tree_event", {
@@ -293,9 +316,9 @@ function M.spooky_story(player_info, player_is_focused_on)
 					surround_with_flicker(sl)
 				end
 			end
-
-			goto finish
 		end
+
+		goto finish
 	end
 
 	-- Small events.
@@ -305,7 +328,12 @@ function M.spooky_story(player_info, player_is_focused_on)
 		end
 
 		local rand = math.random()
-		if rand < 0.3 then
+		if rand < 0.05 then
+			sl[#sl + 1] = { "spawn_poltergeist", {
+				treepos = tree.position,
+				target = player,
+			}}
+		elseif rand < 0.3 then
 			local biter_rate_table = "default"
 			if math.random() < 0.15 then
 				biter_rate_table = "retaliation"
@@ -318,7 +346,7 @@ function M.spooky_story(player_info, player_is_focused_on)
 			}}
 		elseif rand < 0.45 then
 			sl[#sl + 1] = { "spit_fire", {treepos = tree.position}}
-		elseif rand < 0.5 then
+		elseif rand < 0.58 then
 			sl[#sl + 1] = { "poison_cloud", {treepos = tree.position}}
 		elseif rand < 0.65 and ents.can_make_ents() then
 			sl[#sl + 1] = { "turn_tree_into_ent", {tree = tree}}
@@ -330,7 +358,12 @@ function M.spooky_story(player_info, player_is_focused_on)
 			player_info.tree_threat = player_info.tree_threat + 1
 		end
 		local rand = math.random()
-		if rand < 0.15 then
+		if rand < 0.05 then
+			sl[#sl + 1] = { "spawn_poltergeist", {
+				treepos = tree.position,
+				target = player,
+			}}
+		elseif rand < 0.15 then
 			sl[#sl + 1] = { "biter_attack", {
 				treepos = tree.position,
 				biter_count = math.random(1, 2),

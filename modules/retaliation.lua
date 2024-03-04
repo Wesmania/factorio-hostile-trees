@@ -2,6 +2,7 @@ local util = require("modules/util")
 local area_util = require("modules/area_util")
 local tree_events = require("modules/tree_events")
 local ents = require("modules/ent_generation")
+local poltergeist = require("modules/poltergeist")
 
 -- Avoid find_nearest_enemy_entity_with_owner if possible for retaliation.
 -- Large forest fires can trigger a lot of retaliations and this call is SLOW.
@@ -83,8 +84,16 @@ local function find_close_tree(surface, pos)
 	return find_close_tree_in(surface, pos, 16)
 end
 
-local function get_valid_target(cause)
-	if cause == nil or not cause.valid then return nil end
+local function get_valid_target(event)
+	local cause = event.cause
+	if cause == nil or not cause.valid then
+		-- Cluster grenades are invalid causes. Wow.
+		if event.entity.valid then
+			return area_util.find_closest_player(event.entity.position, 100)
+		else
+			return nil
+		end
+	end
 	if cause.is_entity_with_health then
 		return cause
 	end
@@ -93,14 +102,14 @@ local function get_valid_target(cause)
 	-- cause that's the poison cloud. Drive-by shooting reports no cause.
 	-- In that case, just find the closest cached player. Shouldn't be too
 	-- expensive.
-	return area_util.find_closest_player(cause.position)
+	return area_util.find_closest_player(cause.position7, 100)
 end
 
 local function check_for_minor_retaliation(surface, event)
 	local tree = event.entity
 	local treepos = tree.position
 
-	local enemy = get_valid_target(event.cause)
+	local enemy = get_valid_target(event)
 	local edist2 = 0
 
 	if enemy ~= nil then
@@ -114,6 +123,8 @@ local function check_for_minor_retaliation(surface, event)
 			maybe_enemy = false
 		end
 		tree_events.spawn_biters(surface, treepos, math.random(1, 2), "retaliation", maybe_enemy)
+	elseif rand < 0.35 and enemy and poltergeist.can_introduce() then
+		poltergeist.throw_poltergeist(surface, treepos, enemy.position, math.random() * 4 + 7)
 	elseif rand < 0.75 then
 		if enemy ~= nil and edist2 < 1024 then
 			local projectiles = tree_events.default_random_projectiles()
@@ -192,7 +203,7 @@ local function check_for_major_retaliation(surface, event)
 	end
 	global.major_retaliation_threshold = global.tree_kill_count + 200
 
-	local enemy = get_valid_target(event.cause)
+	local enemy = get_valid_target(event)
 	local edist2 = 0
 	if enemy ~= nil then
 		edist2 = util.dist2(enemy.position, treepos)
@@ -213,10 +224,15 @@ local function check_for_major_retaliation(surface, event)
 		return
         end
 
-       local maybe_nearby_player = nil
-       if enemy ~= nil and enemy.name == "character" and edist2 < 3600 then
-               maybe_nearby_player = enemy
-       end
+	if rand < 1.1 and enemy ~= nil and poltergeist.can_introduce() then
+		poltergeist.throw_a_bunch_of_fast_poltergeists(surface, enemy, treepos, math.random(7, 12), 10, 25)
+		return
+	end
+
+        local maybe_nearby_player = nil
+        if enemy ~= nil and enemy.name == "character" and edist2 < 3600 then
+		maybe_nearby_player = enemy
+        end
 
 	-- Chance for forest to just focus on player
 	if rand < 0.55 and maybe_nearby_player ~= nil then

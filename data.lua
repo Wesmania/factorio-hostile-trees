@@ -2,6 +2,7 @@ local stdlib_util = require("__core__/lualib/util")
 local ents = require("modules/ent_generation")
 local electricity = require("modules/electricity")
 local belttrees = require("modules/belttrees")
+local poltergeist = require("modules/poltergeist")
 
 local function edit_spitter_projectile(p, damage_mult)
 	for _, e in pairs(p.initial_action) do
@@ -275,3 +276,5 @@ data:extend({{
 	},
 	energy_usage = "500kW",
 }})
+
+poltergeist.data_stage()

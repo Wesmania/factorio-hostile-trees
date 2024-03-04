@@ -102,8 +102,11 @@ function M.is_water(surface, position)
 	return string.find(tile.prototype.name, "water", 1, true) ~= nil
 end
 
-function M.find_closest_player(position)
+function M.find_closest_player(position, max_dist)
 	local dist2 = 1000000000
+	if max_dist ~= nil then
+		dist2 = max_dist * max_dist
+	end
 	local res = nil
 	for _, p in ipairs(global.players_array) do
 		if p.player.valid then

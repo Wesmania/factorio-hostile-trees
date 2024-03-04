@@ -4,6 +4,7 @@ local tree_events = require("modules/tree_events")
 local ents = require("modules/ent_generation")
 local electricity = require("modules/electricity")
 local belttrees = require("modules/belttrees")
+local poltergeist = require("modules/poltergeist")
 
 local M = {}
 
@@ -151,6 +152,11 @@ end
 -- For tree_events.gradual_tree_transform_story
 function M.event_spawn_trees_on_timer(s)
 	return tree_events.event_spawn_trees_on_timer(s)
+end
+
+-- Poltergeists
+function M.throw_a_bunch_of_fast_poltergeists(s)
+	return poltergeist.throw_a_bunch_of_fast_poltergeists_coro(s)
 end
 
 function M.event_wait_then_burst_electric_tree(s)
