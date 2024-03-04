@@ -1,4 +1,13 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.2.5
+Date: 04/03/2024
+
+  Changes:
+    - Trees have been playing STALKER lately.
+    - Rebalance some events.
+    - Fixed cluster grenades unintentionally intimidating trees.
+
+---------------------------------------------------------------------------------------------------
 Version: 0.2.4
 Date: 28/02/2024
 
