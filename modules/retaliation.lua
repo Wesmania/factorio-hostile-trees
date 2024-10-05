@@ -102,7 +102,7 @@ local function get_valid_target(event)
 	-- cause that's the poison cloud. Drive-by shooting reports no cause.
 	-- In that case, just find the closest cached player. Shouldn't be too
 	-- expensive.
-	return area_util.find_closest_player(cause.position7, 100)
+	return area_util.find_closest_player(cause.position, 100)
 end
 
 local function check_for_minor_retaliation(surface, event)
