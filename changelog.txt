@@ -1,4 +1,16 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.3.0
+Date: 19/04/2025
+
+  Changes:
+    - Now that I beat Space Age, it's time to update the mod for 2.0.
+    - The absolute bare minimum was done to get the mod to start a new game.
+      Things might still be broken and crash for 2.0 vanilla, and will
+      definitely be broken in weird ways in Space Age.
+    - Still, that's better than nothing and I hope to fix things soon. Enjoy,
+      and please report bugs.
+
+---------------------------------------------------------------------------------------------------
 Version: 0.2.6
 Date: 05/10/2024
 
