@@ -2,7 +2,7 @@ local M = {}
 
 function M.get_buildings(surface, area)
 	local out = {}
-	for _, force in pairs(global.game_forces) do
+	for _, force in pairs(storage.game_forces) do
 		for _, e in ipairs(surface.find_entities_filtered{area = area, force = force}) do
 			if e.prototype.is_building then
 				out[#out + 1] = e
@@ -51,7 +51,7 @@ end
 
 -- Only call it after we did an entity / tree check
 function M.has_buildings(surface, area)
-	for _, force in pairs(global.game_forces) do
+	for _, force in pairs(storage.game_forces) do
 		for _, e in ipairs(surface.find_entities_filtered{area = area, force = force}) do
 			if e.prototype.is_building then return true end
 		end
@@ -89,7 +89,7 @@ function M.get_trees_radius(surface, position, radius)
 end
 
 function M.has_player_entities(surface, area)
-	for _, force in pairs(global.game_forces) do
+	for _, force in pairs(storage.game_forces) do
 		if surface.count_entities_filtered{area = area, force = force, limit = 1} > 0 then
 			return true
 		end
@@ -108,7 +108,7 @@ function M.find_closest_player(position, max_dist)
 		dist2 = max_dist * max_dist
 	end
 	local res = nil
-	for _, p in ipairs(global.players_array) do
+	for _, p in ipairs(storage.players_array) do
 		if p.player.valid then
 			local pos = p.player.position
 			local dx = position.x - pos.x

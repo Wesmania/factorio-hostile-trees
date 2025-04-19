@@ -103,7 +103,7 @@ local events = {
 						{ "spitter_projectile", "fire_stream" },
 					}
 					local pk = projectile_kinds[math.random(1, #projectile_kinds)]
-					global.tree_stories[#global.tree_stories + 1] = M.building_spit_assault(a.s, a.a, pk)
+					storage.tree_stories[#storage.tree_stories + 1] = M.building_spit_assault(a.s, a.a, pk)
 				end },
 			}
 		} }

@@ -1,4 +1,3 @@
-local walking_sounds = require("__base__/prototypes/tile/tile-sounds")
 local tree_images = require("modules/tree_images")
 require("__base__/prototypes/entity/spitter-animations")
 
@@ -196,19 +195,6 @@ local function generate_ent_animation(tree_data, v, color, unit_type)
 	return tree_images.generate_tree_image(tree_data, v, color)
 end
 
-local ent_walk_sounds = {
-	volume = 0.4,
-	variations = {},
-}
-local s = walking_sounds
-
-for _, t in ipairs({ s.walking.plant, s.walking.small_bush, s.walking.big_bush }) do
-	for _, tt in ipairs(t.variations) do
-		local v = ent_walk_sounds.variations
-		v[#v + 1] = tt
-	end
-end
-
 local function exploder_ammo_type(ent_data)
 	local params = ent_balance.exp.explosion
 	return
@@ -259,7 +245,7 @@ local function exploder_ammo_type(ent_data)
 	}
 end
 
-function M.generate_ent(tree_data, unit_type)
+function M.generate_ent(tree_data, unit_type, walk_sounds)
 	local balance = ent_balance[unit_type]
 
 	local unit = table.deepcopy(data.raw["unit"]["small-biter"])
@@ -269,7 +255,7 @@ function M.generate_ent(tree_data, unit_type)
 	unit.dying_sound = nil
 	unit.working_sound = nil
 	unit.running_sound_animation_positions = {120,}		-- TODO do specific values do anything?
-	unit.walking_sound = ent_walk_sounds
+	unit.walking_sound = walk_sounds
 	unit.water_reflection = tree_data.water_reflection
 	unit.collision_box = tree_data.collision_box
 	unit.localised_name = {"entity-name.hostile-trees-ent-" .. unit_type}
@@ -314,7 +300,7 @@ function M.make_ent_entity_name(params)
 end
 
 function M.can_make_ents(params)
-	return game.forces["enemy"].evolution_factor >= 0.1
+	return game.forces["enemy"].get_evolution_factor("nauvis") >= 0.1
 end
 
 M.spawnrates = {
@@ -362,5 +348,31 @@ M.spawnrates = {
 		},
 	},
 }
+
+function M.make_walking_sounds()
+	local s = require("__base__/prototypes/tile/tile-sounds")
+	local ent_walk_sounds = {
+		volume = 0.4,
+		variations = {},
+	}
+	for _, t in ipairs({ s.walking.plant, s.walking.small_bush, s.walking.big_bush }) do
+		for _, tt in ipairs(t.variations) do
+			local v = ent_walk_sounds.variations
+			v[#v + 1] = tt
+		end
+	end
+	return ent_walk_sounds
+end
+
+function M.datastage(data)
+	local sounds = M.make_walking_sounds()
+	for _, tree in pairs(data.raw["tree"]) do
+		for _, ent_type in pairs(M.spawnrates) do
+			if M.can_generate_ent(tree) then
+				M.generate_ent(tree, ent_type.unit, ent_walk_sounds)
+			end
+		end
+	end
+end
 
 return M

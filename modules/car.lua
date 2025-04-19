@@ -9,13 +9,13 @@ local function on_placed_vehicle(e)
 	if not string.find(e.created_entity.name, "car") then return end
 
 	local car = e.created_entity
-	local pc = global.player_cars
+	local pc = storage.player_cars
 
 	-- Don't tank performance if player's a psycho that places down hundreds of cars
 	if #pc.list >= 250 then return end
 
 	local rid = script.register_on_entity_destroyed(car)
-	global.entity_destroyed_script_events[rid] = {
+	storage.entity_destroyed_script_events[rid] = {
 		action = "on_car_destroyed",
 		id = car.unit_number,
 	}
@@ -25,7 +25,7 @@ local function on_placed_vehicle(e)
 end
 
 function M.on_car_destroyed(e)
-	util.ldict_remove(global.player_cars, e.id)
+	util.ldict_remove(storage.player_cars, e.id)
 end
 
 local function car_has_sapling(car)
@@ -58,9 +58,9 @@ local function blow_up(c)
 end
 
 local function arming_events()
-	local cs = global.player_cars.armed.cars
-	local ps = global.player_cars.armed.players
-	local es = global.player_cars.armed.early
+	local cs = storage.player_cars.armed.cars
+	local ps = storage.player_cars.armed.players
+	local es = storage.player_cars.armed.early
 
 	for id, item in pairs(cs) do
 		item.time = item.time - 1
@@ -131,15 +131,15 @@ function M.car_tree_events()
 	-- Check existing arming events.
 	arming_events()
 
-	if not global.config.player_events then return end
-	local ccount = #global.player_cars.list
+	if not storage.config.player_events then return end
+	local ccount = #storage.player_cars.list
 	if ccount == 0 then return end
 
 	-- Player events are each frequency * 0.5 seconds. Booby trap cars 10 times less often.
-	local event_chance = ccount / (global.config.player_event_frequency * 5)
+	local event_chance = ccount / (storage.config.player_event_frequency * 5)
 	if math.random() >= event_chance then return end
 
-	local victim_info = util.ldict_get_random(global.player_cars)
+	local victim_info = util.ldict_get_random(storage.player_cars)
 	local victim = victim_info.e
 
 	-- Is the car empty?
@@ -156,8 +156,8 @@ function M.car_tree_events()
 
 	-- And add a small chance of exploding too early.
 	if math.random() < 0.1 then
-		if global.player_cars.armed.early[victim.unit_number] == nil then
-			global.player_cars.armed.early[victim.unit_number] = {
+		if storage.player_cars.armed.early[victim.unit_number] == nil then
+			storage.player_cars.armed.early[victim.unit_number] = {
 				time = 600,
 				info = victim_info,
 			}
@@ -169,14 +169,14 @@ local function arm_booby_trap(e)
 	local car = e.entity
 	-- Sanity checks
 	if car == nil then return end
-	if global.player_cars.dict[car.unit_number] == nil then return end
+	if storage.player_cars.dict[car.unit_number] == nil then return end
 
 	if car.get_driver() == nil and car.get_passenger() == nil then return end
 
 	-- EXTRA: add last driver for early explosion checks.
 	local driver = car.get_driver()
 	if driver ~= nil and not driver.is_player() then
-		global.player_cars.dict[car.unit_number].last_driver = driver
+		storage.player_cars.dict[car.unit_number].last_driver = driver
 	end
 
 	if not car_has_sapling(car) then return end
@@ -184,8 +184,8 @@ local function arm_booby_trap(e)
 	-- Small chance of failing to arm
 	if math.random() < 0.2 then return end
 
-	if global.player_cars.armed.cars[car.unit_number] ~= nil then return end
-	global.player_cars.armed.cars[car.unit_number] = {
+	if storage.player_cars.armed.cars[car.unit_number] ~= nil then return end
+	storage.player_cars.armed.cars[car.unit_number] = {
 		time = math.random(5, 15),
 		e = car,
 	}
@@ -194,15 +194,15 @@ end
 local function arm_held_sapling(e)
 	local ch = game.players[e.player_index].character
 	if ch == nil or not player_has_sapling(ch) then return end
-	if global.player_cars.armed.players[ch.unit_number] ~= nil then return end
-	global.player_cars.armed.players[ch.unit_number] = {
+	if storage.player_cars.armed.players[ch.unit_number] ~= nil then return end
+	storage.player_cars.armed.players[ch.unit_number] = {
 		time = math.random(5, 10),
 		e = ch,
 	}
 end
 
 function M.fresh_setup()
-	global.player_cars = {
+	storage.player_cars = {
 		list = {},
 		dict = {},
 		armed = {

@@ -53,7 +53,7 @@ local function cache_evolution_for(evolution)
 	}
 
 	-- Collect spawn rates from saved spawner tables.
-	for enemy_kind, rates in pairs(global.spawnrates) do
+	for enemy_kind, rates in pairs(storage.spawnrates) do
 		local rate_adjust = enemy_rates[enemy_kind]
 		interpolate_evolution_rates(evolution, rates, new_entries, rate_adjust)
 	end
@@ -68,8 +68,8 @@ local function cache_evolution_for_ents(evolution)
 end
 
 M.cache_evolution_rates = function()
-	local evolution = game.forces["enemy"].evolution_factor
-	global.spawntable = {
+	local evolution = game.forces["enemy"].get_evolution_factor("nauvis")
+	storage.spawntable = {
 		default = cache_evolution_for(evolution),
 		retaliation = cache_evolution_for(evolution + 0.1),
 		half_retaliation = cache_evolution_for(evolution + 0.05),

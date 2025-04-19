@@ -86,12 +86,9 @@ tree_poison.action.action_delivery.target_effects.action.force = "enemy"
 
 data:extend({tree_poison})
 
+ents.datastage(data)
+
 for _, tree in pairs(data.raw["tree"]) do
-	for _, ent_type in pairs(ents.spawnrates) do
-		if ents.can_generate_ent(tree) then
-			ents.generate_ent(tree, ent_type.unit)
-		end
-	end
 	if ents.can_generate_ent(tree) then -- FIXME refactor
 		electricity.generate_electric_tree(tree)
 		belttrees.generate_belt_tree(tree)

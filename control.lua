@@ -18,21 +18,21 @@ script.on_init(function()
 end)
 
 script.on_configuration_changed(function(info)
-	local old_grace_period = global.config.grace_period
+	local old_grace_period = storage.config.grace_period
 
 	if info.old_version ~= nil or info.mod_changes["hostile-trees"] ~= nil or info.mod_startup_settings_changed then
 		setup.initialize(info)
-		global.config.grace_period = old_grace_period
+		storage.config.grace_period = old_grace_period
 	end
 end)
 
 script.on_event({defines.events.on_tick}, function(event)
-	local global = global
-	local surface = global.surface
-	local config = global.config
+	local storage = storage
+	local surface = storage.surface
+	local config = storage.config
 
-	global.tick_mod_10_s = (global.tick_mod_10_s + 1) % 600
-	if global.tick_mod_10_s == 0 then
+	storage.tick_mod_10_s = (storage.tick_mod_10_s + 1) % 600
+	if storage.tick_mod_10_s == 0 then
 		setup.refresh_caches()
 	end
 
@@ -46,7 +46,7 @@ script.on_event({defines.events.on_tick}, function(event)
 	end
 
 	-- Stories, ran once per tick.
-	for _, player_info in pairs(global.players) do
+	for _, player_info in pairs(storage.players) do
 		if player_info.story ~= nil then
 			if not player_stories.run_coro(player_info.story) then
 				player_info.story = nil
@@ -57,24 +57,24 @@ script.on_event({defines.events.on_tick}, function(event)
 	-- Tree stories. Safe iteration while removing elements.
 	local i = 1
 	while true do
-		if i > #global.tree_stories then break end
-		local story = global.tree_stories[i]
+		if i > #storage.tree_stories then break end
+		local story = storage.tree_stories[i]
 		if trees.run_coro(story) then
 			i = i + 1
 		else
-			local tmp = global.tree_stories[#global.tree_stories]
-			global.tree_stories[i] = tmp
-			global.tree_stories[#global.tree_stories] = nil
+			local tmp = storage.tree_stories[#storage.tree_stories]
+			storage.tree_stories[i] = tmp
+			storage.tree_stories[#storage.tree_stories] = nil
 			-- New entity under same i
 		end
 	end
 
-	if global.config.factory_events then
+	if storage.config.factory_events then
 
-		local cks = global.chunks
-		global.accum = global.accum + chunks.active_per_tick(cks)
-		local tocheck = math.floor(global.accum)
-		global.accum = global.accum - tocheck
+		local cks = storage.chunks
+		storage.accum = storage.accum + chunks.active_per_tick(cks)
+		local tocheck = math.floor(storage.accum)
+		storage.accum = storage.accum - tocheck
 
 		for i = 1,tocheck do
 			-- TODO do we define these as globals to avoid allocation cost?
@@ -94,10 +94,10 @@ script.on_event({defines.events.on_tick}, function(event)
 	-- Player event check.
 
 	do
-		if not global.config.player_events or #global.players_array == 0 then goto after_player_check end
-		local event_chance = #global.players_array / (global.config.player_event_frequency * 30)
+		if not storage.config.player_events or #storage.players_array == 0 then goto after_player_check end
+		local event_chance = #storage.players_array / (storage.config.player_event_frequency * 30)
 		if math.random() >= event_chance then goto after_player_check end
-		local player_info = global.players_array[math.random(1, #global.players_array)]
+		local player_info = storage.players_array[math.random(1, #storage.players_array)]
 		if not player_info.player.valid then goto after_player_check end
 		if player_info.story ~= nil then goto after_player_check end
 
@@ -110,11 +110,11 @@ script.on_event({defines.events.on_tick}, function(event)
 
 	do
 		-- Player event check for players that are focused on.
-		local chance_every_sec = #global.players_focused_on.list / 60
+		local chance_every_sec = #storage.players_focused_on.list / 60
 		if math.random() >= chance_every_sec then goto after_focus_check end
-		local l = global.players_focused_on.list
+		local l = storage.players_focused_on.list
 		local pid = l[math.random(1, #l)]
-		local player_info = global.players[pid]
+		local player_info = storage.players[pid]
 		if player_info == nil or not player_info.player.valid then goto after_focus_check end
 		if player_info.story ~= nil then goto after_focus_check end
 
@@ -128,17 +128,17 @@ script.on_event({defines.events.on_tick}, function(event)
 	belttrees.check_jumping_belt_trees()
 
 	-- Call only once per second, booby trapping cars doesn't have to be precise
-	if global.tick_mod_10_s % 60 == 0 then
+	if storage.tick_mod_10_s % 60 == 0 then
 		car.car_tree_events()
 	end
 
 	-- Same wih electrified trees
-	if global.tick_mod_10_s % 60 == 30 then
+	if storage.tick_mod_10_s % 60 == 30 then
 		electricity.check_electrified_trees()
 	end
 
-	-- Same wih matuing belt trees
-	if global.tick_mod_10_s % 60 == 15 then
+	-- Same wih maturing belt trees
+	if storage.tick_mod_10_s % 60 == 15 then
 		belttrees.mature_travelling_belt_trees()
 	end
 end)

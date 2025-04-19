@@ -9,26 +9,26 @@ local belttrees = require("modules/belttrees")
 local M = {}
 
 M.cache_players = function()
-	local old_players = global.players
-	global.players = {}
-	global.players_array = {}
+	local old_players = storage.players
+	storage.players = {}
+	storage.players_array = {}
 
 	for _, force in pairs(game.forces) do
 		for _, player in pairs(force.players) do
 			if player.character ~= nil then
 				local id = player.character.unit_number
 				if old_players[id] ~= nil then
-					global.players[id] = old_players[id]
-					global.players[id].player = player.character
+					storage.players[id] = old_players[id]
+					storage.players[id].player = player.character
 				else
-					global.players[id] = {
+					storage.players[id] = {
 						player = player.character,
 						story = nil,
 						tree_threat = 0,
 						big_tree_threat = 0,
 					}
 				end
-				global.players_array[#global.players_array + 1] = global.players[id]
+				storage.players_array[#storage.players_array + 1] = storage.players[id]
 			end
 		end
 	end
@@ -42,41 +42,41 @@ end
 
 function M.cache_trees_that_can_turn_into_ents()
 	local names = {}
-	for name, _ in pairs(game.entity_prototypes) do
+	for name, _ in pairs(prototypes.entity) do
 		local parts = ents.split_ent_entity_name(name)
 		if parts ~= nil then
 			names[parts.name] = true
 		end
 	end
-	global.entable_trees = names
+	storage.entable_trees = names
 end
 
 function M.cache_electric_trees()
 	local names = {}
-	for name, _ in pairs(game.entity_prototypes) do
+	for name, _ in pairs(prototypes.entity) do
 		local parts = electricity.split_electric_tree_name(name)
 		if parts ~= nil then
 			names[parts.name] = true
 		end
 	end
-	global.electric_trees = names
+	storage.electric_trees = names
 end
 
 
 function M.cache_game_forces()
-	global.game_forces = {}
+	storage.game_forces = {}
 	for _, force in pairs(game.forces) do
 		if #force.players > 0 then
-			global.game_forces[#global.game_forces + 1] = force
+			storage.game_forces[#storage.game_forces + 1] = force
 		end
 	end
 end
 
 script.on_event(defines.events.on_chunk_generated, function(e)
-	chunks.on_chunk_generated(global.chunks, e.position)
+	chunks.on_chunk_generated(storage.chunks, e.position)
 end)
 script.on_event(defines.events.on_chunk_deleted, function(e)
-	chunks.on_chunk_deleted(global.chunk, e.position)
+	chunks.on_chunk_deleted(storage.chunk, e.position)
 end)
 
 function M.refresh_caches()
@@ -95,38 +95,38 @@ function M.reinitialize()
 	config.player_event_frequency = settings.global["hostile-trees-how-often-do-trees-hate-you"].value
 	config.retaliation_enabled = settings.global["hostile-trees-do-trees-retaliate"].value
 	config.grace_period = settings.global["hostile-trees-how-long-do-trees-withhold-their-hate"].value * 60
-	global.config = config
+	storage.config = config
 
-	global.players          = {}
-	global.players_array    = {}
+	storage.players          = {}
+	storage.players_array    = {}
 
 	-- Used by main on-tick tree loop.
-	global.tick_mod_10_s    = 0
-	global.accum            = 0
+	storage.tick_mod_10_s    = 0
+	storage.accum            = 0
 
 	-- Used by tree events. Nothing here should affect long-lasting state.
-	global.tree_stories  = {}
+	storage.tree_stories  = {}
 
 	-- Used by retaliation, not important.
-	global.tree_kill_count  = 0
-	global.robot_tree_deconstruct_count = 0
-	global.tree_kill_locs   = {}
-	global.major_retaliation_threshold = 200	-- FIXME balance
+	storage.tree_kill_count  = 0
+	storage.robot_tree_deconstruct_count = 0
+	storage.tree_kill_locs   = {}
+	storage.major_retaliation_threshold = 200	-- FIXME balance
 	
-	global.surface          = game.get_surface("nauvis")
+	storage.surface          = game.get_surface("nauvis")
 
 	-- Players temporarily focused on as retaliation, not important
-	global.players_focused_on = {
+	storage.players_focused_on = {
 		list = {},
 		dict = {},
 	}
 
 	-- Spawn rates
-	global.spawnrates = {}
-	local biter_spawner = game.get_filtered_entity_prototypes{{filter="name", name="biter-spawner"}}["biter-spawner"]
-	global.spawnrates.biters = biter_spawner.result_units
-	local spitter_spawner = game.get_filtered_entity_prototypes{{filter="name", name="spitter-spawner"}}["spitter-spawner"]
-	global.spawnrates.spitters = spitter_spawner.result_units
+	storage.spawnrates = {}
+	local biter_spawner = prototypes.get_entity_filtered{{filter="name", name="biter-spawner"}}["biter-spawner"]
+	storage.spawnrates.biters = biter_spawner.result_units
+	local spitter_spawner = prototypes.get_entity_filtered{{filter="name", name="spitter-spawner"}}["spitter-spawner"]
+	storage.spawnrates.spitters = spitter_spawner.result_units
 
 	M.refresh_caches()
 
@@ -137,8 +137,8 @@ end
 
 -- Set things up to *some* defaults like we used to.
 local function before_0_2_1()
-	if global.entity_destroyed_script_events == nil then
-		global.entity_destroyed_script_events = {}
+	if storage.entity_destroyed_script_events == nil then
+		storage.entity_destroyed_script_events = {}
 	end
 
 	-- No cars before 0.2.1
@@ -194,7 +194,7 @@ function M.initialize_fresh()
 	M.reinitialize()
 
 	-- Stateful, keeps track of existing entities.
-	global.entity_destroyed_script_events = {}
+	storage.entity_destroyed_script_events = {}
 
 	-- Stateful, keeps track of cars.
 	car.fresh_setup()

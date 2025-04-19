@@ -14,7 +14,7 @@ end
 local M = {}
 
 function M.fresh_setup()
-	global.electric_tree_state = {
+	storage.electric_tree_state = {
 		all = {},
 		growing = {
 			dict = {},
@@ -31,7 +31,7 @@ end
 local function add_mask(pos)
 	local cx = math.floor(pos.x / 32)
 	local cy = math.floor(pos.y / 32)
-	local cs = global.chunks
+	local cs = storage.chunks
 
 	for i = cx - 1,cx + 1 do
 		for j = cy - 1, cy + 1 do
@@ -43,7 +43,7 @@ end
 local function remove_mask(pos)
 	local cx = math.floor(pos.x / 32)
 	local cy = math.floor(pos.y / 32)
-	local cs = global.chunks
+	local cs = storage.chunks
 
 	for i = cx - 1,cx + 1 do
 		for j = cy - 1, cy + 1 do
@@ -64,7 +64,7 @@ function M.try_to_hook_up_electricity(tree, electric)
 	local stats = electric.electric_network_statistics
 	local total_power = 0
 	for name, _ in pairs(stats.output_counts) do
-		local pn = game.entity_prototypes[name]
+		local pn = prototypes.entity[name]
 		if not pn or pn.type ~= "electric-energy-interface" then
 			local fc = stats.get_flow_count{
 				name = name,
@@ -125,7 +125,7 @@ function M.register_new_electric_tree(tree, other_pole, power_usage)
 	end
 
 	local rid = script.register_on_entity_destroyed(tree)
-	global.entity_destroyed_script_events[rid] = {
+	storage.entity_destroyed_script_events[rid] = {
 		action = "on_electric_tree_destroyed",
 		pos = tree.position,
 		id = tree.unit_number,
@@ -140,7 +140,7 @@ function M.on_electric_tree_destroyed(e)
 end
 
 function M.electrify_tree(tree)
-	if global.electric_trees[tree.name] == nil then return nil end
+	if storage.electric_trees[tree.name] == nil then return nil end
 	local ent = tree.surface.create_entity{
 		name = M.make_electric_tree_name{
 			name = tree.name,
@@ -163,7 +163,7 @@ function M.new_electrified_tree(etree, power_entity)
 		starvation = 2,
 		gaggle = {},
 	}
-	local et = global.electric_tree_state
+	local et = storage.electric_tree_state
 	local id = etree.unit_number
 	if et.all[id] == nil then
 		et.all[id] = tree
@@ -176,7 +176,7 @@ function M.new_electrified_tree(etree, power_entity)
 end
 
 function M.destroy_electrified_tree(id)
-	local et = global.electric_tree_state
+	local et = storage.electric_tree_state
 	if et.all[id] == nil then return end
 	local tree = et.all[id]
 	et.all[id] = nil
@@ -191,7 +191,7 @@ end
 
 function M.mature_electrified_tree(tree)
 	if tree.state ~= "growing" then return end
-	local et = global.electric_tree_state
+	local et = storage.electric_tree_state
 	local id = tree.e.unit_number
 	util.ldict_remove(et[tree.state], id)
 	tree.state = "mature"
@@ -199,12 +199,12 @@ function M.mature_electrified_tree(tree)
 end
 
 function M.get_random_growing_tree()
-	local et = global.electric_tree_state
+	local et = storage.electric_tree_state
 	return util.ldict_get_random(et.growing)
 end
 
 function M.get_random_mature_tree()
-	local et = global.electric_tree_state
+	local et = storage.electric_tree_state
 	return util.ldict_get_random(et.mature)
 end
 
@@ -231,7 +231,7 @@ end
 -- Called once per second.
 function M.check_electrified_trees()
 	-- Mature trees increase power consumption once every 5 minutes on average.
-	local et = global.electric_tree_state
+	local et = storage.electric_tree_state
 	local gcount = #et.mature.list / 300
 
 	et.tick = (et.tick + 1) % 10
@@ -330,14 +330,14 @@ function M.check_electrified_trees()
 end
 
 function M.burst_electric_tree_gaggle(gaggle)
-	local et = global.electric_tree_state.all
+	local et = storage.electric_tree_state.all
 	for tid, _ in pairs(gaggle) do
 		local g_etree = et[tid]
 		if g_etree ~= nil then
 			-- Safeguard against triggering it again too soon
 			g_etree.starvation = 2
 			local event = M.burst_electric_tree_story(g_etree)
-			global.tree_stories[#global.tree_stories + 1] = event
+			storage.tree_stories[#storage.tree_stories + 1] = event
 		end
 	end
 end
@@ -398,7 +398,7 @@ end
 -- One last check: trigger bursting when one of trees dies.
 function M.pole_died(e)
 	if not M.is_electric_tree_name(e.entity.name) then return end
-	local etree = global.electric_tree_state.all[e.entity.unit_number]
+	local etree = storage.electric_tree_state.all[e.entity.unit_number]
 	if etree ~= nil then
 		M.burst_electric_tree_gaggle(etree.gaggle)
 	end

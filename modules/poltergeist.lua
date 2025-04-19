@@ -197,11 +197,11 @@ end
 
 function M.throw_a_bunch_of_fast_poltergeists(surface, target, treepos, count, ilow, ihigh)
 	local s = M.throw_a_bunch_of_fast_poltergeists_story(surface, target, treepos, count, ilow, ihigh)
-	global.tree_stories[#global.tree_stories + 1] = s
+	storage.tree_stories[#storage.tree_stories + 1] = s
 end
 
 function M.can_introduce()
-	return game.forces["enemy"].evolution_factor >= 0.2
+	return game.forces["enemy"].get_evolution_factor("nauvis") >= 0.2
 end
 
 return M

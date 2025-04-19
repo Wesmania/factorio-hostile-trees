@@ -4,12 +4,12 @@ local belttrees = require("modules/belttrees")
 local car = require("modules/car")
 local electricity = require("modules/electricity")
 
-script.on_event(defines.events.on_entity_destroyed, function(data)
-	local event = global.entity_destroyed_script_events[data.registration_number]
+script.on_event(defines.events.on_object_destroyed, function(data)
+	local event = storage.entity_destroyed_script_events[data.registration_number]
 	if event ~= nil and event.action ~= nil and M[event.action] ~= nil then
 		M[event.action](event)
 	end
-	global.entity_destroyed_script_events[data.registration_number] = nil
+	storage.entity_destroyed_script_events[data.registration_number] = nil
 end)
 
 function M.on_spawning_spit_landed(e)

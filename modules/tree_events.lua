@@ -5,7 +5,7 @@ local ents = require("modules/ent_generation")
 local M = {}
 
 local function deal_damage_to_player_entities(surface, position, radius, amount)
-	for _, force in pairs(global.game_forces) do
+	for _, force in pairs(storage.game_forces) do
 		for _, item in ipairs(surface.find_entities_filtered{position = position, radius = radius, force = force}) do
 			if item.is_entity_with_health then
 				item.damage(amount, "enemy", "explosion")
@@ -49,7 +49,7 @@ local function make_tree_spawner_projectile(surface, source, target, tree_name, 
 	}
 	if s ~= nil then
 		local rid = script.register_on_entity_destroyed(s)
-		global.entity_destroyed_script_events[rid] = {
+		storage.entity_destroyed_script_events[rid] = {
 			action = "on_spawning_spit_landed",
 			tree_name = tree_name,
 			generation = generation,
@@ -88,7 +88,7 @@ function M.on_spawning_spit_landed(event)
 	local target = event.target
 	local tree_name = event.tree_name
 	local generation = event.generation
-	local surface = global.surface
+	local surface = storage.surface
 
 	if area_util.is_water(surface, target) then
 		return
@@ -158,7 +158,7 @@ function M.on_spawning_spit_landed(event)
 			x = target.x + dp.x,
 			y = target.y + dp.y,
 		}
-		make_tree_spawner_projectile(global.surface, target, new_target, tree_name, gen)
+		make_tree_spawner_projectile(storage.surface, target, new_target, tree_name, gen)
 	end
 end
 
@@ -171,7 +171,7 @@ local function make_exploding_hopper_projectile(surface, source, target, target_
 	}
 	if s ~= nil then
 		local rid = script.register_on_entity_destroyed(s)
-		global.entity_destroyed_script_events[rid] = {
+		storage.entity_destroyed_script_events[rid] = {
 			action = "on_exploding_hopper_landed",
 			generation = generation,
 			target = target,
@@ -208,7 +208,7 @@ function M.on_exploding_hopper_landed(event)
 	local source = event.target
 	local target_entity = event.target_entity
 	local generation = event.generation
-	local surface = global.surface
+	local surface = storage.surface
 
 	M.small_explosion(surface, source, 3, 75)
 	generation = generation - 1
@@ -219,7 +219,7 @@ function M.on_exploding_hopper_landed(event)
 	local target = target_entity.position
 	local new_target = calculate_hopper_target(source, target, 2.5)
 	if new_target ~= nil then
-		make_exploding_hopper_projectile(global.surface, source, new_target, target_entity, generation)
+		make_exploding_hopper_projectile(storage.surface, source, new_target, target_entity, generation)
 	end
 end
 
@@ -231,7 +231,7 @@ function M.send_homing_exploding_hopper_projectile(source, target_entity)
 	local number_of_hops = math.floor(dist / 6) + math.random(1, 2)
 
 	local new_target = calculate_hopper_target(source, target_entity.position, 2.5)
-	make_exploding_hopper_projectile(global.surface, source, new_target, target_entity, number_of_hops)
+	make_exploding_hopper_projectile(storage.surface, source, new_target, target_entity, number_of_hops)
 end
 
 function M.small_explosion(surface, at, radius, damage)
@@ -302,7 +302,7 @@ function M.pick_random_enemy_type(rate_tree, default)
 
 	local rand = math.random()
 	local res = nil
-	local nxt = global.spawntable[rate_tree]
+	local nxt = storage.spawntable[rate_tree]
 	for i = 1,#nxt do
 		local entry = nxt[i]
 		if rand < entry[2] then break end
@@ -465,8 +465,8 @@ function M.run_coro(s)
 end
 
 function M.focus_on_player(player_id, seconds)
-	local l = global.players_focused_on.list
-	local d = global.players_focused_on.dict
+	local l = storage.players_focused_on.list
+	local d = storage.players_focused_on.dict
 
 	if d[player_id] == nil then
 		l[#l + 1] = player_id
@@ -477,9 +477,9 @@ function M.focus_on_player(player_id, seconds)
 end
 
 local function unfocus_players()
-	global.players_focused_on.list = {}
-	local l = global.players_focused_on.list
-	local d = global.players_focused_on.dict
+	storage.players_focused_on.list = {}
+	local l = storage.players_focused_on.list
+	local d = storage.players_focused_on.dict
 
 	for id, info in pairs(d) do
 		info.seconds = info.seconds - 1
@@ -506,7 +506,7 @@ function M.turn_construction_bot_hostile(surface, bot)
 end
 
 function M.turn_tree_into_ent(surface, tree)
-	if global.entable_trees[tree.name] == nil then return nil end
+	if storage.entable_trees[tree.name] == nil then return nil end
 	local rand_ent = M.pick_random_enemy_type("ents", "ent")
 	local ent = surface.create_entity{
 		name = ents.make_ent_entity_name{
@@ -575,7 +575,7 @@ end
 
 function M.entify_trees_in_cone(surface, from, to, angle, radius, speed, target)
 	local coro = M.entify_trees_in_cone_coro(surface, from, to, angle, radius, speed, target)
-	global.tree_stories[#global.tree_stories + 1] = coro
+	storage.tree_stories[#storage.tree_stories + 1] = coro
 end
 -- Radius is *extra* radius on top of distance from "from" to "to"!
 

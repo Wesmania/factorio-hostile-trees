@@ -86,7 +86,7 @@ function M.do_spit_on_belt(name, graphics_variation, surface, position, belt)
 	}
 	if s ~= nil then
 		local rid = script.register_on_entity_destroyed(s)
-		global.entity_destroyed_script_events[rid] = {
+		storage.entity_destroyed_script_events[rid] = {
 			action = "on_belttree_spawning_spit_landed",
 			tree_name = name,
 			tree_variation = graphics_variation,
@@ -137,7 +137,7 @@ function M.do_spit_on_belt_final(name, graphics_variation, surface, position, be
 	}
 	if s ~= nil then
 		local rid = script.register_on_entity_destroyed(s)
-		global.entity_destroyed_script_events[rid] = {
+		storage.entity_destroyed_script_events[rid] = {
 			action = "on_belttree_final_spit_landed",
 			tree_name = name,
 			tree_variation = graphics_variation,
@@ -236,7 +236,7 @@ function M.belttree_jump(bt_data)
 end
 
 function M.fresh_setup()
-	global.belttrees = {
+	storage.belttrees = {
 		travelling = {},
 		jumping = {
 			dict = {},
@@ -249,7 +249,7 @@ function M.add_new_belt_tree(bt_data)
 	bt_data.unit_number = bt_data.bt.unit_number
 	-- Have the tree travel for at least 10 seconds
 	local active_time = math.floor(game.tick / 60) + 10
-	local t = global.belttrees.travelling
+	local t = storage.belttrees.travelling
 	if t[active_time] == nil then
 		t[active_time] = {}
 	end
@@ -260,9 +260,9 @@ end
 -- Needs to be called once a second or else it will leak!
 function M.mature_travelling_belt_trees()
 	local now = math.floor(game.tick / 60)
-	local t = global.belttrees.travelling
+	local t = storage.belttrees.travelling
 	if t[now] == nil then return end
-	local j = global.belttrees.jumping
+	local j = storage.belttrees.jumping
 	local count = #t[now]
 	for _, bt_data in ipairs(t[now]) do
 		if bt_data.bt.valid then
@@ -273,7 +273,7 @@ function M.mature_travelling_belt_trees()
 end
 
 function M.check_jumping_belt_trees()
-	local j = global.belttrees.jumping
+	local j = storage.belttrees.jumping
 	local count = #j.list / 600	-- FIXME
 	while count > 1 or math.random() < count do
 		count = count - 1

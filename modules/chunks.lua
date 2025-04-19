@@ -15,7 +15,7 @@ function M.chunks_new()
 end
 
 local function cache_squares_to_check_per_tick(cs)
-	cs.per_tick = #cs.active.list * global.config.factory_events_per_tick_per_chunk
+	cs.per_tick = #cs.active.list * storage.config.factory_events_per_tick_per_chunk
 end
 
 function M.on_chunk_generated(cs, c)
@@ -60,7 +60,7 @@ function M.chunk_mask_dec(cs, x, y)
 end
 
 function M.reinitialize_chunks(cs)
-	for c in global.surface.get_chunks() do
+	for c in storage.surface.get_chunks() do
 		M.on_chunk_generated(cs, c)
 	end
 	cache_squares_to_check_per_tick(cs)
@@ -75,8 +75,8 @@ function M.pick_random_active_chunk(cs)
 end
 
 function M.fresh_setup()
-	global.chunks = M.chunks_new()
-	M.reinitialize_chunks(global.chunks)
+	storage.chunks = M.chunks_new()
+	M.reinitialize_chunks(storage.chunks)
 end
 
 return M

@@ -10,10 +10,10 @@ local poltergeist = require("modules/poltergeist")
 local M = {}
 
 script.on_nth_tick(30 * 60, function()
-	global.tree_kill_count = 0
-	global.tree_kill_locs = {}
-	global.major_retaliation_threshold = 200	-- FIXME balance
-	global.robot_tree_deconstruct_count = 0
+	storage.tree_kill_count = 0
+	storage.tree_kill_locs = {}
+	storage.major_retaliation_threshold = 200	-- FIXME balance
+	storage.robot_tree_deconstruct_count = 0
 end)
 
 local function pos_to_coords(pos)
@@ -26,10 +26,10 @@ local function register_tree_death_loc(event)
 	local tree = event.entity
 	local treepos = tree.position
 	local chunk_x, chunk_y = table.unpack(pos_to_coords(treepos))
-	local mx = global.tree_kill_locs[chunk_x]
+	local mx = storage.tree_kill_locs[chunk_x]
 	if mx == nil then
 		mx = {}
-		global.tree_kill_locs[chunk_x] = mx
+		storage.tree_kill_locs[chunk_x] = mx
 	end
 	if mx[chunk_y] == nil then
 		mx[chunk_y] = 0
@@ -180,7 +180,7 @@ local function check_for_major_retaliation(surface, event)
 	-- Check neighbouring chunks
 	local counts = 0
 	for i = chunk_x - 2,chunk_x + 2 do
-		local mx = global.tree_kill_locs[i]
+		local mx = storage.tree_kill_locs[i]
 		if mx ~= nil then
 			for j = chunk_y - 2,chunk_y + 2 do
 				if mx[j] ~= nil then
@@ -194,14 +194,14 @@ local function check_for_major_retaliation(surface, event)
 
 	-- Clear counts in neighbouring chunks
 	for i = chunk_x - 2,chunk_x + 2 do
-		local mx = global.tree_kill_locs[i]
+		local mx = storage.tree_kill_locs[i]
 		if mx ~= nil then
 			for j = chunk_y - 2,chunk_y + 2 do
 				mx[j] = nil
 			end
 		end
 	end
-	global.major_retaliation_threshold = global.tree_kill_count + 200
+	storage.major_retaliation_threshold = storage.tree_kill_count + 200
 
 	local enemy = get_valid_target(event)
 	local edist2 = 0
@@ -250,27 +250,27 @@ local function check_for_major_retaliation(surface, event)
 	if enemy == nil or edist2 > 3600 then
 		enemy = false
 	end
-	global.tree_stories[#global.tree_stories + 1] = tree_events.spawn_biters_over_time(surface, spawn_pos, biter_count, "retaliation", enemy)
+	storage.tree_stories[#storage.tree_stories + 1] = tree_events.spawn_biters_over_time(surface, spawn_pos, biter_count, "retaliation", enemy)
 end
 
 function M.tree_died(event)
-	global.tree_kill_count = global.tree_kill_count + 1
-	if global.tree_kill_count % 40 == 0 and global.config.retaliation_enabled then
+	storage.tree_kill_count = storage.tree_kill_count + 1
+	if storage.tree_kill_count % 40 == 0 and storage.config.retaliation_enabled then
 		local surface = game.get_surface(1)
 		register_tree_death_loc(event)
 		if math.random() < 0.65 then
 			check_for_minor_retaliation(surface, event)
 		end
 
-		if global.tree_kill_count >= global.major_retaliation_threshold then
+		if storage.tree_kill_count >= storage.major_retaliation_threshold then
 			check_for_major_retaliation(surface, event)
 		end
 	end
 end
 
 function M.tree_bot_deconstructed(event)
-	global.robot_tree_deconstruct_count = global.robot_tree_deconstruct_count + 1
-	if global.robot_tree_deconstruct_count % 20 == 0 and global.config.retaliation_enabled then
+	storage.robot_tree_deconstruct_count = storage.robot_tree_deconstruct_count + 1
+	if storage.robot_tree_deconstruct_count % 20 == 0 and storage.config.retaliation_enabled then
 		if math.random() < 0.05 then	-- TODO balance. Maybe too rare?
 			tree_events.turn_construction_bot_hostile(game.get_surface(1), event.robot)
 		end
