@@ -440,9 +440,9 @@ function M.generate_electric_tree(tree_data)
 				variation = i,
 			},
 			localised_name = {"entity-name.hostile-trees-electrified-tree"},
+			hidden = true,
 			flags = {
 				"breaths-air",
-				"hidden",
 				"hide-alt-info",
 				"not-upgradable",
 				"not-in-made-in"

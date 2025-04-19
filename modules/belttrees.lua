@@ -22,6 +22,7 @@ local proto_base = {
 	    render_no_power_icon = false,
 	    render_no_network_icon = false,
     },
+    energy_source = { type = "void" },
     consumption = "1kW",
     -- animation = { layers = ... },
     rotation_speed = 0.0035,

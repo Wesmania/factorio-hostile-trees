@@ -1,4 +1,4 @@
-local entity_sounds = require("__base__/prototypes/entity/sounds")
+local walking_sounds = require("__base__/prototypes/tile/tile-sounds")
 local tree_images = require("modules/tree_images")
 require("__base__/prototypes/entity/spitter-animations")
 
@@ -196,14 +196,16 @@ local function generate_ent_animation(tree_data, v, color, unit_type)
 	return tree_images.generate_tree_image(tree_data, v, color)
 end
 
-local ent_walk_sounds = {}
-local s = entity_sounds
-for _, t in ipairs({ s.plant, s.small_bush, s.big_bush }) do
-	for _, tt in ipairs(t) do
-		ent_walk_sounds[#ent_walk_sounds + 1] = {
-			filename = tt.filename,
-			volume = 0.4,
-		}
+local ent_walk_sounds = {
+	volume = 0.4,
+	variations = {},
+}
+local s = walking_sounds
+
+for _, t in ipairs({ s.walking.plant, s.walking.small_bush, s.walking.big_bush }) do
+	for _, tt in ipairs(t.variations) do
+		local v = ent_walk_sounds.variations
+		v[#v + 1] = tt
 	end
 end
 

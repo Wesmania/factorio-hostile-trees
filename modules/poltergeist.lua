@@ -50,6 +50,7 @@ local proto_base = {
 	selection_box = {{0, 0}, {0, 0}},
 	attack_parameters = {
 		type = "beam",
+		ammo_category = "bullet",
 		range = 13,
 		cooldown = 60,
 		ammo_consumption_modifier = 0,

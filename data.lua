@@ -55,10 +55,7 @@ function fake_biter_sounds(name, soundlist)
 			type = "explosion",
 			name = name,
 			flags = {"not-on-map", "placeable-off-grid"},
-			sound = {
-				aggregation = { max_count = 3, remove = false },
-				variations = soundlist,
-			},
+			sound = soundlist,
 			animations = stdlib_util.empty_sprite(),
 		},
 	})
@@ -252,13 +249,14 @@ data:extend({{
 data:extend({{
 	type = "electric-energy-interface",
 	name = "electric-tree-consumption",
+	hidden = true,
 	localised_name = {"entity-name.electric-tree-consumption"},
 	-- HACK this should ensure it never dies before the associated tree
 	max_health = 1000000,
 	flags = {
-		"hidden",
 		"hide-alt-info",
 		"placeable-off-grid",
+		"no-copy-paste",
 		"not-on-map",
 		"not-selectable-in-game",
 		"not-flammable",
