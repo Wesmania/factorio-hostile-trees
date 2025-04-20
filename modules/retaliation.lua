@@ -84,12 +84,12 @@ local function find_close_tree(surface, pos)
 	return find_close_tree_in(surface, pos, 16)
 end
 
-local function get_valid_target(event)
+local function get_valid_target(surface, event)
 	local cause = event.cause
 	if cause == nil or not cause.valid then
 		-- Cluster grenades are invalid causes. Wow.
 		if event.entity.valid then
-			return area_util.find_closest_player(event.entity.position, 100)
+			return area_util.find_closest_player(surface, event.entity.position, 100)
 		else
 			return nil
 		end
@@ -102,14 +102,14 @@ local function get_valid_target(event)
 	-- cause that's the poison cloud. Drive-by shooting reports no cause.
 	-- In that case, just find the closest cached player. Shouldn't be too
 	-- expensive.
-	return area_util.find_closest_player(cause.position, 100)
+	return area_util.find_closest_player(surface, cause.position, 100)
 end
 
 local function check_for_minor_retaliation(surface, event)
 	local tree = event.entity
 	local treepos = tree.position
 
-	local enemy = get_valid_target(event)
+	local enemy = get_valid_target(surface, event)
 	local edist2 = 0
 
 	if enemy ~= nil then
@@ -203,7 +203,7 @@ local function check_for_major_retaliation(surface, event)
 	end
 	storage.major_retaliation_threshold = storage.tree_kill_count + 200
 
-	local enemy = get_valid_target(event)
+	local enemy = get_valid_target(surface, event)
 	local edist2 = 0
 	if enemy ~= nil then
 		edist2 = util.dist2(enemy.position, treepos)
