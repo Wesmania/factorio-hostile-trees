@@ -3,6 +3,7 @@ local area_util = require("modules/area_util")
 local tree_events = require("modules/tree_events")
 local ents = require("modules/ent_generation")
 local poltergeist = require("modules/poltergeist")
+local chunks = require("modules/chunks")
 
 -- Avoid find_nearest_enemy_entity_with_owner if possible for retaliation.
 -- Large forest fires can trigger a lot of retaliations and this call is SLOW.
@@ -10,10 +11,15 @@ local poltergeist = require("modules/poltergeist")
 local M = {}
 
 script.on_nth_tick(30 * 60, function()
-	storage.tree_kill_count = 0
-	storage.tree_kill_locs = {}
-	storage.major_retaliation_threshold = 200	-- FIXME balance
-	storage.robot_tree_deconstruct_count = 0
+	for _, surface in pairs(game.surfaces) do
+		local data = chunks.get_tree_data(storage.chunks, surface)
+		data = {
+			kill_count = 0,
+			robot_deconstruct_count = 0,
+			kill_locs = {},
+			major_retaliation_threshold = 200,
+		}
+	end
 end)
 
 local function pos_to_coords(pos)
@@ -24,12 +30,14 @@ end
 
 local function register_tree_death_loc(event)
 	local tree = event.entity
+	local tree_data = chunks.get_tree_data(storage.chunks, tree.surface)
 	local treepos = tree.position
 	local chunk_x, chunk_y = table.unpack(pos_to_coords(treepos))
-	local mx = storage.tree_kill_locs[chunk_x]
+
+	local mx = tree_data.kill_locs[chunk_x]
 	if mx == nil then
 		mx = {}
-		storage.tree_kill_locs[chunk_x] = mx
+		tree_data.kill_locs[chunk_x] = mx
 	end
 	if mx[chunk_y] == nil then
 		mx[chunk_y] = 0
@@ -174,13 +182,14 @@ end
 
 local function check_for_major_retaliation(surface, event)
 	local tree = event.entity
+	local tree_data = chunks.get_tree_data(storage.chunks, tree.surface)
 	local treepos = tree.position
 	local chunk_x, chunk_y = table.unpack(pos_to_coords(treepos))
 
 	-- Check neighbouring chunks
 	local counts = 0
 	for i = chunk_x - 2,chunk_x + 2 do
-		local mx = storage.tree_kill_locs[i]
+		local mx = tree_data.kill_locs[i]
 		if mx ~= nil then
 			for j = chunk_y - 2,chunk_y + 2 do
 				if mx[j] ~= nil then
@@ -194,14 +203,14 @@ local function check_for_major_retaliation(surface, event)
 
 	-- Clear counts in neighbouring chunks
 	for i = chunk_x - 2,chunk_x + 2 do
-		local mx = storage.tree_kill_locs[i]
+		local mx = tree_data.kill_locs[i]
 		if mx ~= nil then
 			for j = chunk_y - 2,chunk_y + 2 do
 				mx[j] = nil
 			end
 		end
 	end
-	storage.major_retaliation_threshold = storage.tree_kill_count + 200
+	tree_data.major_retaliation_threshold = tree_data.kill_count + 200
 
 	local enemy = get_valid_target(surface, event)
 	local edist2 = 0
@@ -254,25 +263,31 @@ local function check_for_major_retaliation(surface, event)
 end
 
 function M.tree_died(event)
-	storage.tree_kill_count = storage.tree_kill_count + 1
-	if storage.tree_kill_count % 40 == 0 and storage.config.retaliation_enabled then
-		local surface = game.get_surface(1)
+	local tree = event.entity
+	local tree_data = chunks.get_tree_data(storage.chunks, tree.surface)
+
+	tree_data.kill_count = tree_data.kill_count + 1
+	if tree_data.kill_count% 40 == 0 and storage.config.retaliation_enabled then
+		local surface = tree.surface
 		register_tree_death_loc(event)
 		if math.random() < 0.65 then
 			check_for_minor_retaliation(surface, event)
 		end
 
-		if storage.tree_kill_count >= storage.major_retaliation_threshold then
+		if tree_data.kill_count >= tree_data.major_retaliation_threshold then
 			check_for_major_retaliation(surface, event)
 		end
 	end
 end
 
 function M.tree_bot_deconstructed(event)
-	storage.robot_tree_deconstruct_count = storage.robot_tree_deconstruct_count + 1
-	if storage.robot_tree_deconstruct_count % 20 == 0 and storage.config.retaliation_enabled then
+	local tree = event.entity
+	local tree_data = chunks.get_tree_data(storage.chunks, tree.surface)
+
+	tree_data.robot_deconstruct_count = tree_data.robot_deconstruct_count + 1
+	if tree_data.robot_deconstruct_count % 20 == 0 and storage.config.retaliation_enabled then
 		if math.random() < 0.05 then	-- TODO balance. Maybe too rare?
-			tree_events.turn_construction_bot_hostile(game.get_surface(1), event.robot)
+			tree_events.turn_construction_bot_hostile(tree.surface, event.robot)
 		end
 	end
 end

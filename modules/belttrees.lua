@@ -72,6 +72,16 @@ function M.generate_belt_tree(tree_data)
 end
 
 function M.spit_on_belt(tree, belt)
+	-- FIXME Hacky fix for a crash, Why did these belttrees not get created?
+	local belt_tree_name = M.make_belt_tree_name{
+		name = tree.name,
+		variation = tree.graphics_variation,
+	}
+	local trees = prototypes.get_entity_filtered{{filter="name", name=belt_tree_name}}
+	if #trees == 0 then
+		return
+	end
+
 	M.do_spit_on_belt(tree.name, tree.graphics_variation, tree.surface, tree.position, belt)
 end
 

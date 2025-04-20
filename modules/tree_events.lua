@@ -559,8 +559,8 @@ function M.event_spawn_trees_on_timer(s)
 		local ent = M[s.spawn_fn](s.surface, t)
 		if not ent then goto continue end
 
-		if s.target ~= nil and s.target ~= false and s.target.valid then
-			ent.set_command({
+		if s.target ~= nil and s.target ~= false and s.target.valid and ent.commandable ~= nil then
+			ent.commandable.set_command({
 				type = defines.command.attack,
 				target = s.target,
 			})

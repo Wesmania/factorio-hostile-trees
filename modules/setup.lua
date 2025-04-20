@@ -108,12 +108,6 @@ function M.reinitialize()
 	-- Used by tree events. Nothing here should affect long-lasting state.
 	storage.tree_stories  = {}
 
-	-- Used by retaliation, not important.
-	storage.tree_kill_count  = 0
-	storage.robot_tree_deconstruct_count = 0
-	storage.tree_kill_locs   = {}
-	storage.major_retaliation_threshold = 200	-- FIXME balance
-	
 	-- Players temporarily focused on as retaliation, not important
 	storage.players_focused_on = {
 		list = {},

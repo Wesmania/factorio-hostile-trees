@@ -12,6 +12,12 @@ function M.chunks_new()
 		masked = {},
 		per_tick = 0,
 		accum = 0,
+		tree = {
+			kill_count = 0,
+			robot_deconstruct_count = 0,
+			kill_locs = {},
+			major_retaliation_threshold = 200,
+		},
 	}
 end
 
@@ -102,6 +108,11 @@ end
 function M.set_accum(cs, surface, accum)
 	local cs = M.get_surface_cs(cs, surface)
 	cs.accum = accum
+end
+
+function M.get_tree_data(cs, surface)
+	local cs = M.get_surface_cs(cs, surface)
+	return cs.tree
 end
 
 function M.fresh_setup()

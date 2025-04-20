@@ -68,7 +68,7 @@ function M.try_to_hook_up_electricity(tree, electric)
 		if not pn or pn.type ~= "electric-energy-interface" then
 			local fc = stats.get_flow_count{
 				name = name,
-				input = false,
+				category = "output",
 				precision_index = defines.flow_precision_index.five_seconds
 				}
 			-- Reports usage per tick.
@@ -93,12 +93,29 @@ function M.try_to_hook_up_electricity(tree, electric)
 	end
 end
 
+function M.get_copper_connector(thing)
+	for _, c in ipairs(thing.get_wire_connectors(true)) do
+		if c.wire_type == defines.wire_type.copper then
+			return c
+		end
+	end
+	return nil
+end
+
 function M.register_new_electric_tree(tree, other_pole, power_usage)
 	-- connect_neighbour returns false if we're already connected and
 	-- there's no way to find out connection status (?????)
-	tree.disconnect_neighbour(other_pole)
-	if not tree.connect_neighbour(other_pole) then
+	local tree_connector = M.get_copper_connector(tree)
+	local pole_connector = M.get_copper_connector(other_pole)
+
+	if tree_connector == nil or pole_connector == nil then
 		return nil
+	end
+
+	if not tree_connector.is_connected_to(pole_connector) then
+		if not tree_connector.connect_to(pole_connector) then
+			return nil
+		end
 	end
 
 	local electric = tree.surface.create_entity{
