@@ -51,6 +51,7 @@ local function make_tree_spawner_projectile(surface, source, target, tree_name, 
 		local rid = script.register_on_entity_destroyed(s)
 		storage.entity_destroyed_script_events[rid] = {
 			action = "on_spawning_spit_landed",
+			surface = surface,
 			tree_name = tree_name,
 			generation = generation,
 			source = source,
@@ -88,8 +89,11 @@ function M.on_spawning_spit_landed(event)
 	local target = event.target
 	local tree_name = event.tree_name
 	local generation = event.generation
-	local surface = storage.surfaces["nauvis"]
+	local surface = event.surface
 
+	if not surface.valid then
+		return
+	end
 	if area_util.is_water(surface, target) then
 		return
 	end
@@ -158,7 +162,7 @@ function M.on_spawning_spit_landed(event)
 			x = target.x + dp.x,
 			y = target.y + dp.y,
 		}
-		make_tree_spawner_projectile(storage.surfaces["nauvis"], target, new_target, tree_name, gen)
+		make_tree_spawner_projectile(surface, target, new_target, tree_name, gen)
 	end
 end
 
@@ -173,6 +177,7 @@ local function make_exploding_hopper_projectile(surface, source, target, target_
 		local rid = script.register_on_entity_destroyed(s)
 		storage.entity_destroyed_script_events[rid] = {
 			action = "on_exploding_hopper_landed",
+			surface = surface,
 			generation = generation,
 			target = target,
 			target_entity = target_entity,
@@ -208,7 +213,11 @@ function M.on_exploding_hopper_landed(event)
 	local source = event.target
 	local target_entity = event.target_entity
 	local generation = event.generation
-	local surface = storage.surfaces["nauvis"]
+	local surface = event.surface
+
+	if not surface.valid then
+		return
+	end
 
 	M.small_explosion(surface, source, 3, 75)
 	generation = generation - 1
@@ -219,11 +228,11 @@ function M.on_exploding_hopper_landed(event)
 	local target = target_entity.position
 	local new_target = calculate_hopper_target(source, target, 2.5)
 	if new_target ~= nil then
-		make_exploding_hopper_projectile(storage.surfaces["nauvis"], source, new_target, target_entity, generation)
+		make_exploding_hopper_projectile(surface, source, new_target, target_entity, generation)
 	end
 end
 
-function M.send_homing_exploding_hopper_projectile(source, target_entity)
+function M.send_homing_exploding_hopper_projectile(surface, source, target_entity)
 	local tp = target_entity.position
 	local dx = tp.x - source.x
 	local dy = tp.y - source.y
@@ -231,7 +240,7 @@ function M.send_homing_exploding_hopper_projectile(source, target_entity)
 	local number_of_hops = math.floor(dist / 6) + math.random(1, 2)
 
 	local new_target = calculate_hopper_target(source, target_entity.position, 2.5)
-	make_exploding_hopper_projectile(storage.surfaces["nauvis"], source, new_target, target_entity, number_of_hops)
+	make_exploding_hopper_projectile(surface, source, new_target, target_entity, number_of_hops)
 end
 
 function M.small_explosion(surface, at, radius, damage)

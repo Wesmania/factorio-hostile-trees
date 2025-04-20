@@ -140,7 +140,7 @@ local function check_for_minor_retaliation(surface, event)
 				if pos == nil then return end
 				local tree = area_util.get_random_tree(surface, util.box_around(pos, 4))
 				if tree == nil then return end
-				tree_events.send_homing_exploding_hopper_projectile(tree.position, enemy)
+				tree_events.send_homing_exploding_hopper_projectile(surface, tree.position, enemy)
 			end
 		end
 	else

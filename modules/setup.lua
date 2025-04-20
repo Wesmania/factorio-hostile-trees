@@ -114,10 +114,6 @@ function M.reinitialize()
 	storage.tree_kill_locs   = {}
 	storage.major_retaliation_threshold = 200	-- FIXME balance
 	
-	storage.surfaces          = {
-		nauvis = game.get_surface("nauvis")
-	}
-
 	-- Players temporarily focused on as retaliation, not important
 	storage.players_focused_on = {
 		list = {},
