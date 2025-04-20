@@ -60,7 +60,7 @@ function M.chunk_mask_dec(cs, x, y)
 end
 
 function M.reinitialize_chunks(cs)
-	for c in storage.surface.get_chunks() do
+	for c in storage.surfaces["nauvis"].get_chunks() do
 		M.on_chunk_generated(cs, c)
 	end
 	cache_squares_to_check_per_tick(cs)

@@ -28,7 +28,7 @@ end)
 
 script.on_event({defines.events.on_tick}, function(event)
 	local storage = storage
-	local surface = storage.surface
+	local surface = storage.surfaces["nauvis"]
 	local config = storage.config
 
 	storage.tick_mod_10_s = (storage.tick_mod_10_s + 1) % 600
