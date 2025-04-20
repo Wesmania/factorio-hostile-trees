@@ -367,7 +367,7 @@ function M.event_spawn_biters(s)
 	s.wait_interval = math.random(4, 6)
 	if not s.surface.valid then return false end	-- unlikely
 	s.spawned = s.spawned + 1
-	local biter = M.pick_random_enemy_type(s.surface, s.rate_table, evolution.surface_default_enemy(surface))
+	local biter = M.pick_random_enemy_type(s.surface, s.rate_table, evolution.surface_default_enemy(s.surface))
 	local spos = s.position
 	s.actual_pos.x = spos.x + math.random() * 5 - 2.5
 	s.actual_pos.y = spos.y + math.random() * 5 - 2.5
