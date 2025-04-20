@@ -124,7 +124,7 @@ function M.register_new_electric_tree(tree, other_pole, power_usage)
 		return nil
 	end
 
-	local rid = script.register_on_entity_destroyed(tree)
+	local rid = script.register_on_object_destroyed(tree)
 	storage.entity_destroyed_script_events[rid] = {
 		action = "on_electric_tree_destroyed",
 		pos = tree.position,

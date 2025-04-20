@@ -85,7 +85,7 @@ function M.do_spit_on_belt(name, graphics_variation, surface, position, belt)
 		target = belt,
 	}
 	if s ~= nil then
-		local rid = script.register_on_entity_destroyed(s)
+		local rid = script.register_on_object_destroyed(s)
 		storage.entity_destroyed_script_events[rid] = {
 			action = "on_belttree_spawning_spit_landed",
 			tree_name = name,
@@ -136,7 +136,7 @@ function M.do_spit_on_belt_final(name, graphics_variation, surface, position, be
 		target = belt,
 	}
 	if s ~= nil then
-		local rid = script.register_on_entity_destroyed(s)
+		local rid = script.register_on_object_destroyed(s)
 		storage.entity_destroyed_script_events[rid] = {
 			action = "on_belttree_final_spit_landed",
 			tree_name = name,

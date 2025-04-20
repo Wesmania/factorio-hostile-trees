@@ -48,7 +48,7 @@ local function make_tree_spawner_projectile(surface, source, target, tree_name, 
 		target = target,
 	}
 	if s ~= nil then
-		local rid = script.register_on_entity_destroyed(s)
+		local rid = script.register_on_object_destroyed(s)
 		storage.entity_destroyed_script_events[rid] = {
 			action = "on_spawning_spit_landed",
 			surface = surface,
@@ -174,7 +174,7 @@ local function make_exploding_hopper_projectile(surface, source, target, target_
 		target = target,
 	}
 	if s ~= nil then
-		local rid = script.register_on_entity_destroyed(s)
+		local rid = script.register_on_object_destroyed(s)
 		storage.entity_destroyed_script_events[rid] = {
 			action = "on_exploding_hopper_landed",
 			surface = surface,

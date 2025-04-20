@@ -14,7 +14,7 @@ local function on_placed_vehicle(e)
 	-- Don't tank performance if player's a psycho that places down hundreds of cars
 	if #pc.list >= 250 then return end
 
-	local rid = script.register_on_entity_destroyed(car)
+	local rid = script.register_on_object_destroyed(car)
 	storage.entity_destroyed_script_events[rid] = {
 		action = "on_car_destroyed",
 		id = car.unit_number,
