@@ -5,10 +5,10 @@ local M = {}
 
 local function on_placed_vehicle(e)
 	-- Identifying cars 101
-	if e.created_entity.type ~= "car" then return end
-	if not string.find(e.created_entity.name, "car") then return end
+	if e.entity.type ~= "car" then return end
+	if not string.find(e.entity.name, "car") then return end
 
-	local car = e.created_entity
+	local car = e.entity
 	local pc = storage.player_cars
 
 	-- Don't tank performance if player's a psycho that places down hundreds of cars
@@ -115,6 +115,9 @@ local function arming_events()
 		end
 		if dvr == nil or not dvr.valid then
 			es[id] = nil
+			goto next_3
+		end
+		if car.surface.index ~= dvr.surface.index then
 			goto next_3
 		end
 		if util.dist2(car.position, dvr.position) < 256 and math.random() < 0.8 then

@@ -10,12 +10,11 @@ local proto_anim = {
 			draw_as_glow = true,
 			blend_mode = "additive-soft",
 			line_length = 4,
-			width = 49,
-			height = 54,
+			width = 91,
+			height = 93,
 			frame_count = 16,
 			direction_count = 1,
-			shift = {-0.046875, 0},
-			scale = 2.0,
+			shift = {-0.078125, -0.046875},
 			hr_version =
 			{
 				filename = "__base__/graphics/entity/beam/hr-tileable-beam-END.png",
