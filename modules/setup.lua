@@ -168,6 +168,9 @@ end
 
 -- Reinitialize new and stateful features.
 function M.port_state(old_version, new_version)
+	if old_version == nil then
+		return
+	end
 	local old_version = version_to_number(old_version)
 	local new_version = version_to_number(new_version)
 

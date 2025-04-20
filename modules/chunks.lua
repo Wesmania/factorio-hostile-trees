@@ -79,8 +79,9 @@ function M.reinitialize_chunks(cs)
 		for c in surface.get_chunks() do
 			M.on_chunk_generated(cs, c, surface)
 		end
+		local surface_cs = M.get_surface_cs(cs, surface)
+		cache_squares_to_check_per_tick(surface_cs)
 	end
-	cache_squares_to_check_per_tick(cs)
 end
 
 function M.active_per_tick(cs, surface)
@@ -104,6 +105,7 @@ function M.set_accum(cs, surface, accum)
 end
 
 function M.fresh_setup()
+	storage.chunks = {}
 	M.reinitialize_chunks(storage.chunks)
 end
 
