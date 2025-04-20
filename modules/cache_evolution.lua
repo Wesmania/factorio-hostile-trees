@@ -45,15 +45,56 @@ local function normalize_rates(new_entries)
 	return res
 end
 
-local function cache_evolution_for(evolution)
+function M.surface_spawntable_name(surface)
+	if surface.name == "gleba" then
+		return "gleba"
+	else
+		return "nauvis"
+	end
+end
+
+function M.surface_spawntable(surface)
+	return storage.spawntable[M.surface_spawntable_name(surface)]
+end
+
+function M.surface_default_enemy(surface)
+	local name = M.surface_spawntable_name(surface)
+	if name == "gleba" then
+		return "small-wriggler-pentapod"
+	else
+		return "small-biter"
+	end
+end
+
+local function can_cache_evolution(surface)
+	if surface.name ~= "gleba" and surface.name ~= "nauvis" then
+		return false
+	end
+	return true
+end
+
+local function cache_evolution_for(surface, evolution)
+	if not can_cache_evolution(surface) then
+		return
+	end
+
+	local evolution_entry = M.surface_spawntable_name(surface)
 	local new_entries = {}
-	local enemy_rates = {
-		biters = 0.75,
-		spitters = 0.25,
+
+	local enemy_rates_table = {
+		gleba = {
+			small_spawner = 1.0,
+		},
+		nauvis = {
+			biters = 0.75,
+			spitters = 0.25,
+		}
 	}
 
+	local enemy_rates = enemy_rates_table[evolution_entry]
+
 	-- Collect spawn rates from saved spawner tables.
-	for enemy_kind, rates in pairs(storage.spawnrates) do
+	for enemy_kind, rates in pairs(storage.spawnrates[evolution_entry]) do
 		local rate_adjust = enemy_rates[enemy_kind]
 		interpolate_evolution_rates(evolution, rates, new_entries, rate_adjust)
 	end
@@ -61,20 +102,28 @@ local function cache_evolution_for(evolution)
 	return normalize_rates(new_entries)
 end
 
-local function cache_evolution_for_ents(evolution)
+local function cache_evolution_for_ents(surface, evolution)
 	local new_entries = {}
 	interpolate_evolution_rates(evolution, ents.spawnrates, new_entries, 1.0)
 	return normalize_rates(new_entries)
 end
 
 M.cache_evolution_rates = function()
-	local evolution = game.forces["enemy"].get_evolution_factor("nauvis")
-	storage.spawntable = {
-		default = cache_evolution_for(evolution),
-		retaliation = cache_evolution_for(evolution + 0.1),
-		half_retaliation = cache_evolution_for(evolution + 0.05),
-		ents = cache_evolution_for_ents(evolution)
-	}
+	storage.spawntable = {}
+	for _, surface in pairs(game.surfaces) do
+		if not can_cache_evolution(surface) then
+			goto continue
+		end
+		local evolution = game.forces["enemy"].get_evolution_factor(surface.index)
+		local spawntable_name = M.surface_spawntable_name(surface)
+		storage.spawntable[spawntable_name] = {
+			default = cache_evolution_for(surface, evolution),
+			retaliation = cache_evolution_for(surface, evolution + 0.1),
+			half_retaliation = cache_evolution_for(surface, evolution + 0.05),
+			ents = cache_evolution_for_ents(surface, evolution)
+		}
+		::continue::
+	end
 end
 
 return M

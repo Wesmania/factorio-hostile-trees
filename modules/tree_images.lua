@@ -12,7 +12,7 @@ function M.generate_tree_image(tree_data, v, color)
 
 	local add_layer = function(l)
 		if l.layers ~= nil then
-			for ll in l.layers do
+			for _, ll in pairs(l.layers) do
 				fixup_anim(ll)
 				layers[#layers + 1] = ll
 			end

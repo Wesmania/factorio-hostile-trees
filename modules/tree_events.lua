@@ -1,6 +1,7 @@
 local util = require("modules/util")
 local area_util = require("modules/area_util")
 local ents = require("modules/ent_generation")
+local evolution = require("modules/cache_evolution")
 
 local M = {}
 
@@ -306,12 +307,13 @@ function M.default_random_projectiles()
 		end
 end
 
-function M.pick_random_enemy_type(rate_tree, default)
+function M.pick_random_enemy_type(surface, rate_tree, default)
 	if rate_tree == nil then rate_tree = "default" end
 
 	local rand = math.random()
 	local res = nil
-	local nxt = storage.spawntable[rate_tree]
+	local spawntable = evolution.surface_spawntable(surface)
+	local nxt = spawntable[rate_tree]
 	for i = 1,#nxt do
 		local entry = nxt[i]
 		if rand < entry[2] then break end
@@ -330,7 +332,7 @@ function M.spawn_biters(surface, treepos, count, rate_table, enemy)
 	}
 
 	for i = 1,count do
-		local biter = M.pick_random_enemy_type(rate_table, 'small-biter')
+		local biter = M.pick_random_enemy_type(surface, rate_table, evolution.surface_default_enemy(surface))
 		actual_pos.x = treepos.x + math.random() * 5 - 2.5
 		actual_pos.y = treepos.y + math.random() * 5 - 2.5
 		surface.create_entity{
@@ -365,7 +367,7 @@ function M.event_spawn_biters(s)
 	s.wait_interval = math.random(4, 6)
 	if not s.surface.valid then return false end	-- unlikely
 	s.spawned = s.spawned + 1
-	local biter = M.pick_random_enemy_type(s.rate_table, 'small-biter')
+	local biter = M.pick_random_enemy_type(s.surface, s.rate_table, evolution.surface_default_enemy(surface))
 	local spos = s.position
 	s.actual_pos.x = spos.x + math.random() * 5 - 2.5
 	s.actual_pos.y = spos.y + math.random() * 5 - 2.5
@@ -516,7 +518,7 @@ end
 
 function M.turn_tree_into_ent(surface, tree)
 	if storage.entable_trees[tree.name] == nil then return nil end
-	local rand_ent = M.pick_random_enemy_type("ents", "ent")
+	local rand_ent = M.pick_random_enemy_type(surface,"ents", "ent")
 	local ent = surface.create_entity{
 		name = ents.make_ent_entity_name{
 			name = tree.name,
@@ -536,7 +538,7 @@ function M.turn_tree_into_ent_or_biter(surface, tree)
 			return maybe_ent
 		end
 	end
-	local rand_ent = M.pick_random_enemy_type("half_retaliation", "small_biter")
+	local rand_ent = M.pick_random_enemy_type(surface, "half_retaliation", evolution.surface_default_enemy(surface))
 	local biter = surface.create_entity{
 		name = rand_ent,
 		position = tree.position,

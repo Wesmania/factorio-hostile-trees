@@ -115,11 +115,19 @@ function M.reinitialize()
 	}
 
 	-- Spawn rates
-	storage.spawnrates = {}
+	storage.spawnrates = {
+		nauvis = {},
+		gleba = {},
+	}
 	local biter_spawner = prototypes.get_entity_filtered{{filter="name", name="biter-spawner"}}["biter-spawner"]
-	storage.spawnrates.biters = biter_spawner.result_units
+	storage.spawnrates.nauvis.biters = biter_spawner.result_units
 	local spitter_spawner = prototypes.get_entity_filtered{{filter="name", name="spitter-spawner"}}["spitter-spawner"]
-	storage.spawnrates.spitters = spitter_spawner.result_units
+	storage.spawnrates.nauvis.spitters = spitter_spawner.result_units
+
+	if script.active_mods["space-age"] ~= nil then
+		local gleba_small_spawner = prototypes.get_entity_filtered{{filter="name", name="gleba-spawner-small"}}["gleba-spawner-small"]
+		storage.spawnrates.gleba.small_spawner = gleba_small_spawner.result_units
+	end
 
 	M.refresh_caches()
 

@@ -8,6 +8,7 @@
 	"homepage": "",
 	"description": "Makes trees hate you and your factory. They will do bad things to you and your factory.",
 	"dependencies": [
-		"base >= 2.0"
+		"base >= 2.0",
+		"? space-age"
 	]
 }

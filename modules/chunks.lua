@@ -26,10 +26,10 @@ local function cache_squares_to_check_per_tick(cs)
 end
 
 function M.get_surface_cs(cs, surface)
-	local c = cs[surface.name]
+	local c = cs[surface.index]
 	if c == nil then
 		local c = M.chunks_new()
-		cs[surface.name] = c
+		cs[surface.index] = c
 		return c
 	end
 	return c
