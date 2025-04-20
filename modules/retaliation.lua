@@ -233,7 +233,7 @@ local function check_for_major_retaliation(surface, event)
 		return
         end
 
-	if rand < 1.1 and enemy ~= nil and poltergeist.can_introduce() then
+	if rand < 0.25 and enemy ~= nil and poltergeist.can_introduce() then
 		poltergeist.throw_a_bunch_of_fast_poltergeists(surface, enemy, treepos, math.random(7, 12), 10, 25)
 		return
 	end
