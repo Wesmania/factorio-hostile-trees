@@ -1,4 +1,17 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.3.1
+Date: 20/04/2025
+
+  Changes:
+    - More mod fixes. 0.3.0 was still badly broken , this one shouldn't be.
+    - Tested on my Space Age save, all crashes within the first few minutes
+      were fixed and some other stuff was explicitly tested. Please report bugs.
+    - Trees on Gleba also hate you now. We are ecstatic to make your Gleba
+      experience even more enjoyable.
+      - For the squeamish, Gleba hatred can be disabled. I hate you, you're the
+	only reason I couldn't keep this a surprise.
+
+---------------------------------------------------------------------------------------------------
 Version: 0.3.0
 Date: 19/04/2025
 
