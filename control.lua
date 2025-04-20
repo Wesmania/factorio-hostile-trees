@@ -28,7 +28,6 @@ end)
 
 script.on_event({defines.events.on_tick}, function(event)
 	local storage = storage
-	local surface = storage.surfaces["nauvis"]
 	local config = storage.config
 
 	storage.tick_mod_10_s = (storage.tick_mod_10_s + 1) % 600
@@ -70,23 +69,30 @@ script.on_event({defines.events.on_tick}, function(event)
 	end
 
 	if storage.config.factory_events then
+		-- Run factory events for every surface.
+		-- Probably excessive because trees are only on Nauvis for now, but whatever.
+		
+		for _, surface in pairs(game.surfaces) do
 
-		local cks = storage.chunks
-		storage.accum = storage.accum + chunks.active_per_tick(cks)
-		local tocheck = math.floor(storage.accum)
-		storage.accum = storage.accum - tocheck
+			local cks = storage.chunks
+			local accum = chunks.get_accum(cks, surface)
+			accum = accum + chunks.active_per_tick(cks, surface)
+			local tocheck = math.floor(accum)
+			chunks.set_accum(cks, surface, accum - tocheck)
 
-		for i = 1,tocheck do
-			-- TODO do we define these as globals to avoid allocation cost?
-			local chunk = chunks.pick_random_active_chunk(cks)
-			local map_pos = {
-				x = chunk.x * 32 + math.random(0, 32),
-				y = chunk.y * 32 + math.random(0, 32),
-			}
-			local box = util.box_around(map_pos, 4)
-			if area_util.has_player_entities(surface, box) and area_util.has_trees(surface, box) -- These two first, they remove most checks
-			    and area_util.has_buildings(surface, box) then
-				trees.event(surface, box)
+			for i = 1,tocheck do
+				-- TODO do we define these as globals to avoid allocation cost?
+				local chunk = chunks.pick_random_active_chunk(cks, surface)
+				local map_pos = {
+					x = chunk.x * 32 + math.random(0, 32),
+					y = chunk.y * 32 + math.random(0, 32),
+				}
+				local box = util.box_around(map_pos, 4)
+				-- These two first, they remove most checks
+				if area_util.has_player_entities(surface, box) and area_util.has_trees(surface, box)
+				    and area_util.has_buildings(surface, box) then
+					trees.event(surface, box)
+				end
 			end
 		end
 	end

@@ -73,10 +73,11 @@ function M.cache_game_forces()
 end
 
 script.on_event(defines.events.on_chunk_generated, function(e)
-	chunks.on_chunk_generated(storage.chunks, e.position)
+	chunks.on_chunk_generated(storage.chunks, e.position, e.surface)
 end)
 script.on_event(defines.events.on_chunk_deleted, function(e)
-	chunks.on_chunk_deleted(storage.chunk, e.position)
+	local surface = game.get_surface(e.surface_index)
+	chunks.on_chunk_deleted(storage.chunk, e.position, surface)
 end)
 
 function M.refresh_caches()

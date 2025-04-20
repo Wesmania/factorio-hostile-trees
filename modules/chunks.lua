@@ -11,6 +11,7 @@ function M.chunks_new()
 		all = {},
 		masked = {},
 		per_tick = 0,
+		accum = 0,
 	}
 end
 
@@ -18,7 +19,18 @@ local function cache_squares_to_check_per_tick(cs)
 	cs.per_tick = #cs.active.list * storage.config.factory_events_per_tick_per_chunk
 end
 
-function M.on_chunk_generated(cs, c)
+function M.get_surface_cs(cs, surface)
+	local c = cs[surface.name]
+	if c == nil then
+		local c = M.chunks_new()
+		cs[surface.name] = c
+		return c
+	end
+	return c
+end
+
+function M.on_chunk_generated(cs, c, surface)
+	local cs = M.get_surface_cs(cs, surface)
 	local cinfo = {
 		x = c.x,
 		y = c.y,
@@ -30,13 +42,15 @@ function M.on_chunk_generated(cs, c)
 	end
 end
 
-function M.on_chunk_deleted(cs, c)
+function M.on_chunk_deleted(cs, c, surface)
+	local cs = M.get_surface_cs(cs, surface)
 	util.dict2_remove(cs.all, c.x, c.y)
 	util.ldict2_remove(cs.active, c.x, c.y)
 	cache_squares_to_check_per_tick(cs)
 end
 
-function M.chunk_mask_inc(cs, x, y)
+function M.chunk_mask_inc(cs, surface, x, y)
+	local cs = M.get_surface_cs(cs, surface)
 	local cmask = util.dict2_setdefault(cs.masked, x, y, {c = 0})
 	if cmask.c == 0 then
 		util.ldict2_remove(cs.active, x, y)
@@ -45,7 +59,8 @@ function M.chunk_mask_inc(cs, x, y)
 	cmask.c = cmask.c + 1
 end
 
-function M.chunk_mask_dec(cs, x, y)
+function M.chunk_mask_dec(cs, surface, x, y)
+	local cs = M.get_surface_cs(cs, surface)
 	local cmask = util.dict2_get(cs.masked, x, y)
 	if cmask == nil then return end
 	cmask.c = cmask.c - 1
@@ -60,22 +75,35 @@ function M.chunk_mask_dec(cs, x, y)
 end
 
 function M.reinitialize_chunks(cs)
-	for c in storage.surfaces["nauvis"].get_chunks() do
-		M.on_chunk_generated(cs, c)
+	for _, surface in pairs(game.surfaces) do
+		for c in surface.get_chunks() do
+			M.on_chunk_generated(cs, c, surface)
+		end
 	end
 	cache_squares_to_check_per_tick(cs)
 end
 
-function M.active_per_tick(cs)
+function M.active_per_tick(cs, surface)
+	local cs = M.get_surface_cs(cs, surface)
 	return cs.per_tick
 end
 
-function M.pick_random_active_chunk(cs)
+function M.pick_random_active_chunk(cs, surface)
+	local cs = M.get_surface_cs(cs, surface)
 	return util.ldict2_get_random(cs.active)
 end
 
+function M.get_accum(cs, surface)
+	local cs = M.get_surface_cs(cs, surface)
+	return cs.accum
+end
+
+function M.set_accum(cs, surface, accum)
+	local cs = M.get_surface_cs(cs, surface)
+	cs.accum = accum
+end
+
 function M.fresh_setup()
-	storage.chunks = M.chunks_new()
 	M.reinitialize_chunks(storage.chunks)
 end
 
