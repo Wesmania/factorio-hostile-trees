@@ -250,6 +250,10 @@ function M.generate_ent(tree_data, unit_type, walk_sounds)
 
 	local unit = table.deepcopy(data.raw["unit"]["small-biter"])
 	unit.icon = tree_data.icon
+	-- Work around some mods with no icons
+	if unit.icon == nil then
+		unit.icon = "__base__/graphics/icons/tree-06-brown.png"
+	end
 	unit.corpse = tree_data.corpse
 	unit.dying_explosion = nil
 	unit.dying_sound = nil
