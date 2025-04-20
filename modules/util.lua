@@ -196,4 +196,19 @@ function M.ldict_get_random(ldict)
 	return M.l_get_random(ldict.list)
 end
 
+function M.skip_planet(surface)
+	if surface.name == "gleba" and not storage.config.gleba_is_hostile then
+		return true
+	end
+
+	-- HACK. We want to exclude burnt trees (for the most part) and we
+	-- don't want to add expensive filtering rules to has_trees. Just skip
+	-- vulcanus since nothing alive grows there.
+	if surface.name == "vulcanus" then
+		return true
+	end
+
+	return false
+end
+
 return M

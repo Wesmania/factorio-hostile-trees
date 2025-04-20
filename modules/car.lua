@@ -129,7 +129,8 @@ local function arming_events()
 	end
 end
 
--- NOTE: this is called once every second, NOT evey frame!
+-- NOTE: this is called once every second, NOT every frame!
+-- Frequency of booby-trapping will be reduced if player leaves lots of cars where there are no trees. Oh well.
 function M.car_tree_events()
 	-- Check existing arming events.
 	arming_events()
@@ -144,6 +145,10 @@ function M.car_tree_events()
 
 	local victim_info = util.ldict_get_random(storage.player_cars)
 	local victim = victim_info.e
+
+	if util.skip_planet(surface) then
+		return
+	end
 
 	-- Is the car empty?
 	if victim.get_driver() ~= nil or victim.get_passenger() ~= nil then return end

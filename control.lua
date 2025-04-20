@@ -70,9 +70,12 @@ script.on_event({defines.events.on_tick}, function(event)
 
 	if storage.config.factory_events then
 		-- Run factory events for every surface.
-		-- Probably excessive because trees are only on Nauvis for now, but whatever.
+		-- Probably could skip planets without trees, but whatever.
 		
 		for _, surface in pairs(game.surfaces) do
+			if util.skip_planet(surface) then
+				goto next_surface
+			end
 
 			local cks = storage.chunks
 			local accum = chunks.get_accum(cks, surface)
@@ -94,6 +97,7 @@ script.on_event({defines.events.on_tick}, function(event)
 					trees.event(surface, box)
 				end
 			end
+			::next_surface::
 		end
 	end
 

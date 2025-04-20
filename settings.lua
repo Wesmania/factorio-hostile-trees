@@ -51,4 +51,11 @@ data:extend({
 		default_value = true,
 		order = "c-a"
 	},
+	{
+		type = "bool-setting",
+		name = "hostile-trees-is-gleba-hostile",
+		setting_type = "runtime-global",
+		default_value = true,
+		order = "c-a"
+	},
 })

@@ -230,6 +230,10 @@ function M.spooky_story(player_info, player_is_focused_on)
 	local player = player_info.player
 	local surface = player.surface
 
+	if util.skip_planet(surface) then
+		return
+	end
+
 	local ppos = player.position
 	local box = util.box_around(ppos, 8)
 	local tree_count = area_util.count_trees(surface, box, 40)
