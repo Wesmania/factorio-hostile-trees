@@ -115,6 +115,7 @@ M.cache_evolution_rates = function()
 			goto continue
 		end
 		local evolution = game.forces["enemy"].get_evolution_factor(surface.index)
+		evolution = evolution + math.sqrt(storage.hatred - 1) * 0.015
 		local spawntable_name = M.surface_spawntable_name(surface)
 		storage.spawntable[spawntable_name] = {
 			default = cache_evolution_for(surface, evolution),
