@@ -30,6 +30,15 @@ data:extend({
 		order = "b-b"
 	},
 	{
+		type = "int-setting",
+		name = "hostile-trees-do-trees-hate-you-more",
+		setting_type = "runtime-global",
+		minimum_value = 1,
+		maximum_value = 100,
+		default_value = 1,
+		order = "b-c"
+	},
+	{
 		type = "bool-setting",
 		name = "hostile-trees-do-trees-retaliate",
 		setting_type = "runtime-global",
