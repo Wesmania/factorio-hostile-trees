@@ -100,6 +100,8 @@ function M.reinitialize()
 	config.hatred = settings.global["hostile-trees-do-trees-hate-you-more"].value
 	storage.config = config
 
+	storage.hatred = config.hatred
+
 	storage.players          = {}
 	storage.players_array    = {}
 

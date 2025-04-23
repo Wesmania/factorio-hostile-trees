@@ -241,7 +241,9 @@ function M.send_homing_exploding_hopper_projectile(surface, source, target_entit
 	local number_of_hops = math.floor(dist / 6) + math.random(1, 2)
 
 	local new_target = calculate_hopper_target(source, target_entity.position, 2.5)
-	make_exploding_hopper_projectile(surface, source, new_target, target_entity, number_of_hops)
+	if new_target ~= nil then
+		make_exploding_hopper_projectile(surface, source, new_target, target_entity, number_of_hops)
+	end
 end
 
 function M.small_explosion(surface, at, radius, damage)

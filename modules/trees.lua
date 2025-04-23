@@ -60,55 +60,62 @@ M.building_spit_assault = function(surface, area, tree_projectiles)
 	return s
 end
 
-local events = {
-	sum = 1.5,
-	e = {
-		{ 0.75, function(a)
-			if area_util.is_belt(a.b) then
-				belttrees.spit_on_belt(a.t, a.b)
-			elseif area_util.is_electric_pole(a.b) then
-				electricity.try_to_hook_up_electricity(a.t, a.b)
-			elseif area_util.is_turret(a.b) then
-				tree_events.take_over_turret(a.b)
-			else
-				return "resume_next"
-			end
-		end },
-		{ 0.75, {
-			sum = 105,
-			e = {
-				{ 18 - storage.hatred / 10, function(a) tree_events.spread_trees_towards_buildings(a.s, a.t, a.b) end },
-				{ 7 + storage.hatred / 10, function(a) tree_events.spit_trees_towards_buildings(a.s, a.t, a.b) end },
-				{ 10 - storage.hatred / 20, function(a) tree_events.set_tree_on_fire(a.s, a.t) end },
-				{ 10 + storage.hatred / 20, function(a) tree_events.small_tree_explosion(a.s, a.t) end },
-				{ 10, function(a) tree_events.spawn_biters(a.s, a.t.position, math.random(3, 5)) end},
-				{ 10, function(a)
-					if not ents.can_make_ents() then
-						return "resume_next"
-					end
-					tree_events.turn_tree_into_ent(a.s, a.t)
-				end },
-				{ 10, function(a) tree_events.fire_stream(a.s, a.t.position, a.b.position) end },
-				{ 5 + storage.hatred / 10, function(a)
-					if not ents.can_make_ents() then
-						return "resume_next"
-					end
-					tree_events.entify_trees_in_cone(a.s, a.b.position, a.t.position, 36, 3, 3, a.b)
-				end },
-				{ 20 - storage.hatred / 10, function(a) tree_events.spitter_projectile(a.s, a.t.position, a.b.position) end },
-				{ 5, function(a)
-					local projectile_kinds = {
-						{ "spitter_projectile" },
-						{ "fire_stream" },
-						{ "spitter_projectile", "fire_stream" },
-					}
-					local pk = projectile_kinds[math.random(1, #projectile_kinds)]
-					storage.tree_stories[#storage.tree_stories + 1] = M.building_spit_assault(a.s, a.a, pk)
-				end },
-			}
-		} }
+local _events = nil
+local function events()
+	if _events ~= nil then
+		return _events
+	end
+	_events = {
+		sum = 1.5,
+		e = {
+			{ 0.75, function(a)
+				if area_util.is_belt(a.b) then
+					belttrees.spit_on_belt(a.t, a.b)
+				elseif area_util.is_electric_pole(a.b) then
+					electricity.try_to_hook_up_electricity(a.t, a.b)
+				elseif area_util.is_turret(a.b) then
+					tree_events.take_over_turret(a.b)
+				else
+					return "resume_next"
+				end
+			end },
+			{ 0.75, {
+				sum = 105,
+				e = {
+					{ 18 - storage.hatred / 10, function(a) tree_events.spread_trees_towards_buildings(a.s, a.t, a.b) end },
+					{ 7 +  storage.hatred / 10, function(a) tree_events.spit_trees_towards_buildings(a.s, a.t, a.b) end },
+					{ 10 - storage.hatred / 20, function(a) tree_events.set_tree_on_fire(a.s, a.t) end },
+					{ 10 + storage.hatred / 20, function(a) tree_events.small_tree_explosion(a.s, a.t) end },
+					{ 10, function(a) tree_events.spawn_biters(a.s, a.t.position, math.random(3, 5)) end},
+					{ 10, function(a)
+						if not ents.can_make_ents() then
+							return "resume_next"
+						end
+						tree_events.turn_tree_into_ent(a.s, a.t)
+					end },
+					{ 10, function(a) tree_events.fire_stream(a.s, a.t.position, a.b.position) end },
+					{ 5 + storage.hatred / 10, function(a)
+						if not ents.can_make_ents() then
+							return "resume_next"
+						end
+						tree_events.entify_trees_in_cone(a.s, a.b.position, a.t.position, 36, 3, 3, a.b)
+					end },
+					{ 20 - storage.hatred / 10, function(a) tree_events.spitter_projectile(a.s, a.t.position, a.b.position) end },
+					{ 5, function(a)
+						local projectile_kinds = {
+							{ "spitter_projectile" },
+							{ "fire_stream" },
+							{ "spitter_projectile", "fire_stream" },
+						}
+						local pk = projectile_kinds[math.random(1, #projectile_kinds)]
+						storage.tree_stories[#storage.tree_stories + 1] = M.building_spit_assault(a.s, a.a, pk)
+					end },
+				}
+			} }
+		}
 	}
-}
+	return _events
+end
 
 function pick_event(e, args)
 	if type(e) == "function" then
@@ -133,7 +140,7 @@ function M.event(surface, area)
 
 	if tree == nil or building == nil then return end
 
-	pick_event(events, {
+	pick_event(events(), {
 		s = surface,
 		a = area,
 		t = tree,

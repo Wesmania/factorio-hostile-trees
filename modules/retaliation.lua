@@ -199,7 +199,7 @@ local function check_for_major_retaliation(surface, event)
 		end
 	end
 
-	if counts < 5 then return end
+	if counts < (5 - math.floor(storage.hatred / 33)) then return end
 
 	-- Clear counts in neighbouring chunks
 	for i = chunk_x - 2,chunk_x + 2 do
@@ -210,7 +210,7 @@ local function check_for_major_retaliation(surface, event)
 			end
 		end
 	end
-	tree_data.major_retaliation_threshold = tree_data.kill_count + 200
+	tree_data.major_retaliation_threshold = tree_data.kill_count + 200 - storage.hatred * 1.6
 
 	local enemy = get_valid_target(surface, event)
 	local edist2 = 0
@@ -220,7 +220,7 @@ local function check_for_major_retaliation(surface, event)
 
 	local rand = math.random()
 
-	if rand < 0.2 and ents.can_make_ents() then
+	if rand < 0.2 + (storage.hatred / 500.0) and ents.can_make_ents() then
 		if enemy == nil or edist2 > 3600 then
 			enemy = false
 		end
@@ -228,7 +228,7 @@ local function check_for_major_retaliation(surface, event)
 		                     treepos,
 		                     48 + math.sqrt(storage.hatred - 1) * 2, -- ~48 degrees each direction
 		                     8 + math.sqrt(storage.hatred - 1),
-		                     4,
+		                     4 + math.sqrt(storage.hatred - 1) / 2,
 		                     enemy)
 		return
         end

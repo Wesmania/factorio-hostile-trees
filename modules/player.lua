@@ -136,11 +136,11 @@ local stages = {
 
 	exploding_hopper_projectile = function(s)
 		if s.source.valid and s.target.valid and s.surface.valid then
-			tree_events.send_homing_exploding_hopper_projectile(s.surface, s.source, s.target)
+			tree_events.send_homing_exploding_hopper_projectile(s.surface, s.source.position, s.target)
 		end
 		coro_next_stage(s)
 		return
-	end
+	end,
 
 	tree_spreading_spit = function(s)
 		if s.source.valid and s.target.valid and s.surface.valid then
@@ -148,7 +148,7 @@ local stages = {
 		end
 		coro_next_stage(s)
 		return
-	end
+	end,
 
 	poison_cloud = function(s)
 		tree_events.poison_cloud(s.surface, s.treepos)
