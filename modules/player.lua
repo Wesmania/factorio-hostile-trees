@@ -134,6 +134,14 @@ local stages = {
 		end
 	end,
 
+	exploding_hopper_projectile = function(s)
+		if s.source.valid and s.target.valid and s.surface.valid then
+			tree_events.send_homing_exploding_hopper_projectile(s.surface, s.source, s.target)
+		end
+		coro_next_stage(s)
+		return
+	end
+
 	poison_cloud = function(s)
 		tree_events.poison_cloud(s.surface, s.treepos)
 		coro_next_stage(s)
@@ -218,7 +226,7 @@ local function complex_random_assault(player, sl, tree, add_flicker, spook_playe
 		surround_with_flicker(sl)
 	end
 
-	if math.random() < 0.3 then
+	if math.random() < 0.05 then
 		put_in_random_stage(sl, { "spawn_poltergeist", {
 			target = player,
 			treepos = tree.position,
@@ -261,6 +269,50 @@ function M.spooky_story(player_info, player_is_focused_on)
 	local is_night = surface.darkness >= 0.7
 
 	-- Eternal TODO: add more events.
+	if threat >= 5 and is_near_a_few_trees then
+		-- Mid-sized event.
+		local rand = math.random()
+
+		-- Chance to immediately skip to large event if hatred is high enough.
+		if threat >= 7 and math.random() < storage.hatred * 0.8 then
+			goto large_event
+		end
+
+		-- If we make a mid event, make a major event more likely in the future.
+		if rand > 0.8 - (player_info.big_tree_threat * 0.15) then
+			if not player_is_focused_on then
+				player_info.tree_threat = player_info.tree_threat + 1
+			end
+		else
+			player_info.tree_threat = threat - 5
+			if not player_is_focused_on then
+				player_info.big_tree_threat = player_info.big_tree_threat + 1
+			end
+
+			local add_flicker = is_night and math.random() < 0.25
+			local rand2 = math.random()
+			if rand2 < 0.15 then
+				sl[#sl + 1] = { "tree_event", {
+					_coroutine = tree_events.entify_trees_in_cone_coro(surface, ppos, tree.position,
+											   15, 2, 3, player)
+				}}
+			elseif rand2 < 0.95 then
+				complex_random_assault(player, sl, tree, add_flicker, false, is_in_forest, math.random(180, 360))
+			else
+				sl[#sl + 1] = { "pause", {until_next = 20}}
+				sl[#sl + 1] = { "tree_event", {
+					_coroutine = tree_events.fake_biters(surface, player, 20, 10, 25)
+				}}
+				if add_flicker then
+					surround_with_flicker(sl)
+				end
+			end
+		end
+
+		goto finish
+	end
+
+	::large_event::
 
 	if threat >= 7 and is_near_a_few_trees then
 		-- Large event. Happens about a fifth of the time a mid-sized event does.
@@ -288,47 +340,15 @@ function M.spooky_story(player_info, player_is_focused_on)
 		goto finish
 	end
 
-	if threat >= 5 and is_near_a_few_trees then
-		-- Mid-sized event.
-		local rand = math.random()
-		-- If we make a mid event, make a major event more likely in the future.
-		if rand > 0.8 - (player_info.big_tree_threat * 0.15) then
-			if not player_is_focused_on then
-				player_info.tree_threat = player_info.tree_threat + 1
-			end
-		else
-			player_info.tree_threat = threat - 5
-			if not player_is_focused_on then
-				player_info.big_tree_threat = player_info.big_tree_threat + 1
-			end
-
-			local add_flicker = is_night and math.random() < 0.25
-			local rand2 = math.random()
-			if rand2 < 0.20 then
-				sl[#sl + 1] = { "tree_event", {
-					_coroutine = tree_events.entify_trees_in_cone_coro(surface, ppos, tree.position,
-											   15, 2, 3, player)
-				}}
-			elseif rand2 < 0.85 then
-				complex_random_assault(player, sl, tree, add_flicker, false, is_in_forest, math.random(180, 360))
-			else
-				sl[#sl + 1] = { "pause", {until_next = 20}}
-				sl[#sl + 1] = { "tree_event", {
-					_coroutine = tree_events.fake_biters(surface, player, 20, 10, 25)
-				}}
-				if add_flicker then
-					surround_with_flicker(sl)
-				end
-			end
-		end
-
-		goto finish
-	end
-
 	-- Small events.
 	if is_in_forest then
 		if not player_is_focused_on then
 			player_info.tree_threat = player_info.tree_threat + 1
+			if storage.hatred > 1 then
+				local extra_max_threat = math.floor(math.sqrt(storage.hatred - 1))
+				local extra_threat = math.random(1, extra_max_threat)
+				player_info.tree_threat = player_info.tree_threat + extra_threat
+			end
 		end
 
 		local rand = math.random()
@@ -360,8 +380,24 @@ function M.spooky_story(player_info, player_is_focused_on)
 	elseif is_near_a_few_trees then
 		if math.random() < 0.3 and not player_is_focused_on then
 			player_info.tree_threat = player_info.tree_threat + 1
+			if storage.hatred > 1 then
+				local extra_max_threat = math.floor(math.sqrt(storage.hatred - 1) / 2)
+				local extra_threat = math.random(1, extra_max_threat)
+				player_info.tree_threat = player_info.tree_threat + extra_threat
+			end
 		end
 		local rand = math.random()
+
+		if storage.hatred >= 10 and rand < storage.hatred / 3 then
+			sl[#sl + 1] = { "exploding_hopper_projectile", {
+				source = tree,
+				target = player,
+			}}
+			goto finish
+		end
+
+		rand = math.random()
+
 		if rand < 0.05 then
 			sl[#sl + 1] = { "spawn_poltergeist", {
 				treepos = tree.position,
