@@ -301,8 +301,10 @@ function M.spooky_story(player_info, player_is_focused_on)
 			local rand2 = math.random()
 			if rand2 < 0.15 then
 				sl[#sl + 1] = { "tree_event", {
-					_coroutine = tree_events.entify_trees_in_cone_coro(surface, ppos, tree.position,
-											   15, 2, 3, player)
+					_coroutine = tree_events.entify_trees_in_cone_coro(
+						surface, ppos, tree.position,
+						15 + (storage.hatred - 1) * 0.5,
+						2 + math.sqrt(storage.hatred - 1) / 2, 3, player)
 				}}
 			elseif rand2 < 0.95 then
 				complex_random_assault(player, sl, tree, add_flicker, false, is_in_forest, math.random(180, 360))

@@ -226,8 +226,8 @@ local function check_for_major_retaliation(surface, event)
 		end
 		entify_trees_in_cone(surface,
 		                     treepos,
-		                     48, -- ~48 degrees each direction
-		                     8,
+		                     48 + math.sqrt(storage.hatred - 1) * 2, -- ~48 degrees each direction
+		                     8 + math.sqrt(storage.hatred - 1),
 		                     4,
 		                     enemy)
 		return
