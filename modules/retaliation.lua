@@ -285,8 +285,8 @@ function M.tree_bot_deconstructed(event)
 	local tree_data = chunks.get_tree_data(storage.chunks, tree.surface)
 
 	tree_data.robot_deconstruct_count = tree_data.robot_deconstruct_count + 1
-	if tree_data.robot_deconstruct_count % 20 == 0 and storage.config.retaliation_enabled then
-		if math.random() < 0.05 then	-- TODO balance. Maybe too rare?
+	if tree_data.robot_deconstruct_count % 10 == 0 and storage.config.retaliation_enabled then
+		if math.random() < 0.025 + (storage.hatred - 1) * 0.01 then
 			tree_events.turn_construction_bot_hostile(tree.surface, event.robot)
 		end
 	end
