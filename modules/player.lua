@@ -142,6 +142,14 @@ local stages = {
 		return
 	end
 
+	tree_spreading_spit = function(s)
+		if s.source.valid and s.target.valid and s.surface.valid then
+			tree_events.spit_trees_towards_buildings(s.surface, s.source, s.target)
+		end
+		coro_next_stage(s)
+		return
+	end
+
 	poison_cloud = function(s)
 		tree_events.poison_cloud(s.surface, s.treepos)
 		coro_next_stage(s)
@@ -386,8 +394,8 @@ function M.spooky_story(player_info, player_is_focused_on)
 				player_info.tree_threat = player_info.tree_threat + extra_threat
 			end
 		end
-		local rand = math.random()
 
+		local rand = math.random()
 		if storage.hatred >= 10 and rand < storage.hatred / 3 then
 			sl[#sl + 1] = { "exploding_hopper_projectile", {
 				source = tree,
@@ -415,7 +423,15 @@ function M.spooky_story(player_info, player_is_focused_on)
 		elseif rand < 0.3 and ents.can_make_ents() then
 			sl[#sl + 1] = { "turn_tree_into_ent", {tree = tree}}
 		elseif rand < 0.65 then
-			sl[#sl + 1] = { "spit", {treepos = tree.position}}
+			rand = math.random()
+			if storage.hatred >= 5 and rand < math.sqrt(storage.hatred) / 30 then
+				sl[#sl + 1] = { "tree_spreading_spit", {
+					source = tree,
+					target = player,
+				}}
+			else
+				sl[#sl + 1] = { "spit", {treepos = tree.position}}
+			end
 		end
 	else
 		local rand = math.random()
