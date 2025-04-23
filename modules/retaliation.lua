@@ -17,7 +17,7 @@ script.on_nth_tick(30 * 60, function()
 			kill_count = 0,
 			robot_deconstruct_count = 0,
 			kill_locs = {},
-			major_retaliation_threshold = 200,
+			major_retaliation_threshold = 200 - storage.hatred * 1.6,
 		}
 	end
 end)
