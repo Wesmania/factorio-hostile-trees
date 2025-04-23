@@ -170,6 +170,10 @@ function M.event_wait_then_burst_electric_tree(s)
 	return electricity.event_wait_then_burst_electric_tree(s)
 end
 
+function M.event_artillery_strike(s)
+	return tree_events.artillery_strike_frame(s)
+end
+
 function M.run_coro(s)
 	return M[s.event_name](s)
 end
