@@ -77,10 +77,10 @@ local events = {
 		{ 0.75, {
 			sum = 105,
 			e = {
-				{ 18, function(a) tree_events.spread_trees_towards_buildings(a.s, a.t, a.b) end },
-				{ 7, function(a) tree_events.spit_trees_towards_buildings(a.s, a.t, a.b) end },
-				{ 10, function(a) tree_events.set_tree_on_fire(a.s, a.t) end },
-				{ 10, function(a) tree_events.small_tree_explosion(a.s, a.t) end },
+				{ 18 - storage.hatred / 10, function(a) tree_events.spread_trees_towards_buildings(a.s, a.t, a.b) end },
+				{ 7 + storage.hatred / 10, function(a) tree_events.spit_trees_towards_buildings(a.s, a.t, a.b) end },
+				{ 10 - storage.hatred / 20, function(a) tree_events.set_tree_on_fire(a.s, a.t) end },
+				{ 10 + storage.hatred / 20, function(a) tree_events.small_tree_explosion(a.s, a.t) end },
 				{ 10, function(a) tree_events.spawn_biters(a.s, a.t.position, math.random(3, 5)) end},
 				{ 10, function(a)
 					if not ents.can_make_ents() then
@@ -89,13 +89,13 @@ local events = {
 					tree_events.turn_tree_into_ent(a.s, a.t)
 				end },
 				{ 10, function(a) tree_events.fire_stream(a.s, a.t.position, a.b.position) end },
-				{ 5, function(a)
+				{ 5 + storage.hatred / 10, function(a)
 					if not ents.can_make_ents() then
 						return "resume_next"
 					end
 					tree_events.entify_trees_in_cone(a.s, a.b.position, a.t.position, 36, 3, 3, a.b)
 				end },
-				{ 20, function(a) tree_events.spitter_projectile(a.s, a.t.position, a.b.position) end },
+				{ 20 - storage.hatred / 10, function(a) tree_events.spitter_projectile(a.s, a.t.position, a.b.position) end },
 				{ 5, function(a)
 					local projectile_kinds = {
 						{ "spitter_projectile" },
