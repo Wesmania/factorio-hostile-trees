@@ -5,6 +5,7 @@ local ents = require("modules/ent_generation")
 local electricity = require("modules/electricity")
 local belttrees = require("modules/belttrees")
 local poltergeist = require("modules/poltergeist")
+local seed_mortar = require("modules/seed_mortar")
 
 local M = {}
 
@@ -171,7 +172,7 @@ function M.event_wait_then_burst_electric_tree(s)
 end
 
 function M.event_artillery_strike(s)
-	return tree_events.artillery_strike_frame(s)
+	return seed_mortar.artillery_strike_frame(s)
 end
 
 function M.run_coro(s)

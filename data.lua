@@ -3,6 +3,7 @@ local ents = require("modules/ent_generation")
 local electricity = require("modules/electricity")
 local belttrees = require("modules/belttrees")
 local poltergeist = require("modules/poltergeist")
+local seed_mortar = require("modules/seed_mortar")
 
 local function edit_spitter_projectile(p, damage_mult)
 	for _, e in pairs(p.initial_action) do
@@ -216,32 +217,31 @@ data:extend({{
     subgroup = "trees",
     stack_size = 1,
     capsule_action = {
-	    type = "throw",
-	    attack_parameters = {
-		    type = "projectile",
-		    activation_type = "throw",
-		    ammo_category = "grenade",
-		    cooldown = 30,
-		    projectile_creation_distance = 0.6,
-		    range = 15,
-		    ammo_type = {
-			    category = "grenade",
-			    target_type = "position",
-			    action = {
-				    {
-					    type = "direct",
-					    action_delivery = {
-						    type = "projectile",
-						    projectile = "volatile-sapling",
-						    starting_speed = 0.3
-					    }
-				    },
-			    }
-		    }
-	    }
+           type = "throw",
+           attack_parameters = {
+                   type = "projectile",
+                   activation_type = "throw",
+                   ammo_category = "grenade",
+                   cooldown = 30,
+                   projectile_creation_distance = 0.6,
+                   range = 15,
+                   ammo_type = {
+                           category = "grenade",
+                           target_type = "position",
+                           action = {
+                                   {
+                                           type = "direct",
+                                           action_delivery = {
+                                                   type = "projectile",
+                                                   projectile = "volatile-sapling",
+                                                   starting_speed = 0.3
+                                           }
+                                   },
+                           }
+                   }
+           }
     }
 }})
-
 
 data:extend({{
 	type = "electric-energy-interface",
@@ -273,3 +273,4 @@ data:extend({{
 }})
 
 poltergeist.data_stage()
+seed_mortar.data_stage()

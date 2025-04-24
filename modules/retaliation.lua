@@ -4,6 +4,7 @@ local tree_events = require("modules/tree_events")
 local ents = require("modules/ent_generation")
 local poltergeist = require("modules/poltergeist")
 local chunks = require("modules/chunks")
+local seed_mortar = require("modules/seed_mortar")
 
 -- Avoid find_nearest_enemy_entity_with_owner if possible for retaliation.
 -- Large forest fires can trigger a lot of retaliations and this call is SLOW.
@@ -113,6 +114,32 @@ local function get_valid_target(surface, event)
 	return area_util.find_closest_player(surface, cause.position, 100)
 end
 
+local function target_artillery(surface, treepos, enemy, edist2)
+	if edist2 < 100 then return end
+	local vec_to_tree = {
+		x = enemy.position.x - treepos.x,
+		y = enemy.position.y - treepos.y,
+	}
+
+	-- Normalize
+	local len = math.sqrt(util.len2(vec_to_tree))
+	vec_to_tree.x = vec_to_tree.x / len
+	vec_to_tree.y = vec_to_tree.y / len
+
+	local multiplier = math.random(40, 60)
+
+	local point_away = {
+		x = treepos.x + (vec_to_tree.x * multiplier),
+		y = treepos.y + (vec_to_tree.y * multiplier),
+	}
+
+	if not area_util.get_buildings(surface, util.box_around(point_away, 16)) then
+		return
+	end
+
+	seed_mortar.tree_artillery(surface, util.box_around(treepos, 16), point_away, 16, seed_mortar.make_seed_mortar, 40, 4)
+end
+
 local function check_for_minor_retaliation(surface, event)
 	local tree = event.entity
 	local treepos = tree.position
@@ -125,7 +152,10 @@ local function check_for_minor_retaliation(surface, event)
 	end
 
 	local rand = math.random()
-	if rand < 0.3 then
+
+	if rand < 2 and enemy ~= nil then
+		target_artillery(surface, treepos, enemy, edist2)
+	elseif rand < 0.3 then
 		local maybe_enemy = enemy
 		if enemy == nil or edist2 > 1600 then
 			maybe_enemy = false

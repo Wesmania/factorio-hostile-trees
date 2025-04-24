@@ -641,60 +641,6 @@ function M.entify_trees_in_cone_coro(surface, from, to, angle, radius, speed, ta
 	return M.gradual_tree_transform_story(surface, trees_in_cone, target, "turn_tree_into_ent")
 end
 
-function M.artillery_strike_story(surface, sources_targets, projectile, speed)
-	local s = {}
-	s.surface = surface
-	s.sources_targets = sources_targets
-	s.projectile = projectile
-	s.per_frame = speed / 60.0
-	s.frame = 0
-	s.idx = 1
-	s.event_name = "event_artillery_strike"
-	return s
-end
-
-function M.tree_artillery(surface, source_rect, target, target_radius, projectile, count, speed)
-	local coro = M.tree_artillery_coro(surface, source_rect, target, target_radius, projectile, count, speed)
-	storage.tree_stories[#storage.tree_stories + 1] = coro
-end
-
-function M.tree_artillery_coro(surface, source_rect, target, target_radius, projectile, count, speed)
-	local trees = area_util.get_trees(surface, source_rect)
-	if count * 2 > #trees then
-		count = math.floor(trees / 2)
-	end
-
-	local sources = {}
-	for i = 0, count do
-		local r = math.random(#trees)
-		local tree = trees[r]
-		local random_target = util.random_offset(target, target_radius)
-		if tree.valid then
-			sources[#sources + 1] = {
-				source = tree.position,
-				target = random_target
-			}
-		end
-	end
-	return M.artillery_strike_story(surface, sources, projectile, speed)
-end
-
-function M.artillery_strike_frame(s)
-	local st = s.sources_targets
-	if s.idx > #st or s.frame > 1200 then return false end
-
-	s.frame = s.frame + 1
-	if s.idx >= s.frame * s.per_frame then return true end
-
-	if not s.surface.valid then return false end
-
-	local sti = st[s.idx]
-	s.idx = s.idx + 1
-
-	s.projectile(s.surface, sti.source, sti.target)
-	return true
-end
-
 script.on_nth_tick(60, unfocus_players)
 
 
