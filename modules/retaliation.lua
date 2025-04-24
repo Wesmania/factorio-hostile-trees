@@ -114,7 +114,7 @@ local function get_valid_target(surface, event)
 	return area_util.find_closest_player(surface, cause.position, 100)
 end
 
-local function target_artillery(surface, treepos, enemy, edist2)
+local function target_artillery(surface, treepos, enemy, edist2, count, freq)
 	if edist2 < 100 then return end
 	local vec_to_tree = {
 		x = enemy.position.x - treepos.x,
@@ -133,11 +133,19 @@ local function target_artillery(surface, treepos, enemy, edist2)
 		y = treepos.y + (vec_to_tree.y * multiplier),
 	}
 
-	if not area_util.get_buildings(surface, util.box_around(point_away, 16)) then
-		return
+	if not area_util.has_buildings(surface, util.box_around(point_away, 16)) then
+		return false
 	end
 
-	seed_mortar.tree_artillery(surface, util.box_around(treepos, 16), point_away, 16, seed_mortar.make_seed_mortar, 40, 4)
+	local rand = math.random()
+	local projectile = nil
+	if rand < 0.5 then
+		projectile = seed_mortar.make_seed_mortar
+	else
+		projectile = seed_mortar.make_explosive_mortar
+	end
+	seed_mortar.tree_artillery(surface, util.box_around(treepos, 16), point_away, 16, projectile, count, freq)
+	return true
 end
 
 local function check_for_minor_retaliation(surface, event)
@@ -153,9 +161,7 @@ local function check_for_minor_retaliation(surface, event)
 
 	local rand = math.random()
 
-	if rand < 2 and enemy ~= nil then
-		target_artillery(surface, treepos, enemy, edist2)
-	elseif rand < 0.3 then
+	if rand < 0.3 then
 		local maybe_enemy = enemy
 		if enemy == nil or edist2 > 1600 then
 			maybe_enemy = false
@@ -249,6 +255,11 @@ local function check_for_major_retaliation(surface, event)
 	end
 
 	local rand = math.random()
+
+	if math.random() < 0.05 + storage.hatred / 800.0 and enemy ~= nil then
+		local will_fire = target_artillery(surface, treepos, enemy, edist2, 40 + storage.hatred, 4 + (storage.hatred / 20))
+		if will_fire then return end
+	end
 
 	if rand < 0.2 + (storage.hatred / 500.0) and ents.can_make_ents() then
 		if enemy == nil or edist2 > 3600 then

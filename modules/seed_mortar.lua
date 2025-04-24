@@ -83,6 +83,17 @@ function M.make_seed_mortar(surface, source, target, tree_name)
 	end
 end
 
+function M.make_explosive_mortar(surface, source, target, tree_name)
+	if tree_is_dead(tree_name) then return end
+	local s = surface.create_entity{
+		name = 'hostile-trees-explosive-mortar',
+		position = source,
+		source = source,
+		target = target,
+		speed = 0.3,
+	}
+end
+
 function M.on_seed_mortar_landed(s)
 	if s.surface.valid then
 		local ts = s.surface.create_entity {
@@ -102,7 +113,7 @@ end
 -- I wish it was possible to throw it in a high arc...
 local explosive_tree_mortar = {
   type = "projectile",
-  name = "hostile-tree-mortar",
+  name = "hostile-trees-explosive-mortar",
   acceleration = 0,
   flags = {"not-on-map"},
   hidden = true,
@@ -129,7 +140,7 @@ local explosive_tree_mortar = {
           action =
           {
             type = "area",
-            radius = 3.0,
+            radius = 4.0,
             action_delivery =
             {
               type = "instant",
@@ -137,7 +148,7 @@ local explosive_tree_mortar = {
               {
                 {
                   type = "damage",
-                  damage = {amount = 10, type = "explosion"}
+                  damage = {amount = 75, type = "explosion"}
                 }
               }
             }
@@ -197,6 +208,7 @@ function M.generate_tree(tree)
                 type = "instant",
                 target_effects = {
                   type = "create-entity",
+                  offset_deviation = util.box_around({x = 0, y = 0}, 3),
                   entity_name = tree.name
                 }
               }
