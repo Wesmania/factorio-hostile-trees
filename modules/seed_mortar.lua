@@ -190,6 +190,8 @@ function M.generate_tree(tree)
 	local seed =  {
           type = "item",
           name = "hostile-trees-seed-" .. tree.name,
+          localised_name = { "item-name.hostile-trees-slimy-sapling" },
+          localised_description = { "item-description.hostile-trees-slimy-sapling" },
           icon = unit.icon,
           icon_size = 64, icon_mipmaps = 4,
           subgroup = "trees",
