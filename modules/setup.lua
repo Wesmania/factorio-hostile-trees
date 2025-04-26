@@ -86,8 +86,7 @@ function M.refresh_caches()
 	M.cache_game_forces()
 end
 
--- All things that can be safely initialized again without losing important state.
-function M.reinitialize()
+function M.reload_config()
 	local config = {}
 	config.factory_events = settings.global["hostile-trees-do-trees-hate-your-factory"].value
 	local fe_intvl = settings.global["hostile-trees-how-often-do-trees-hate-your-factory"].value
@@ -101,6 +100,11 @@ function M.reinitialize()
 	storage.config = config
 
 	storage.hatred = config.hatred
+end
+
+-- All things that can be safely initialized again without losing important state.
+function M.reinitialize()
+	M.reload_config()
 
 	storage.players          = {}
 	storage.players_array    = {}

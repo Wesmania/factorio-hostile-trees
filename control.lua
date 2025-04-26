@@ -151,4 +151,10 @@ script.on_event({defines.events.on_tick}, function(event)
 	if storage.tick_mod_10_s % 60 == 15 then
 		belttrees.mature_travelling_belt_trees()
 	end
+
+	-- Surprise, settings can change at any time.
+	-- Just reload them every second instead of renaming everything.
+	if storage.tick_mod_10_s % 60 == 0 then
+		setup.reload_config()
+	end
 end)
