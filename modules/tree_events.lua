@@ -427,7 +427,7 @@ local function player_is_unhurt(player)
 end
 
 local function player_restore_health(player)
-	player.health = player.prototype.max_health
+	player.health = player.prototype.get_max_health()
 end
 
 function M.event_fake_biters(s)
