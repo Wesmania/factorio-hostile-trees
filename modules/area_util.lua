@@ -37,6 +37,11 @@ function M.is_belt(building)
 	return t == "transport-belt" or t == "underground-belt" or t == "splitter"
 end
 
+function M.is_pipe(building)
+	local t = building.type
+	return t == "pipe" or t == "pipe-to-ground"
+end
+
 function M.get_random_belt(surface, area)
        local items = surface.find_entities_filtered{
                area = area,

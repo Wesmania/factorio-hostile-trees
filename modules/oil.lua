@@ -26,10 +26,15 @@ function M.split_oil_tree_name(name)
 end
 
 function M.spawn_oil_tree(tree, pipe)
-	local name = M.make_oil_tree_name(tree)
+	if storage.oil_trees[tree.name] == nil then return nil end
+	local name = M.make_oil_tree_name{
+		name = tree.name,
+		variation = tree.graphics_variation,
+	}
 	tree.surface.create_entity{
 		name = name,
 		position = pipe.position,
+		force = "enemy",
 	}
 end
 
@@ -50,6 +55,12 @@ function M.generate_oil_tree(tree_data)
 				"not-in-made-in"
 			},
 			max_health = 250,
+			resistances = {
+				{
+					type = "fire",
+					percent = 100,
+				}
+			},
 			corpse = tree_data.corpse,
 			dying_explosion = "gun-turret-explosion",
 			collision_box = util.box_around({x = 0, y = 0}, 0.5),
@@ -68,15 +79,16 @@ function M.generate_oil_tree(tree_data)
 			activation_buffer_ratio = 0.1,
 			fluid_box = {
 				volume = 100,
+				hide_connection_info = true,
 				pipe_connections = {
-					{ direction = defines.direction.north, position = {0.5, 0.0} },
-					{ direction = defines.direction.south, position = {-0.5, 0.0} },
-					{ direction = defines.direction.east, position = {0.0, 0.5} },
-					{ direction = defines.direction.west, position = {0.0, -0.5} },
-					{ direction = defines.direction.northeast, position = {0.5, 0.5} },
-					{ direction = defines.direction.northwest, position = {0.5, -0.5} },
-					{ direction = defines.direction.southeast, position = {-0.5, 0.5} },
-					{ direction = defines.direction.southwest, position = {-0.5, -0.5} },
+					{ direction = defines.direction.north, position = {0.0, 0.0} },
+					{ direction = defines.direction.south, position = {0.0, 0.0} },
+					{ direction = defines.direction.east, position = {0.0, 0.0} },
+					{ direction = defines.direction.west, position = {0.0, 0.0} },
+					{ direction = defines.direction.northeast, position = {0.0, 0.0} },
+					{ direction = defines.direction.northwest, position = {0.0, 0.0} },
+					{ direction = defines.direction.southeast, position = {0.0, 0.0} },
+					{ direction = defines.direction.southwest, position = {0.0, 0.0} },
 				}
 			},
 			attack_parameters = {

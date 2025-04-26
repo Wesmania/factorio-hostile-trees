@@ -5,6 +5,7 @@ local electricity = require("modules/electricity")
 local cache_evolution = require("modules/cache_evolution")
 local car = require("modules/car")
 local belttrees = require("modules/belttrees")
+local oil = require("modules/oil")
 
 local M = {}
 
@@ -62,6 +63,16 @@ function M.cache_electric_trees()
 	storage.electric_trees = names
 end
 
+function M.cache_oil_trees()
+	local names = {}
+	for name, _ in pairs(prototypes.entity) do
+		local parts = oil.split_oil_tree_name(name)
+		if parts ~= nil then
+			names[parts.name] = true
+		end
+	end
+	storage.oil_trees = names
+end
 
 function M.cache_game_forces()
 	storage.game_forces = {}
@@ -142,6 +153,7 @@ function M.reinitialize()
 	-- One time caches
 	M.cache_trees_that_can_turn_into_ents()
 	M.cache_electric_trees()
+	M.cache_oil_trees()
 end
 
 -- Set things up to *some* defaults like we used to.

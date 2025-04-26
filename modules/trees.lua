@@ -6,6 +6,7 @@ local electricity = require("modules/electricity")
 local belttrees = require("modules/belttrees")
 local poltergeist = require("modules/poltergeist")
 local seed_mortar = require("modules/seed_mortar")
+local oil = require("modules/oil")
 
 local M = {}
 
