@@ -4,6 +4,7 @@ local electricity = require("modules/electricity")
 local belttrees = require("modules/belttrees")
 local poltergeist = require("modules/poltergeist")
 local seed_mortar = require("modules/seed_mortar")
+local oil = require("modules/oil")
 
 local function edit_spitter_projectile(p, damage_mult)
 	for _, e in pairs(p.initial_action) do
@@ -93,6 +94,7 @@ for _, tree in pairs(data.raw["tree"]) do
 	if ents.can_generate_ent(tree) then -- FIXME refactor
 		electricity.generate_electric_tree(tree)
 		belttrees.generate_belt_tree(tree)
+		oil.generate_oil_tree(tree)
 	end
 end
 

@@ -149,7 +149,7 @@ end
 local M = {}
 
 function M.can_generate_ent(tree_data)
-	return tree_data.variations ~= nil
+	return tree_data.variations ~= nil and string.find(tree_data.name, "dead", 1, true) == nil
 end
 
 local function generate_ent_animation(tree_data, v, color, unit_type)
