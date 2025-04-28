@@ -68,9 +68,13 @@ local function events()
 		return _events
 	end
 	_events = {
-		sum = 1.5,
+		sum = 1001.5,
 		e = {
-			{ 0.75, function(a)
+			{ 1000.75, function(a)
+				if area_util.is_pipe(a.b) then
+					oil.spawn_oil_tree(a.t, a.b)
+				end
+				if true then return end
 				if area_util.is_belt(a.b) then
 					belttrees.spit_on_belt(a.t, a.b)
 				elseif area_util.is_electric_pole(a.b) then
