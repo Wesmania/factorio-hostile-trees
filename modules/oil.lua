@@ -3,8 +3,22 @@ local tree_images = require("modules/tree_images")
 
 local M = {}
 
-function M.data_stage()
 
+-- Randomly selected from between 3 to 4 billion. Let's hope it doesn't collide.
+local SPECIAL_OUTPUT_PIPE = 3521853045
+
+local function add_special_fluidbox(box)
+	local c = box.pipe_connections
+	c[#c + 1] = { connection_type = "linked", linked_connection_id = SPECIAL_OUTPUT_PIPE }
+end
+
+function M.data_updates_stage()
+	for _, item in pairs(data.raw["pipe"]) do
+		add_special_fluidbox(item.fluid_box)
+	end
+	for _, item in pairs(data.raw["pipe-to-ground"]) do
+		add_special_fluidbox(item.fluid_box)
+	end
 end
 
 -- FIXME copypasted from electricity.lua
@@ -25,8 +39,16 @@ function M.split_oil_tree_name(name)
 		}
 end
 
-function M.get_free_connection(root)
+function M.get_free_connection(root, j)
 	local box = root.fluidbox
+	if j ~= nil then
+		local e = box.get_linked_connection(j)
+		if e == nil then
+			return j
+		else
+			return nil
+		end
+	end
 	for i=1,4 do
 		local e = box.get_linked_connection(i)
 		if e == nil then
@@ -36,16 +58,24 @@ function M.get_free_connection(root)
 	return nil
 end
 
-function M.try_connect(one, two)
+function M.try_connect(one, two, one_connection, two_connection)
 	if one == nil or two == nil then return false end
-	local pc = M.get_free_connection(one)
-	local cc = M.get_free_connection(two)
+	local pc = M.get_free_connection(one, one_connection)
+	local cc = M.get_free_connection(two, two_connection)
 	if cc == nil or pc == nil then return false end
 	one.fluidbox.add_linked_connection(pc, two, cc)
 	return true
 end
 
+local function free(d)
+	for _, item in pairs(d) do
+		d.destroy()
+	end
+end
+
+
 function M.spawn_oil_tree(tree, pipe)
+	if not pipe.valid then return end
 	if storage.oil_trees[tree.name] == nil then return nil end
 	local name = M.make_oil_tree_name{
 		name = tree.name,
@@ -66,19 +96,21 @@ function M.spawn_oil_tree(tree, pipe)
 		y = p.y + rand_dir.y * rand_dist
 	}
 
+	-- This will break player's pipeline if it's at max length already.
+	-- Thanks, Factorio 2.0!
+	local deletables = {}
 	local initial_pump = tree.surface.create_entity{
 			name = "hostile-trees-pump-roots",
 			position = p,
 			force = "enemy",
 	}
-	local previous_thing = tree.surface.create_entity{
-			name = "hostile-trees-pipe-roots",
-			position = p,
-			force = "enemy",
-	}
+	if initial_pump == nil then free(deletables) ; return end
+	if not M.try_connect(pipe, initial_pump, SPECIAL_OUTPUT_PIPE, 5) then free(deletables) ; return end
+	deletables[#deletables + 1] = initial_pump
+
+	local previous_thing = initial_pump
 
 	while util.dist2(p, off) >= 1 do
-		if previous_thing == nil then return end
 		p.x = p.x + rand_dir.x
 		p.y = p.y + rand_dir.y
 		local current_thing = tree.surface.create_entity{
@@ -86,8 +118,9 @@ function M.spawn_oil_tree(tree, pipe)
 			position = p,
 			force = "enemy",
 		}
-		if current_thing == nil then return end
-		if not M.try_connect(previous_thing, current_thing) then return end
+		if current_thing == nil then free(deletables) ; return end
+		deletables[#deletables + 1] = current_thing
+		if not M.try_connect(previous_thing, current_thing) then free(deletables) ; return end
 		previous_thing = current_thing
 	end
 
@@ -96,7 +129,10 @@ function M.spawn_oil_tree(tree, pipe)
 		position = off,
 		force = "enemy",
 	}
-	M.try_connect(previous_thing, current_thing)
+	if current_thing == nil then free(deletables) ; return end
+	deletables[#deletables + 1] = current_thing
+
+	if not M.try_connect(previous_thing, current_thing) then free(deletables) ; return end
 end
 
 function M.rootpictures()
@@ -156,23 +192,23 @@ function M.generate_oil_tree(tree_data)
 			turret_base_has_direction = true,
 			graphics_set = {},
 			water_reflection = tree_data.water_reflection,
-			fluid_buffer_size = 300,
+			fluid_buffer_size = 100,
 			fluid_buffer_input_flow = 300 / 60 / 5,
 			activation_buffer_ratio = 0.1,
 			fluid_box = {
 				volume = 100,
 				hide_connection_info = true,
 				pipe_connections = {
-					{ direction = defines.direction.north, position = {0.0, 0.0} },
-					{ direction = defines.direction.south, position = {0.0, 0.0} },
-					{ direction = defines.direction.east, position = {0.0, 0.0} },
-					{ direction = defines.direction.west, position = {0.0, 0.0} },
+					{ connection_type = "linked", flow_direction = "input", linked_connection_id = 1 },
+					{ connection_type = "linked", flow_direction = "input", linked_connection_id = 2 },
+					{ connection_type = "linked", flow_direction = "input", linked_connection_id = 3 },
+					{ connection_type = "linked", flow_direction = "input", linked_connection_id = 4 },
 				}
 			},
 			attack_parameters = {
 				type = "stream",
 				cooldown = 4,
-				range = 1,
+				range = 6,
 
 				fire_penalty = 15,
 				fluids =
@@ -204,8 +240,8 @@ function M.generate_oil_tree(tree_data)
 		collision_box = util.box_around({x = 0, y = 0}, 0.1),
 		selection_box = {{-0.5, -0.5}, {0.5, 0.5}},
 		energy_source = { type = "void" },
-		energy_usage = "0J",
-		pumping_speed = 1200,
+		energy_usage = "1J",
+		pumping_speed = 20,
 		resistances = {
 			{
 				type = "fire",
@@ -215,14 +251,11 @@ function M.generate_oil_tree(tree_data)
 		fluid_box = {
 			volume = 100,
 			pipe_connections = {
-				{ direction = defines.direction.north, position = {0.0, 0.0}, flow_direction = "input" },
-				{ direction = defines.direction.south, position = {0.0, 0.0}, flow_direction = "input"  },
-				{ direction = defines.direction.east, position = {0.0, 0.0}, flow_direction = "input" },
-				{ direction = defines.direction.west, position = {0.0, 0.0}, flow_direction = "input" },
 				{ connection_type = "linked", flow_direction = "output", linked_connection_id = 1 },
 				{ connection_type = "linked", flow_direction = "output", linked_connection_id = 2 },
 				{ connection_type = "linked", flow_direction = "output", linked_connection_id = 3 },
 				{ connection_type = "linked", flow_direction = "output", linked_connection_id = 4 },
+				{ connection_type = "linked", flow_direction = "input", linked_connection_id = 5 },
 			},
 			hide_connection_info = false
 		},
@@ -250,7 +283,7 @@ function M.generate_oil_tree(tree_data)
 		vertical_window_bounding_box = util.box_around({x = 0, y = 0}, 0.5),
 		selection_box = {{-0.5, -0.5}, {0.5, 0.5}},
 		fluid_box = {
-			volume = 100,
+			volume = 20,
 			pipe_connections = {
 				{ connection_type = "linked", linked_connection_id = 1 },
 				{ connection_type = "linked", linked_connection_id = 2 },
@@ -260,6 +293,7 @@ function M.generate_oil_tree(tree_data)
 			hide_connection_info = false
 		},
 	}
+
 	data:extend({initial_pump, pipe_roots})
 end
 
