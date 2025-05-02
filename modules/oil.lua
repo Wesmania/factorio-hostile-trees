@@ -52,6 +52,45 @@ function M.fresh_setup()
 	}
 end
 
+function M.register_edge(edge)
+	util.ldict_add(storage.oil_tree_state.edges, edge[1].unit_number, { item = edge })
+	return edge[1].unit_number
+end
+
+function M.destroy_edge(num)
+	local edge = util.ldict_get(storage.oil_tree_state.edges, num).item
+	for _, item in ipairs(edge) do
+		if item.valid then
+			item.destroy()
+		end
+	end
+	util.ldict_remove(storage.oil_tree_state.edges, num)
+end
+
+function M.register_tree(tree)
+	util.ldict_add(storage.oil_tree_state.trees, tree.tree.unit_number, tree)
+	return tree.tree.unit_number
+end
+
+function M.destroy_tree(num)
+	local tree = util.ldict_get(storage.oil_tree_state.trees, num)
+	M.destroy_oil_tree(tree)
+	util.ldict_remove(storage.oil_tree_state.trees, num)
+end
+
+function M.register_pump(pump)
+	util.ldict_add(storage.oil_tree_state.pumps, pump.unit_number, { item = pump })
+	return pump.unit_number
+end
+
+function M.destroy_pump(num)
+	local pump = util.ldict_get(storage.oil_tree_state.pumps, num).item
+	if pump.valid then
+		pump.destroy()
+	end
+	util.ldict_remove(storage.oil_tree_state.pumps, num)
+end
+
 -- FIXME copypasted from electricity.lua
 function M.make_oil_tree_name(params)
 		return "hostile-trees-oil-tree-" .. params.name .. "-" .. string.format("%03d", params.variation)
@@ -107,11 +146,37 @@ end
 function M.make_oil_tree(tree_info)
 	if storage.oil_trees[tree_info.name] == nil then return nil end
 	local name = M.make_oil_tree_name(tree_info)
-	return tree_info.surface.create_entity{
+	local oil_tree = tree_info.surface.create_entity{
 		name = name,
 		position = tree_info.position,
 		force = "enemy",
 	}
+	if oil_tree == nil then return nil end
+
+	local oil_eater = tree_info.surface.create_entity{
+		name = "hostile-trees-oil-eater",
+		position = tree_info.position,
+		force = "enemy",
+	}
+	if oil_eater == nil then
+		oil_tree.destroy()
+		return nil
+	end
+	local t = M.try_connect(oil_tree, oil_eater, OIL_EATER, OIL_EATER)
+	assert(t == true)
+	return {
+		tree = oil_tree,
+		eater = oil_eater,
+	}
+end
+
+function M.destroy_oil_tree(tree)
+	if tree.tree.valid then
+		tree.tree.destroy()
+	end
+	if tree.eater.valid then
+		tree.eater.destroy()
+	end
 end
 
 -- Returns pipes in order from start to end.
@@ -188,11 +253,16 @@ function M.spawn_oil_tree(tree, pipe)
 	})
 	if oil_tree == nil then return end
 
-	local connection = M.connect_oil_tree_to_pipe(oil_tree, pipe)
+	local connection = M.connect_oil_tree_to_pipe(oil_tree.tree, pipe)
 	if connection == nil then
-		oil_tree.destroy()
+		M.destroy_oil_tree(oil_tree)
+		return
 	end
 	tree.destroy()
+
+	M.register_edge(connection.edge)
+	M.register_pump(connection.pump)
+	M.register_tree(oil_tree)
 end
 
 function M.rootpictures()
@@ -379,7 +449,12 @@ function M.generate_oil_tree(tree_data)
 			hide_connection_info = true,
 			filter = "crude-oil",
 		},
-		energy_source = { type = "electric", usage_priority = "primary-output" },
+		energy_source = {
+			type = "electric",
+			usage_priority = "primary-output",
+			render_no_power_icon = false,
+			render_no_network_icon = false,
+		},
 		fluid_usage_per_tick = 1 / 60,
 		scale_fluid_usage = false,
 		maximum_temperature = 1000,

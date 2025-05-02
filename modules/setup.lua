@@ -176,11 +176,17 @@ local function on_0_2_3()
 	belttrees.fresh_setup()
 end
 
+local function on_0_3_6()
+	oil.fresh_setup()
+end
+
 -- Any version fixups will come here. First version with info is 0.2.1.
 local version_changes = {
 	-- 0.2.1: car bombs, electricity sapping
 	{201, before_0_2_1},
 	{203, on_0_2_3},
+	-- 0.3.6: oil trees
+	{306, on_0_3_6},
 }
 
 local function version_to_number(s)
@@ -230,6 +236,9 @@ function M.initialize_fresh()
 	electricity.fresh_setup()
 
 	belttrees.fresh_setup()
+
+	-- Stateful, holds oil tree state.
+	oil.fresh_setup()
 end
 
 return M
