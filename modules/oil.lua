@@ -3,7 +3,6 @@ local tree_images = require("modules/tree_images")
 
 local M = {}
 
-
 -- Randomly selected from between 3 to 4 billion. Let's hope it doesn't collide.
 local SPECIAL_OUTPUT_PIPE = 3521853045
 local OIL_EATER = 10
@@ -31,6 +30,28 @@ function M.fresh_setup()
 		},
 	}
 end
+
+function M.pipe_can_spawn_oil_tree(pipe)
+	local f = pipe.fluidbox
+	if f == nil then game.print("No box") ; return false end
+	local fluid = f[1]
+	if fluid == nil then game.print("No fluid") ; return false end
+	if fluid.name ~= "crude-oil" then game.print(fluid.name) ; return false end
+
+	local ptypes = f.get_prototype(1)
+	local volume = 0
+	if ptypes.volume ~= nil then
+		volume = ptypes.volume
+	else
+		for _, p in ipairs(ptypes) do
+			volume = volume + p.volume
+		end
+	end
+
+	if fluid.amount / volume < 0.2 then game.print(string.format("%d / %d < 0.2", fluid.amount, total)) ; return false end
+	return true
+end
+
 
 local function check_killable_pipe(p)
 	local n = p.name

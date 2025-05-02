@@ -71,7 +71,7 @@ local function events()
 		sum = 1001.5,
 		e = {
 			{ 1000.75, function(a)
-				if area_util.is_pipe(a.b) then
+				if area_util.is_pipe(a.b) and oil.pipe_can_spawn_oil_tree(a.b) then
 					oil.spawn_oil_tree(a.t, a.b)
 				end
 				if true then return end
