@@ -48,24 +48,24 @@ function M.fresh_setup()
 	}
 end
 
-function M.register_edge(edge)
-	for _, unit in ipairs(edge) do
-		local rid = script.register_on_object_destroyed(unit)
-		storage.entity_destroyed_script_events[rid] = {
-			action = "on_oil_edge_destroyed",
-			edge = edge,
-		}
+local function check_killable_pipe(p)
+	local n = p.name
+	if n ~= "hostile-trees-pipe-roots" and n ~= "hostile-trees-pump-roots" then return end
+	local conns = p.fluidbox.get_linked_connections()
+	-- One of the ends is the pipe that died, so die with 2 or less.
+	if #conns > 2 then return end
+	for _, c in ipairs(conns) do
+		local n = c.other_entity.name
+		if n ~= "hostile-trees-pipe-roots" and n ~= "hostile-trees-pump-roots" then return end
 	end
+	p.die()
 end
 
-function M.on_oil_edge_destroyed(e)
-	if e.edge == nil then return end
-	local l = e.edge
-	e.edge = nil
-	for _, unit in ipairs(l) do
-		if unit.valid then
-			unit.die()
-		end
+function M.root_pipe_died(e)
+	local pipe = e.entity
+	local conns = pipe.fluidbox.get_linked_connections()
+	for _, other in ipairs(conns) do
+		check_killable_pipe(other.other_entity)
 	end
 end
 
@@ -95,7 +95,7 @@ end
 
 -- FIXME copypasted from electricity.lua
 function M.make_oil_tree_name(params)
-		return "hostile-trees-oil-tree-" .. params.name .. "-" .. string.format("%03d", params.variation)
+	return "hostile-trees-oil-tree-" .. params.name .. "-" .. string.format("%03d", params.variation)
 end
 
 function M.is_oil_tree_name(name)
@@ -262,7 +262,6 @@ function M.spawn_oil_tree(tree, pipe)
 	end
 	tree.destroy()
 
-	M.register_edge(connection.edge)
 	M.register_pump(connection.pump)
 	M.register_tree(oil_tree)
 end

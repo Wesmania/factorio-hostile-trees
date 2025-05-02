@@ -2,16 +2,21 @@
 
 local retaliation = require("modules/retaliation")
 local electricity = require("modules/electricity")
+local oil = require("modules/oil")
 
 script.on_event(defines.events.on_entity_died, function(event)
 	if event.entity.type == "tree" then
 		retaliation.tree_died(event)
-	else
+	elseif event.entity.type == "electric-pole" then
 		electricity.pole_died(event)
+	elseif event.entity.name == "hostile-trees-pipe-roots" or event.entity.name == "hostile-trees-pump-roots" then
+		oil.root_pipe_died(event)
 	end
 end, {
 	{ filter = "type", type = "tree", },
-	{ filter = "type", type = "electric-pole", }
+	{ filter = "type", type = "electric-pole", },
+	{ filter = "name", name = "hostile-trees-pipe-roots" },
+	{ filter = "name", name = "hostile-trees-pump-roots" }
 })
 
 script.on_event(defines.events.on_robot_mined_entity, function(event)

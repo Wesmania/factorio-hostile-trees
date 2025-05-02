@@ -41,7 +41,3 @@ end
 function M.on_seed_mortar_landed(e)
 	seed_mortar.on_seed_mortar_landed(e)
 end
-
-function M.on_oil_edge_destroyed(e)
-	oil.on_oil_edge_destroyed(e)
-end
