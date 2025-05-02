@@ -6,6 +6,7 @@ local M = {}
 
 -- Randomly selected from between 3 to 4 billion. Let's hope it doesn't collide.
 local SPECIAL_OUTPUT_PIPE = 3521853045
+local OIL_EATER = 10
 
 local function add_special_fluidbox(box)
 	local c = box.pipe_connections
@@ -19,6 +20,36 @@ function M.data_updates_stage()
 	for _, item in pairs(data.raw["pipe-to-ground"]) do
 		add_special_fluidbox(item.fluid_box)
 	end
+end
+
+local function new_tree(tree)
+	return {
+		tree = tree,
+	}
+end
+
+local function new_oil_tree_web(pump)
+	return {
+		pump = nil,
+		trees = {}
+	}
+end
+
+function M.fresh_setup()
+	storage.oil_tree_state = {
+		trees = {
+			dict = {},
+			list = {},
+		},
+		edges = {
+			dict = {},
+			list = {},
+		},
+		pumps = {
+			dict = {},
+			list = {},
+		},
+	}
 end
 
 -- FIXME copypasted from electricity.lua
@@ -73,33 +104,54 @@ local function free(d)
 	end
 end
 
-
-function M.spawn_oil_tree(tree, pipe)
-	if not pipe.valid then return end
-	if storage.oil_trees[tree.name] == nil then return nil end
-	local name = M.make_oil_tree_name{
-		name = tree.name,
-		variation = tree.graphics_variation,
+function M.make_oil_tree(tree_info)
+	if storage.oil_trees[tree_info.name] == nil then return nil end
+	local name = M.make_oil_tree_name(tree_info)
+	return tree_info.surface.create_entity{
+		name = name,
+		position = tree_info.position,
+		force = "enemy",
 	}
+end
+
+-- Returns pipes in order from start to end.
+function M.draw_pipe_edge(surface, start, _end)
+	local ret = {}
+	local delta = util.normalize({
+		x = _end.x - start.x,
+		y = _end.y - start.y,
+	})
+	local p = start
+	local last_node = nil
+
+	local at_least_one = false
+	while util.dist2(p, _end) >= 1 and not at_least_one do
+		at_least_one = true
+		p.x = p.x + delta.x
+		p.y = p.y + delta.y
+		local node = surface.create_entity{
+			name = "hostile-trees-pipe-roots",
+			position = p,
+			force = "enemy",
+		}
+		if node == nil then free(ret) ; return nil end
+		ret[#ret + 1] = node
+		if last_node ~= nil then
+			if not M.try_connect(last_node, node) then free(ret) ; return nil end
+		end
+		last_node = node
+	end
+	return ret
+end
+
+function M.connect_oil_tree_to_pipe(oil_tree, pipe)
+	if not pipe.valid or not oil_tree.valid then return end
 
 	local p = pipe.position
-	local off = {
-		x = p.x + math.random(-20, 20),
-		y = p.y + math.random(-20, 20),
-	}
+	local oil_pos = oil_tree.position
 
-	local unit_dir = { x = 0, y = 1 }
-	local rand_dir = util.rotate(unit_dir, math.random() * 6.283)
-	local rand_dist = math.random() * 20
-	local off = {
-		x = p.x + rand_dir.x * rand_dist,
-		y = p.y + rand_dir.y * rand_dist
-	}
-
-	-- This will break player's pipeline if it's at max length already.
-	-- Thanks, Factorio 2.0!
 	local deletables = {}
-	local initial_pump = tree.surface.create_entity{
+	local initial_pump = oil_tree.surface.create_entity{
 			name = "hostile-trees-pump-roots",
 			position = p,
 			force = "enemy",
@@ -108,31 +160,39 @@ function M.spawn_oil_tree(tree, pipe)
 	if not M.try_connect(pipe, initial_pump, SPECIAL_OUTPUT_PIPE, 5) then free(deletables) ; return end
 	deletables[#deletables + 1] = initial_pump
 
-	local previous_thing = initial_pump
-
-	while util.dist2(p, off) >= 1 do
-		p.x = p.x + rand_dir.x
-		p.y = p.y + rand_dir.y
-		local current_thing = tree.surface.create_entity{
-			name = "hostile-trees-pipe-roots",
-			position = p,
-			force = "enemy",
-		}
-		if current_thing == nil then free(deletables) ; return end
-		deletables[#deletables + 1] = current_thing
-		if not M.try_connect(previous_thing, current_thing) then free(deletables) ; return end
-		previous_thing = current_thing
+	local pipe_edge = M.draw_pipe_edge(oil_tree.surface, p, oil_pos)
+	if pipe_edge == nil then free(deletables) ; return end
+	for _, pipe in ipairs(pipe_edge) do
+		deletables[#deletables + 1] = pipe
 	end
 
-	local current_thing = tree.surface.create_entity{
-		name = name,
-		position = off,
-		force = "enemy",
-	}
-	if current_thing == nil then free(deletables) ; return end
-	deletables[#deletables + 1] = current_thing
+	local pipe_end = pipe_edge[1]
+	local tree_end = pipe_edge[#pipe_edge]
 
-	if not M.try_connect(previous_thing, current_thing) then free(deletables) ; return end
+	if not M.try_connect(initial_pump, pipe_end) then free(deletables) ; return end
+	if not M.try_connect(oil_tree, tree_end) then free(deletables) ; return end
+
+	return {
+		edge = pipe_edge,
+		pump = initial_pump,
+	}
+end
+
+function M.spawn_oil_tree(tree, pipe)
+	if not pipe.valid then return end
+	local oil_tree = M.make_oil_tree({
+		surface = tree.surface,
+		name = tree.name,
+		position = tree.position,
+		variation = tree.graphics_variation,
+	})
+	if oil_tree == nil then return end
+
+	local connection = M.connect_oil_tree_to_pipe(oil_tree, pipe)
+	if connection == nil then
+		oil_tree.destroy()
+	end
+	tree.destroy()
 end
 
 function M.rootpictures()
@@ -203,7 +263,10 @@ function M.generate_oil_tree(tree_data)
 					{ connection_type = "linked", flow_direction = "input", linked_connection_id = 2 },
 					{ connection_type = "linked", flow_direction = "input", linked_connection_id = 3 },
 					{ connection_type = "linked", flow_direction = "input", linked_connection_id = 4 },
-				}
+					{ connection_type = "linked", flow_direction = "output", linked_connection_id = OIL_EATER }
+				},
+				volume_reservation_fraction = 0.5,
+				filter = "crude-oil",
 			},
 			attack_parameters = {
 				type = "stream",
@@ -257,7 +320,8 @@ function M.generate_oil_tree(tree_data)
 				{ connection_type = "linked", flow_direction = "output", linked_connection_id = 4 },
 				{ connection_type = "linked", flow_direction = "input", linked_connection_id = 5 },
 			},
-			hide_connection_info = false
+			hide_connection_info = false,
+			filter = "crude-oil",
 		},
 	}
 	local pipe_roots = {
@@ -290,11 +354,39 @@ function M.generate_oil_tree(tree_data)
 				{ connection_type = "linked", linked_connection_id = 3 },
 				{ connection_type = "linked", linked_connection_id = 4 },
 			},
-			hide_connection_info = false
+			hide_connection_info = false,
+			filter = "crude-oil",
 		},
 	}
+	local oil_eater = {
+		type = "generator",
+		name = "hostile-trees-oil-eater",
+		icon = "__base__/graphics/icons/tree-06-brown.png",
+		pictures = M.rootpictures(),
+		flags = {
+			"breaths-air",
+			"hide-alt-info",
+			"not-upgradable",
+			"not-in-made-in",
+			"not-on-map",
+		},
+		max_health = 1000000,
+		fluid_box = {
+			volume = 100,
+			pipe_connections = {
+				{ connection_type = "linked", linked_connection_id = OIL_EATER },
+			},
+			hide_connection_info = true,
+			filter = "crude-oil",
+		},
+		energy_source = { type = "electric", usage_priority = "primary-output" },
+		fluid_usage_per_tick = 1 / 60,
+		scale_fluid_usage = false,
+		maximum_temperature = 1000,
+		effectivity = 0.001,
+	}
 
-	data:extend({initial_pump, pipe_roots})
+	data:extend({initial_pump, pipe_roots, oil_eater})
 end
 
 return M

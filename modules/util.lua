@@ -56,6 +56,26 @@ function M.random_offset(pos, offset)
 	}
 end
 
+function M.random_offset_circle(pos, min_dist, max_dist)
+	local unit_dir = { x = 0, y = 1 }
+	local rand_dir = M.rotate(unit_dir, math.random() * 6.283)
+	local dist_cutoff = (min_dist / max_dist)
+	dist_cutoff = dist_cutoff * dist_cutoff
+	local rand_dist = math.sqrt(math.random() * (1 - dist_cutoff) + dist_cutoff) * max_dist
+	local off = {
+		x = pos.x + rand_dir.x * rand_dist,
+		y = pos.y + rand_dir.y * rand_dist
+	}
+	return unit_dir
+end
+
+function M.normalize(vec)
+	local len = math.sqrt(M.len2(vec))
+	vec.x = vec.x / len
+	vec.y = vec.y / len
+	return vec
+end
+
 function M.rotate(position, angle)
 	local x = position.x
 	local i_x = position.y
