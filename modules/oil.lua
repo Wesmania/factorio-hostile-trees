@@ -7,6 +7,7 @@ local M = {}
 -- Randomly selected from between 3 to 4 billion. Let's hope it doesn't collide.
 local SPECIAL_OUTPUT_PIPE = 3521853045
 local OIL_EATER = 10
+local ROOT_PUMP_INPUT = 20
 
 local function add_special_fluidbox(box)
 	local c = box.pipe_connections
@@ -22,26 +23,9 @@ function M.data_updates_stage()
 	end
 end
 
-local function new_tree(tree)
-	return {
-		tree = tree,
-	}
-end
-
-local function new_oil_tree_web(pump)
-	return {
-		pump = nil,
-		trees = {}
-	}
-end
-
 function M.fresh_setup()
 	storage.oil_tree_state = {
 		trees = {
-			dict = {},
-			list = {},
-		},
-		pumps = {
 			dict = {},
 			list = {},
 		},
@@ -54,9 +38,14 @@ local function check_killable_pipe(p)
 	local conns = p.fluidbox.get_linked_connections()
 	-- One of the ends is the pipe that died, so die with 2 or less.
 	if #conns > 2 then return end
+
 	for _, c in ipairs(conns) do
 		local n = c.other_entity.name
-		if n ~= "hostile-trees-pipe-roots" and n ~= "hostile-trees-pump-roots" then return end
+		if      n ~= "hostile-trees-pipe-roots" and
+			n ~= "hostile-trees-pump-roots" and
+			c.this_linked_connection_id ~= ROOT_PUMP_INPUT then -- Ignore root pump's pipe connection.
+			return
+		end
 	end
 	p.die()
 end
@@ -69,28 +58,36 @@ function M.root_pipe_died(e)
 	end
 end
 
-function M.register_tree(tree)
-	util.ldict_add(storage.oil_tree_state.trees, tree.tree.unit_number, tree)
-	return tree.tree.unit_number
-end
-
-function M.destroy_tree(num)
-	local tree = util.ldict_get(storage.oil_tree_state.trees, num)
-	M.destroy_oil_tree(tree)
-	util.ldict_remove(storage.oil_tree_state.trees, num)
-end
-
-function M.register_pump(pump)
-	util.ldict_add(storage.oil_tree_state.pumps, pump.unit_number, { item = pump })
-	return pump.unit_number
-end
-
-function M.destroy_pump(num)
-	local pump = util.ldict_get(storage.oil_tree_state.pumps, num).item
-	if pump.valid then
-		pump.destroy()
+function M.on_oil_tree_destroyed(e)
+	-- Don't kill roots when tree dies, it will be able to regrow.
+	-- Let eater live for the same reason.
+	local tree = e.item
+	if not tree.roots.valid then
+		M.kill_and_deregister_tree(tree)
+	elseif not tree.tree.valid then
+		-- If tree is dead and we are not connected to anything else, die as well.
+		local c = tree.roots.fluidbox.get_linked_connections()
+		if #c == 0 then
+			tree.roots.die()
+		end
 	end
-	util.ldict_remove(storage.oil_tree_state.pumps, num)
+end
+
+function M.register_tree(tree)
+	util.ldict_add(storage.oil_tree_state.trees, tree.id, tree)
+end
+
+function M.kill_and_deregister_tree(tree)
+	if tree.roots.valid then
+		tree.roots.die()
+	end
+	if tree.tree.valid then
+		tree.tree.die()
+	end
+	if tree.eater.valid then
+		tree.eater.destroy()
+	end
+	util.ldict_remove(storage.oil_tree_state.trees, tree.id)
 end
 
 -- FIXME copypasted from electricity.lua
@@ -146,6 +143,8 @@ local function free(d)
 end
 
 function M.make_oil_tree(tree_info)
+	local d = {}
+
 	if storage.oil_trees[tree_info.name] == nil then return nil end
 	local name = M.make_oil_tree_name(tree_info)
 	local oil_tree = tree_info.surface.create_entity{
@@ -153,26 +152,52 @@ function M.make_oil_tree(tree_info)
 		position = tree_info.position,
 		force = "enemy",
 	}
-	if oil_tree == nil then return nil end
-
+	if oil_tree == nil then free(d) ; return nil end
+	d[#d + 1] = oil_tree
 	local oil_eater = tree_info.surface.create_entity{
 		name = "hostile-trees-oil-eater",
 		position = tree_info.position,
 		force = "enemy",
 	}
-	if oil_eater == nil then
-		oil_tree.destroy()
-		return nil
-	end
+	if oil_eater == nil then free(d) ; return nil end
+	d[#d + 1] = oil_eater
+	local base_roots = tree_info.surface.create_entity{
+		name = "hostile-trees-pipe-roots",
+		position = tree_info.position,
+		force = "enemy",
+	}
+	if base_roots == nil then free(d) ; return nil end
+	d[#d + 1] = base_roots
+
+	local t = M.try_connect(base_roots, oil_tree)
+	assert(t == true)
 	local t = M.try_connect(oil_tree, oil_eater, OIL_EATER, OIL_EATER)
 	assert(t == true)
-	return {
+	local tree_object = {
+		roots = base_roots,
 		tree = oil_tree,
 		eater = oil_eater,
+		id = oil_tree.unit_number,
 	}
+
+	local rid = script.register_on_object_destroyed(oil_tree)
+	storage.entity_destroyed_script_events[rid] = {
+		action = "on_oil_tree_destroyed",
+		item = tree_object,
+	}
+	local rid = script.register_on_object_destroyed(base_roots)
+	storage.entity_destroyed_script_events[rid] = {
+		action = "on_oil_tree_destroyed",
+		item = tree_object,
+	}
+
+	return tree_object
 end
 
-function M.destroy_oil_tree(tree)
+function M.deinitialize_oil_tree(tree)
+	if tree.roots.valid then
+		tree.roots.destroy()
+	end
 	if tree.tree.valid then
 		tree.tree.destroy()
 	end
@@ -224,7 +249,7 @@ function M.connect_oil_tree_to_pipe(oil_tree, pipe)
 			force = "enemy",
 	}
 	if initial_pump == nil then free(deletables) ; return end
-	if not M.try_connect(pipe, initial_pump, SPECIAL_OUTPUT_PIPE, 5) then free(deletables) ; return end
+	if not M.try_connect(pipe, initial_pump, SPECIAL_OUTPUT_PIPE, ROOT_PUMP_INPUT) then free(deletables) ; return end
 	deletables[#deletables + 1] = initial_pump
 
 	local pipe_edge = M.draw_pipe_edge(oil_tree.surface, p, oil_pos)
@@ -255,14 +280,13 @@ function M.spawn_oil_tree(tree, pipe)
 	})
 	if oil_tree == nil then return end
 
-	local connection = M.connect_oil_tree_to_pipe(oil_tree.tree, pipe)
+	local connection = M.connect_oil_tree_to_pipe(oil_tree.roots, pipe)
 	if connection == nil then
-		M.destroy_oil_tree(oil_tree)
+		M.deinitialize_oil_tree(oil_tree)
 		return
 	end
 	tree.destroy()
 
-	M.register_pump(connection.pump)
 	M.register_tree(oil_tree)
 end
 
@@ -370,7 +394,7 @@ function M.generate_oil_tree(tree_data)
 		type = "pump",
 		name = "hostile-trees-pump-roots",
 		icon = "__base__/graphics/icons/tree-06-brown.png",
-		max_health = 100,
+		max_health = 1000,
 		collision_box = util.box_around({x = 0, y = 0}, 0.1),
 		selection_box = {{-0.5, -0.5}, {0.5, 0.5}},
 		energy_source = { type = "void" },
@@ -395,7 +419,7 @@ function M.generate_oil_tree(tree_data)
 				{ connection_type = "linked", flow_direction = "output", linked_connection_id = 2 },
 				{ connection_type = "linked", flow_direction = "output", linked_connection_id = 3 },
 				{ connection_type = "linked", flow_direction = "output", linked_connection_id = 4 },
-				{ connection_type = "linked", flow_direction = "input", linked_connection_id = 5 },
+				{ connection_type = "linked", flow_direction = "input", linked_connection_id = ROOT_PUMP_INPUT },
 			},
 			hide_connection_info = false,
 			filter = "crude-oil",
