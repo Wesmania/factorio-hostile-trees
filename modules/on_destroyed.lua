@@ -4,6 +4,7 @@ local belttrees = require("modules/belttrees")
 local car = require("modules/car")
 local electricity = require("modules/electricity")
 local seed_mortar = require("modules/seed_mortar")
+local oil = require("modules/oil")
 
 script.on_event(defines.events.on_object_destroyed, function(data)
 	local event = storage.entity_destroyed_script_events[data.registration_number]
@@ -39,4 +40,8 @@ end
 
 function M.on_seed_mortar_landed(e)
 	seed_mortar.on_seed_mortar_landed(e)
+end
+
+function M.on_oil_edge_destroyed(e)
+	oil.on_oil_edge_destroyed(e)
 end

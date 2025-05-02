@@ -41,10 +41,6 @@ function M.fresh_setup()
 			dict = {},
 			list = {},
 		},
-		edges = {
-			dict = {},
-			list = {},
-		},
 		pumps = {
 			dict = {},
 			list = {},
@@ -53,18 +49,24 @@ function M.fresh_setup()
 end
 
 function M.register_edge(edge)
-	util.ldict_add(storage.oil_tree_state.edges, edge[1].unit_number, { item = edge })
-	return edge[1].unit_number
+	for _, unit in ipairs(edge) do
+		local rid = script.register_on_object_destroyed(unit)
+		storage.entity_destroyed_script_events[rid] = {
+			action = "on_oil_edge_destroyed",
+			edge = edge,
+		}
+	end
 end
 
-function M.destroy_edge(num)
-	local edge = util.ldict_get(storage.oil_tree_state.edges, num).item
-	for _, item in ipairs(edge) do
-		if item.valid then
-			item.destroy()
+function M.on_oil_edge_destroyed(e)
+	if e.edge == nil then return end
+	local l = e.edge
+	e.edge = nil
+	for _, unit in ipairs(l) do
+		if unit.valid then
+			unit.die()
 		end
 	end
-	util.ldict_remove(storage.oil_tree_state.edges, num)
 end
 
 function M.register_tree(tree)
@@ -190,7 +192,7 @@ function M.draw_pipe_edge(surface, start, _end)
 	local last_node = nil
 
 	local at_least_one = false
-	while util.dist2(p, _end) >= 1 and not at_least_one do
+	while util.dist2(p, _end) >= 1 or not at_least_one do
 		at_least_one = true
 		p.x = p.x + delta.x
 		p.y = p.y + delta.y
@@ -373,6 +375,12 @@ function M.generate_oil_tree(tree_data)
 		collision_box = util.box_around({x = 0, y = 0}, 0.1),
 		selection_box = {{-0.5, -0.5}, {0.5, 0.5}},
 		energy_source = { type = "void" },
+		flags = {
+			"breaths-air",
+			"hide-alt-info",
+			"not-upgradable",
+			"not-in-made-in",
+		},
 		energy_usage = "1J",
 		pumping_speed = 20,
 		resistances = {
@@ -405,13 +413,18 @@ function M.generate_oil_tree(tree_data)
 			"not-upgradable",
 			"not-in-made-in",
 		},
-		max_health = 100,
-		resistances = {
-			{
-				type = "fire",
-				percent = 100
-			},
+		max_health = 500,
+		resistances = {		-- Roots are underground, dummy!
+			{ type = "physical", percent = 80, decrease = 20 },
+			{ type = "explosion", percent = 80, decrease = 20 },
+			{ type = "fire", percent = 100 },
+			{ type = "impact", percent = 100 },
+			{ type = "acid", percent = 100 },
+			{ type = "laser", percent = 100 },
+			{ type = "electric", percent = 100 },
+
 		},
+		dying_explosion = "ground-explosion",
 		collision_box = util.box_around({x = 0, y = 0}, 0.1),
 		horizontal_window_bounding_box = util.box_around({x = 0, y = 0}, 0.5),
 		vertical_window_bounding_box = util.box_around({x = 0, y = 0}, 0.5),
