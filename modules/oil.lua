@@ -678,10 +678,10 @@ function M.generate_oil_tree(tree_data)
 		energy_usage = "1J",
 		pumping_speed = 20,
 		resistances = {
-			{
-				type = "fire",
-				percent = 100
-			},
+			{ type = "fire", percent = 100 },
+			{ type = "physical", decrease = 4 },
+			{ type = "laser", percent = 50 },
+			{ type = "electric", percent = 100 },
 		},
 		fluid_box = {
 			volume = 100,
