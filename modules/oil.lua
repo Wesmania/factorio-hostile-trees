@@ -60,7 +60,7 @@ function M.pipe_can_spawn_oil_tree(pipe)
 		end
 	end
 
-	if fluid.amount / volume < 0.2 then return false end
+	if fluid.amount / volume < OIL_LOW_LEVEL then return false end
 	return true
 end
 
@@ -537,7 +537,7 @@ end
 function M.check_oil_trees()
 	-- Change state once every 2 minutes.
 	local state = storage.oil_tree_state.trees
-	local gcount = #state.list / 2		-- FIXME
+	local gcount = #state.list / 120
 	while gcount > 1 or (gcount > 0 and math.random() < gcount) do
 		gcount = gcount - 1
 		local tree = util.ldict_get_random(state)
@@ -635,7 +635,7 @@ function M.generate_oil_tree(tree_data)
 			attack_parameters = {
 				type = "stream",
 				cooldown = 4,
-				range = 6,
+				range = 24,
 
 				fire_penalty = 15,
 				fluids =
