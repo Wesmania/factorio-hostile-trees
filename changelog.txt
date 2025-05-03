@@ -1,4 +1,13 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.3.6
+Date: 03/05/2025
+
+  Changes:
+    - Mod now respects settings changes done during gameplay.
+    - Dead trees are no longer ents.
+    - Trees are now eligible to be invaded by America.
+
+---------------------------------------------------------------------------------------------------
 Version: 0.3.5
 Date: 26/04/2025
 
