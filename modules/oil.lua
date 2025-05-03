@@ -650,8 +650,6 @@ function M.generate_oil_tree(tree_data)
 		name = "hostile-trees-pump-roots",
 		icon = "__base__/graphics/icons/tree-06-brown.png",
 		max_health = 1000,
-		collision_box = util.box_around({x = 0, y = 0}, 0.1),
-		selection_box = {{-0.5, -0.5}, {0.5, 0.5}},
 		energy_source = { type = "void" },
 		flags = {
 			"breaths-air",
@@ -676,7 +674,7 @@ function M.generate_oil_tree(tree_data)
 				{ connection_type = "linked", flow_direction = "output", linked_connection_id = 4 },
 				{ connection_type = "linked", flow_direction = "input", linked_connection_id = ROOT_PUMP_INPUT },
 			},
-			hide_connection_info = false,
+			hide_connection_info = true,
 			filter = "crude-oil",
 		},
 	}
@@ -703,10 +701,8 @@ function M.generate_oil_tree(tree_data)
 		},
 		healing_per_tick = 0.02,
 		dying_explosion = "ground-explosion",
-		collision_box = util.box_around({x = 0, y = 0}, 0.1),
-		horizontal_window_bounding_box = util.box_around({x = 0, y = 0}, 0.5),
-		vertical_window_bounding_box = util.box_around({x = 0, y = 0}, 0.5),
-		selection_box = {{-0.5, -0.5}, {0.5, 0.5}},
+		horizontal_window_bounding_box = util.box_around({x = 0, y = 0}, 0.0),
+		vertical_window_bounding_box = util.box_around({x = 0, y = 0}, 0.0),
 		fluid_box = {
 			volume = 20,
 			pipe_connections = {
@@ -715,7 +711,7 @@ function M.generate_oil_tree(tree_data)
 				{ connection_type = "linked", linked_connection_id = 3 },
 				{ connection_type = "linked", linked_connection_id = 4 },
 			},
-			hide_connection_info = false,
+			hide_connection_info = true,
 			filter = "crude-oil",
 		},
 	}
