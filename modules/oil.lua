@@ -478,10 +478,8 @@ function M.try_to_attach_to_random_tree(tree_info)
 end
 
 function M.try_to_attach_to_pipe(tree_info)
-	game.print("Try pipe attach")
 	local nearby_pipe = area_util.get_random_true_pipe(tree_info.roots.surface, util.box_around(tree_info.roots.position, 24))
 	if nearby_pipe == nil then return false end
-	game.print("Found pipe")
 	if not M.pipe_can_spawn_oil_tree(nearby_pipe) then return false end
 	if M.connect_oil_tree_to_pipe(tree_info.roots, nearby_pipe) == nil then return false end
 	return true
@@ -527,7 +525,6 @@ function M.oil_tree_process(tree_info)
 			M.eater_level_up(tree_info)
 		end
 	elseif oil <= OIL_LOW_LEVEL then
-		game.print("Low oil")
 		if math.random() > 0.5 then
 			M.try_to_attach_to_pipe(tree_info)
 		else

@@ -62,7 +62,6 @@ function M.get_random_true_pipe(surface, area)
        local f = {}
        for _, item in ipairs(items) do
 	       if string.find(item.name, "hostile-trees", 1, true) == nil then
-		       game.print("Adding " .. item.name)
 		       f[#f + 1] = item
 	       end
        end
