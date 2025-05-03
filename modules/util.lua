@@ -66,7 +66,7 @@ function M.random_offset_circle(pos, min_dist, max_dist)
 		x = pos.x + rand_dir.x * rand_dist,
 		y = pos.y + rand_dir.y * rand_dist
 	}
-	return unit_dir
+	return off
 end
 
 function M.normalize(vec)

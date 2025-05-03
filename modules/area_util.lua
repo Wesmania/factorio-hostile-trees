@@ -54,6 +54,25 @@ function M.get_random_belt(surface, area)
        end
 end
 
+function M.get_random_true_pipe(surface, area)
+       local items = surface.find_entities_filtered{
+               area = area,
+               type = { "pipe", "pipe-to-ground" },
+       }
+       local f = {}
+       for _, item in ipairs(items) do
+		if string.find(item.name, "hostile-trees") ~= nil then
+			f[#f + 1] = item
+		end
+       end
+
+       if #f == 0 then
+               return nil
+       else
+               return f[math.random(1, #f)]
+       end
+end
+
 -- Only call it after we did an entity / tree check
 function M.has_buildings(surface, area)
 	for _, force in pairs(storage.game_forces) do

@@ -45,3 +45,7 @@ end
 function M.on_oil_tree_destroyed(e)
 	oil.on_oil_tree_destroyed(e)
 end
+
+function M.on_oil_tree_pump_destroyed(e)
+	oil.on_oil_tree_pump_destroyed(e)
+end

@@ -11,6 +11,7 @@ local retaliation = require("modules/retaliation")
 local cache_evolution = require("modules/cache_evolution")
 local electricity = require("modules/electricity")
 local belttrees = require("modules/belttrees")
+local oil = require("modules/oil")
 local _on_entity_died = require("modules/on_entity_died")
 
 script.on_init(function()
@@ -150,6 +151,11 @@ script.on_event({defines.events.on_tick}, function(event)
 	-- Same wih maturing belt trees
 	if storage.tick_mod_10_s % 60 == 15 then
 		belttrees.mature_travelling_belt_trees()
+	end
+
+	-- Same wih oil trees
+	if storage.tick_mod_10_s % 60 == 45 then
+		oil.check_oil_trees()
 	end
 
 	-- Surprise, settings can change at any time.

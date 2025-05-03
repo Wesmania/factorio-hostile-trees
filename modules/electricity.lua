@@ -28,30 +28,6 @@ function M.fresh_setup()
 	}
 end
 
-local function add_mask(surface, pos)
-	local cx = math.floor(pos.x / 32)
-	local cy = math.floor(pos.y / 32)
-	local cs = storage.chunks
-
-	for i = cx - 1,cx + 1 do
-		for j = cy - 1, cy + 1 do
-			chunks.chunk_mask_inc(cs, surface, i, j)
-		end
-	end
-end
-
-local function remove_mask(surface, pos)
-	local cx = math.floor(pos.x / 32)
-	local cy = math.floor(pos.y / 32)
-	local cs = storage.chunks
-
-	for i = cx - 1,cx + 1 do
-		for j = cy - 1, cy + 1 do
-			chunks.chunk_mask_dec(cs, surface, i, j)
-		end
-	end
-end
-
 function M.try_to_hook_up_electricity(tree, electric)
 	local surface = tree.surface
 	local treepos = tree.position
@@ -147,12 +123,12 @@ function M.register_new_electric_tree(tree, other_pole, power_usage)
 		pos = tree.position,
 		id = tree.unit_number,
 	}
-	add_mask(tree.surface, tree.position)
+	chunks.add_area_mask(tree.surface, tree.position)
 	return tree_data
 end
 
 function M.on_electric_tree_destroyed(e)
-	remove_mask(e.surface, e.pos)
+	chunks.remove_area_mask(e.surface, e.pos)
 	M.destroy_electrified_tree(e.id)
 end
 

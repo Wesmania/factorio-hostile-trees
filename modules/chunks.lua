@@ -80,6 +80,28 @@ function M.chunk_mask_dec(cs, surface, x, y)
 	end
 end
 
+function M.add_area_mask(surface, pos)
+	local cx = math.floor(pos.x / 32)
+	local cy = math.floor(pos.y / 32)
+	local cs = storage.chunks
+	for i = cx - 1,cx + 1 do
+		for j = cy - 1, cy + 1 do
+			M.chunk_mask_inc(cs, surface, i, j)
+		end
+	end
+end
+
+function M.remove_area_mask(surface, pos)
+	local cx = math.floor(pos.x / 32)
+	local cy = math.floor(pos.y / 32)
+	local cs = storage.chunks
+	for i = cx - 1,cx + 1 do
+		for j = cy - 1, cy + 1 do
+			M.chunk_mask_dec(cs, surface, i, j)
+		end
+	end
+end
+
 function M.reinitialize_chunks(cs)
 	for _, surface in pairs(game.surfaces) do
 		for c in surface.get_chunks() do

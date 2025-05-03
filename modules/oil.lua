@@ -1,4 +1,6 @@
 local util = require("modules/util")
+local area_util = require("modules/area_util")
+local chunks = require("modules/chunks")
 local tree_images = require("modules/tree_images")
 
 local M = {}
@@ -7,6 +9,16 @@ local M = {}
 local SPECIAL_OUTPUT_PIPE = 3521853045
 local OIL_EATER = 10
 local ROOT_PUMP_INPUT = 20
+local MAX_OIL_EATER = 40
+
+local MAX_BREED_COUNT = 4
+local MAX_BREED_ATTEMPT = 6
+local REGROWTH_TICKS = 4
+local EXPAND_TICKS = 2
+local EATER_LEVEL_TICKS = 5
+
+local OIL_HIGH_LEVEL = 0.8
+local OIL_LOW_LEVEL = 0.2
 
 local function add_special_fluidbox(box)
 	local c = box.pipe_connections
@@ -33,10 +45,10 @@ end
 
 function M.pipe_can_spawn_oil_tree(pipe)
 	local f = pipe.fluidbox
-	if f == nil then game.print("No box") ; return false end
+	if f == nil then return false end
 	local fluid = f[1]
-	if fluid == nil then game.print("No fluid") ; return false end
-	if fluid.name ~= "crude-oil" then game.print(fluid.name) ; return false end
+	if fluid == nil then return false end
+	if fluid.name ~= "crude-oil" then return false end
 
 	local ptypes = f.get_prototype(1)
 	local volume = 0
@@ -48,14 +60,18 @@ function M.pipe_can_spawn_oil_tree(pipe)
 		end
 	end
 
-	if fluid.amount / volume < 0.2 then game.print(string.format("%d / %d < 0.2", fluid.amount, total)) ; return false end
+	if fluid.amount / volume < 0.2 then return false end
 	return true
 end
 
 
 local function check_killable_pipe(p)
 	local n = p.name
-	if n ~= "hostile-trees-pipe-roots" and n ~= "hostile-trees-pump-roots" then return end
+	if      n ~= "hostile-trees-pipe-roots" and
+		n ~= "hostile-trees-pump-roots" and
+		n ~= "hostile-trees-pipe-roots-vertex" then
+		return
+	end
 	local conns = p.fluidbox.get_linked_connections()
 	-- One of the ends is the pipe that died, so die with 2 or less.
 	if #conns > 2 then return end
@@ -64,6 +80,7 @@ local function check_killable_pipe(p)
 		local n = c.other_entity.name
 		if      n ~= "hostile-trees-pipe-roots" and
 			n ~= "hostile-trees-pump-roots" and
+			n ~= "hostile-trees-pipe-roots-vertex" and
 			c.this_linked_connection_id ~= ROOT_PUMP_INPUT then -- Ignore root pump's pipe connection.
 			return
 		end
@@ -129,6 +146,14 @@ function M.split_oil_tree_name(name)
 		}
 end
 
+function M.oil_eater_name(level)
+	return "hostile-trees-oil-eater-" .. string.format("%02d", level)
+end
+
+function M.get_oil_trees(surface, area)
+	 return surface.find_entities_filtered{area = area, name = "hostile-trees-pipe-roots-vertex"}
+end
+
 function M.get_free_connection(root, j)
 	local box = root.fluidbox
 	if j ~= nil then
@@ -159,7 +184,9 @@ end
 
 local function free(d)
 	for _, item in pairs(d) do
-		d.destroy()
+		if item.valid then
+			item.destroy()
+		end
 	end
 end
 
@@ -176,14 +203,14 @@ function M.make_oil_tree(tree_info)
 	if oil_tree == nil then free(d) ; return nil end
 	d[#d + 1] = oil_tree
 	local oil_eater = tree_info.surface.create_entity{
-		name = "hostile-trees-oil-eater",
+		name = M.oil_eater_name(1),
 		position = tree_info.position,
 		force = "enemy",
 	}
 	if oil_eater == nil then free(d) ; return nil end
 	d[#d + 1] = oil_eater
 	local base_roots = tree_info.surface.create_entity{
-		name = "hostile-trees-pipe-roots",
+		name = "hostile-trees-pipe-roots-vertex",
 		position = tree_info.position,
 		force = "enemy",
 	}
@@ -198,7 +225,19 @@ function M.make_oil_tree(tree_info)
 		roots = base_roots,
 		tree = oil_tree,
 		eater = oil_eater,
-		id = oil_tree.unit_number,
+
+		id = base_roots.unit_number,
+		name = tree_info.name,
+		variation = tree_info.variation,
+
+		-- Growth state
+		regrowth_stage = 1,
+		expand_stage = 1,
+		eater_level = 1,
+		eater_level_progress = 1,
+		breed_count = 0,
+		breed_attempt = 0,
+		generation = 0,
 	}
 
 	local rid = script.register_on_object_destroyed(oil_tree)
@@ -257,23 +296,10 @@ function M.draw_pipe_edge(surface, start, _end)
 	return ret
 end
 
-function M.connect_oil_tree_to_pipe(oil_tree, pipe)
-	if not pipe.valid or not oil_tree.valid then return end
-
-	local p = pipe.position
-	local oil_pos = oil_tree.position
-
+function M.connect_oil_tree_to_entity(roots, entity)
 	local deletables = {}
-	local initial_pump = oil_tree.surface.create_entity{
-			name = "hostile-trees-pump-roots",
-			position = p,
-			force = "enemy",
-	}
-	if initial_pump == nil then free(deletables) ; return end
-	if not M.try_connect(pipe, initial_pump, SPECIAL_OUTPUT_PIPE, ROOT_PUMP_INPUT) then free(deletables) ; return end
-	deletables[#deletables + 1] = initial_pump
 
-	local pipe_edge = M.draw_pipe_edge(oil_tree.surface, p, oil_pos)
+	local pipe_edge = M.draw_pipe_edge(roots.surface, entity.position, roots.position)
 	if pipe_edge == nil then free(deletables) ; return end
 	for _, pipe in ipairs(pipe_edge) do
 		deletables[#deletables + 1] = pipe
@@ -282,13 +308,50 @@ function M.connect_oil_tree_to_pipe(oil_tree, pipe)
 	local pipe_end = pipe_edge[1]
 	local tree_end = pipe_edge[#pipe_edge]
 
-	if not M.try_connect(initial_pump, pipe_end) then free(deletables) ; return end
-	if not M.try_connect(oil_tree, tree_end) then free(deletables) ; return end
+	if not M.try_connect(entity, pipe_end) then free(deletables) ; return end
+	if not M.try_connect(roots, tree_end) then free(deletables) ; return end
 
 	return {
 		edge = pipe_edge,
-		pump = initial_pump,
 	}
+end
+
+function M.setup_pump_protection(pump)
+	local rid = script.register_on_object_destroyed(pump)
+	storage.entity_destroyed_script_events[rid] = {
+		action = "on_oil_tree_pump_destroyed",
+		surface = pump.surface,
+		position = pump.position
+	}
+	chunks.add_area_mask(pump.surface, pump.position)
+end
+
+function M.on_oil_tree_pump_destroyed(e)
+	chunks.remove_area_mask(e.surface, e.position)
+end
+
+function M.connect_oil_tree_to_pipe(roots, pipe)
+	if not pipe.valid or not roots.valid then return end
+
+	local p = pipe.position
+	local oil_pos = roots.position
+
+	local deletables = {}
+	local initial_pump = roots.surface.create_entity{
+			name = "hostile-trees-pump-roots",
+			position = p,
+			force = "enemy",
+	}
+	if initial_pump == nil then free(deletables) ; return end
+	if not M.try_connect(pipe, initial_pump, SPECIAL_OUTPUT_PIPE, ROOT_PUMP_INPUT) then free(deletables) ; return end
+	deletables[#deletables + 1] = initial_pump
+
+	local ret = M.connect_oil_tree_to_entity(roots, initial_pump)
+	if ret == nil then free(deletables) ; return end
+
+	M.setup_pump_protection(initial_pump)
+	ret.pump = initial_pump
+	return ret
 end
 
 function M.spawn_oil_tree(tree, pipe)
@@ -309,6 +372,177 @@ function M.spawn_oil_tree(tree, pipe)
 	tree.destroy()
 
 	M.register_tree(oil_tree)
+end
+
+function M.tree_oil_level(tree)
+	local f = tree.eater.fluidbox
+	local fluid = f[1]
+	if fluid == nil then return 0 end
+	local ptypes = f.get_prototype(1)
+	local volume = 0
+	if ptypes.volume ~= nil then
+		volume = ptypes.volume
+	else
+		for _, p in ipairs(ptypes) do
+			volume = volume + p.volume
+		end
+	end
+	return fluid.amount / volume
+end
+
+function max_generation()
+	return 5 + math.floor(storage.hatred / 10)
+end
+
+function M.eater_level_up(tree_info)
+	if not tree_info.tree.valid then return end
+	if tree_info.eater_level_progress < EATER_LEVEL_TICKS then
+		tree_info.eater_level_progress = tree_info.eater_level_progress + 1
+		return
+	end
+	tree_info.eater_level_progress = 1
+	if not tree_info.tree.valid or not tree_info.eater.valid then return end
+	if tree_info.eater_level >= MAX_OIL_EATER then return end
+	tree_info.eater_level = tree_info.eater_level + 1
+
+	local new_eater = tree_info.roots.surface.create_entity{
+		name = M.oil_eater_name(tree_info.eater_level),
+		position = tree_info.roots.position,
+		force = "enemy",
+	}
+	if new_eater == nil then return end
+	tree_info.eater.destroy()
+	tree_info.eater = new_eater
+	local t = M.try_connect(tree_info.tree, tree_info.eater, OIL_EATER, OIL_EATER)
+	assert(t == true)
+end
+
+-- Returns whether it cannot expand anymore due to counters.
+function M.try_to_expand(tree_info)
+	if tree_info.expand_stage < EXPAND_TICKS then
+		tree_info.expand_stage = tree_info.expand_stage + 1
+		return
+	end
+	tree_info.expand_stage = 1
+
+	if tree_info.breed_attempt >= MAX_BREED_ATTEMPT then return false end
+	if tree_info.breed_count >= MAX_BREED_COUNT then return false end
+
+	if tree_info.generation >= max_generation() then return false end
+	tree_info.breed_attempt = tree_info.breed_attempt + 1
+	if not tree_info.tree.valid or not tree_info.roots.valid then return true end
+
+	local tree = tree_info.tree
+	local pos = util.random_offset_circle(tree_info.roots.position, 9, 16)
+	local nearby_trees = M.get_oil_trees(tree_info.roots.surface, util.box_around(pos, 6))
+	if #nearby_trees > 0 then return true end
+
+	local nv = {
+		name = tree_info.name,
+		variation = tree_info.variation,
+		surface = tree_info.roots.surface,
+		position = pos,
+	}
+	local new_oil_tree = M.make_oil_tree(nv)
+	if new_oil_tree == nil then return true end
+
+	local conn = M.connect_oil_tree_to_entity(new_oil_tree.roots, tree_info.roots)
+	if conn == nil then
+		M.deinitialize_oil_tree(new_oil_tree)
+		return
+	end
+	new_oil_tree.generation = tree_info.generation + 1
+	M.register_tree(new_oil_tree)
+	tree_info.breed_count = tree_info.breed_count + 1
+
+	-- Eat all our oil as a price.
+	tree_info.eater.fluidbox[1] = nil
+
+	return true
+end
+
+local function try_to_attach_to_tree(tree_info, other_id)
+	local other_tree_info = util.ldict_get(storage.oil_tree_state.trees, other_id)
+	if other_tree_info == nil then return false end
+	local oil_level = M.tree_oil_level(other_tree_info)
+	if oil_level < OIL_HIGH_LEVEL then return false end
+	local conn = connect_oil_tree_to_entity(tree_info.roots, other_tree_info.roots)
+	if conn == nil then return false end
+	return true
+end
+
+function M.try_to_attach_to_random_tree(tree_info)
+	local nearby_trees = M.get_oil_trees(tree_info.roots.surface, util.box_around(tree_info.roots.position, 12))
+	local pick = util.pick_random(nearby_trees, 1)[1]
+	return try_to_attach_to_tree(tree_info, tree_info.roots.unit_number)
+end
+
+function M.try_to_attach_to_pipe(tree_info)
+	local nearby_pipe = area_util.get_random_true_pipe(tree_info.roots.surface, util.box_around(tree_info.roots.position, 12))
+	if nearby_pipe == nil then return false end
+	if not pipe_can_spawn_oil_tree(nearby_pipe) then return false end
+	if M.connect_oil_tree_to_pipe(tree_info.roots, nearby_pipe) == nil then return false end
+	return true
+end
+
+function M.regrow_tree(tree_info)
+	if tree_info.tree.valid then return end
+	if tree_info.regrowth_stage < REGROWTH_TICKS then
+		tree_info.regrowth_stage = tree_info.regrowth_stage + 1
+		return
+	end
+	tree_info.regrowth_stage = 1
+
+	local name = M.make_oil_tree_name(tree_info)
+	local oil_tree = tree_info.roots.surface.create_entity{
+		name = name,
+		position = tree_info.roots.position,
+		force = "enemy",
+	}
+	if oil_tree == nil then return end
+	local rid = script.register_on_object_destroyed(oil_tree)
+	storage.entity_destroyed_script_events[rid] = {
+		action = "on_oil_tree_destroyed",
+		item = tree_info,
+	}
+	tree_info.tree = oil_tree
+	local t = M.try_connect(tree_info.roots, tree_info.tree)
+	assert(t == true)
+	local t = M.try_connect(tree_info.tree, tree_info.eater, OIL_EATER, OIL_EATER)
+	assert(t == true)
+end
+
+function M.oil_tree_process(tree_info)
+	-- First, do we have to regrow?
+	if not tree_info.tree.valid then
+		M.regrow_tree(tree_info)
+		return
+	end
+	local oil = M.tree_oil_level(tree_info)
+	if oil >= OIL_HIGH_LEVEL then
+		local could_still_grow = M.try_to_expand(tree_info)
+		if not could_still_grow then
+			M.eater_level_up(tree_info)
+		end
+	else
+		if math.random() > 0.5 then
+			M.try_to_attach_to_pipe(tree_info)
+		else
+			M.try_to_attach_to_random_tree(tree_info)
+		end
+	end
+end
+
+-- Called once per second.
+function M.check_oil_trees()
+	-- Change state once every 2 minutes.
+	local state = storage.oil_tree_state.trees
+	local gcount = #state.list / 2		-- FIXME
+	while gcount > 1 or (gcount > 0 and math.random() < gcount) do
+		gcount = gcount - 1
+		local tree = util.ldict_get_random(state)
+		M.oil_tree_process(tree)
+	end
 end
 
 function M.rootpictures()
@@ -466,8 +700,8 @@ function M.generate_oil_tree(tree_data)
 			{ type = "acid", percent = 100 },
 			{ type = "laser", percent = 100 },
 			{ type = "electric", percent = 100 },
-
 		},
+		healing_per_tick = 0.02,
 		dying_explosion = "ground-explosion",
 		collision_box = util.box_around({x = 0, y = 0}, 0.1),
 		horizontal_window_bounding_box = util.box_around({x = 0, y = 0}, 0.5),
@@ -485,6 +719,12 @@ function M.generate_oil_tree(tree_data)
 			filter = "crude-oil",
 		},
 	}
+	data:extend({initial_pump, pipe_roots})
+	-- These uniquely identify trees.
+	local p = table.deepcopy(pipe_roots)
+	p.name = "hostile-trees-pipe-roots-vertex"
+	data:extend({p})
+
 	local oil_eater = {
 		type = "generator",
 		name = "hostile-trees-oil-eater",
@@ -512,13 +752,18 @@ function M.generate_oil_tree(tree_data)
 			render_no_power_icon = false,
 			render_no_network_icon = false,
 		},
-		fluid_usage_per_tick = 1 / 60,
+		fluid_usage_per_tick = 1 / 72,
 		scale_fluid_usage = false,
 		maximum_temperature = 1000,
 		effectivity = 0.001,
 	}
 
-	data:extend({initial_pump, pipe_roots, oil_eater})
+	for level=1,40 do
+		oil_eater = table.deepcopy(oil_eater)
+		oil_eater.name = M.oil_eater_name(level)
+		oil_eater.fluid_usage_per_tick = oil_eater.fluid_usage_per_tick * 1.2
+		data:extend({oil_eater})
+	end
 end
 
 return M
