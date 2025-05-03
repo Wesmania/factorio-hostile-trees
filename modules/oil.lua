@@ -588,6 +588,7 @@ function M.generate_oil_tree(tree_data)
 				variation = i,
 			},
 			localised_name = {"entity-name.hostile-trees-oily-tree"},
+			localised_description = {"entity-description.hostile-trees-oily-tree"},
 			hidden = true,
 			flags = {
 				"breaths-air",
@@ -701,6 +702,8 @@ function M.generate_oil_tree(tree_data)
 	local pipe_roots = {
 		type = "pipe",
 		name = "hostile-trees-pipe-roots",
+		localised_name = {"entity-name.hostile-trees-pipe-roots"},
+		localised_description = {"entity-description.hostile-trees-pipe-roots"},
 		icon = "__base__/graphics/icons/tree-06-brown.png",
 		pictures = M.rootpictures(),
 		flags = {
