@@ -478,9 +478,11 @@ function M.try_to_attach_to_random_tree(tree_info)
 end
 
 function M.try_to_attach_to_pipe(tree_info)
-	local nearby_pipe = area_util.get_random_true_pipe(tree_info.roots.surface, util.box_around(tree_info.roots.position, 12))
+	game.print("Try pipe attach")
+	local nearby_pipe = area_util.get_random_true_pipe(tree_info.roots.surface, util.box_around(tree_info.roots.position, 24))
 	if nearby_pipe == nil then return false end
-	if not pipe_can_spawn_oil_tree(nearby_pipe) then return false end
+	game.print("Found pipe")
+	if not M.pipe_can_spawn_oil_tree(nearby_pipe) then return false end
 	if M.connect_oil_tree_to_pipe(tree_info.roots, nearby_pipe) == nil then return false end
 	return true
 end
@@ -524,7 +526,8 @@ function M.oil_tree_process(tree_info)
 		if not could_still_grow then
 			M.eater_level_up(tree_info)
 		end
-	else
+	elseif oil <= OIL_LOW_LEVEL then
+		game.print("Low oil")
 		if math.random() > 0.5 then
 			M.try_to_attach_to_pipe(tree_info)
 		else
@@ -546,8 +549,15 @@ function M.check_oil_trees()
 end
 
 function M.rootpictures()
-	local pics_from = data.raw["optimized-decorative"]["brown-hairy-grass"]
-	local pic = pics_from.pictures[1]
+	local pics_from = data.raw["optimized-decorative"]["brown-carpet-grass"]
+	local pic = pics_from.pictures[9]
+	pic.tint = {
+		r = 0.1,
+		g = 0.1,
+		b = 0.1,
+		a = 1.0,
+	}
+	pic.scale = 0.4
 	return {
 		straight_vertical_single = pic,
 		straight_vertical = pic,
@@ -567,6 +577,12 @@ function M.rootpictures()
 end
 
 function M.generate_oil_tree(tree_data)
+	local black_colors = {
+		r = 0.1,
+		g = 0.1,
+		b = 0.1,
+		a = 1.0,
+	}
 	for i, variation in ipairs(tree_data.variations) do
 		local unit = {
 			type = "fluid-turret",
@@ -582,7 +598,7 @@ function M.generate_oil_tree(tree_data)
 				"not-upgradable",
 				"not-in-made-in"
 			},
-			max_health = 250,
+			max_health = 500,
 			resistances = {
 				{
 					type = "fire",
@@ -594,9 +610,9 @@ function M.generate_oil_tree(tree_data)
 			collision_box = tree_data.collision_box,
 			selection_box = tree_data.selection_box,
 			drawing_box = tree_data.drawing_box,
-			pictures = tree_images.generate_tree_image(tree_data, variation, tree_data.colors[i]),
+			pictures = tree_images.generate_tree_image(tree_data, variation, black_colors),
 			folded_animation = {
-				north = tree_images.generate_tree_image(tree_data, variation, tree_data.colors[i]),
+				north = tree_images.generate_tree_image(tree_data, variation, black_colors),
 			},
 			call_for_help_radius = 16,
 			turret_base_has_direction = true,
@@ -645,11 +661,14 @@ function M.generate_oil_tree(tree_data)
 		}
 		data:extend({unit})
 	end
+	local pump_pic = data.raw["optimized-decorative"]["brown-asterisk"].pictures[2]
+	pump_pic.scale = 1.5
+	pump_pic.tint = black_colors
 	local initial_pump = {
 		type = "pump",
 		name = "hostile-trees-pump-roots",
 		icon = "__base__/graphics/icons/tree-06-brown.png",
-		max_health = 1000,
+		max_health = 2000,
 		energy_source = { type = "void" },
 		flags = {
 			"breaths-air",
@@ -657,6 +676,7 @@ function M.generate_oil_tree(tree_data)
 			"not-upgradable",
 			"not-in-made-in",
 		},
+		selection_box = util.box_around({x = 0, y = 0}, 0.5),
 		energy_usage = "1J",
 		pumping_speed = 20,
 		resistances = {
@@ -677,6 +697,9 @@ function M.generate_oil_tree(tree_data)
 			hide_connection_info = true,
 			filter = "crude-oil",
 		},
+		animations = {
+			north = pump_pic
+		}
 	}
 	local pipe_roots = {
 		type = "pipe",
@@ -689,7 +712,8 @@ function M.generate_oil_tree(tree_data)
 			"not-upgradable",
 			"not-in-made-in",
 		},
-		max_health = 500,
+		selection_box = util.box_around({x = 0, y = 0}, 0.5),
+		max_health = 1000,
 		resistances = {		-- Roots are underground, dummy!
 			{ type = "physical", percent = 80, decrease = 20 },
 			{ type = "explosion", percent = 80, decrease = 20 },
@@ -699,7 +723,6 @@ function M.generate_oil_tree(tree_data)
 			{ type = "laser", percent = 100 },
 			{ type = "electric", percent = 100 },
 		},
-		healing_per_tick = 0.02,
 		dying_explosion = "ground-explosion",
 		horizontal_window_bounding_box = util.box_around({x = 0, y = 0}, 0.0),
 		vertical_window_bounding_box = util.box_around({x = 0, y = 0}, 0.0),
